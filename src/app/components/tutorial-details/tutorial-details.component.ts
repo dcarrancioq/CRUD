@@ -4,9 +4,10 @@ import { Tutorial } from '../../models/tutorial.model';
 import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
-  selector: 'app-tutorial-details',
-  templateUrl: './tutorial-details.component.html',
-  styleUrls: ['./tutorial-details.component.css'],
+    selector: 'app-tutorial-details',
+    templateUrl: './tutorial-details.component.html',
+    styleUrls: ['./tutorial-details.component.css'],
+    standalone: false
 })
 export class TutorialDetailsComponent implements OnInit {
   @Input() viewMode = false;
