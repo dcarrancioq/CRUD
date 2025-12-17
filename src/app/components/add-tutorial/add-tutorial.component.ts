@@ -3,9 +3,10 @@ import { Tutorial } from '../../models/tutorial.model';
 import { TutorialService } from '../../services/tutorial.service';
 
 @Component({
-  selector: 'app-add-tutorial',
-  templateUrl: './add-tutorial.component.html',
-  styleUrls: ['./add-tutorial.component.css'],
+    selector: 'app-add-tutorial',
+    templateUrl: './add-tutorial.component.html',
+    styleUrls: ['./add-tutorial.component.css'],
+    standalone: false
 })
 export class AddTutorialComponent {
   tutorial: Tutorial = {
