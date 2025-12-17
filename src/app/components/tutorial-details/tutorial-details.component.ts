@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as Sentry from '@sentry/angular';
 import { Tutorial } from '../../models/tutorial.model';
 import { TutorialService } from '../../services/tutorial.service';
 
@@ -27,6 +28,11 @@ export class TutorialDetailsComponent implements OnInit {
 
   ngOnInit(): void {
     if (!this.viewMode) {
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'TutorialDetailsComponent initialized',
+        level: 'info',
+      });
       this.message = '';
       this.getTutorial(this.route.snapshot.params['id']);
     }
@@ -38,7 +44,12 @@ export class TutorialDetailsComponent implements OnInit {
         this.currentTutorial = data;
         console.log(data);
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialDetailsComponent', action: 'getTutorial' },
+        });
+        console.error(e);
+      }
     });
   }
 
@@ -59,7 +70,12 @@ export class TutorialDetailsComponent implements OnInit {
           ? res.message
           : 'The status was updated successfully!';
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialDetailsComponent', action: 'updatePublished' },
+        });
+        console.error(e);
+      }
     });
   }
 
@@ -75,7 +91,12 @@ export class TutorialDetailsComponent implements OnInit {
             ? res.message
             : 'This tutorial was updated successfully!';
         },
-        error: (e) => console.error(e)
+        error: (e) => {
+          Sentry.captureException(e, {
+            tags: { component: 'TutorialDetailsComponent', action: 'updateTutorial' },
+          });
+          console.error(e);
+        }
       });
   }
 
@@ -85,7 +106,12 @@ export class TutorialDetailsComponent implements OnInit {
         console.log(res);
         this.router.navigate(['/tutorials']);
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialDetailsComponent', action: 'deleteTutorial' },
+        });
+        console.error(e);
+      }
     });
   }
 }

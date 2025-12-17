@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import * as Sentry from '@sentry/angular';
 import { Tutorial } from '../../models/tutorial.model';
 import { TutorialService } from '../../services/tutorial.service';
 
@@ -16,6 +17,11 @@ export class TutorialsListComponent implements OnInit {
   constructor(private tutorialService: TutorialService) {}
 
   ngOnInit(): void {
+    Sentry.addBreadcrumb({
+      category: 'navigation',
+      message: 'TutorialsListComponent initialized',
+      level: 'info',
+    });
     this.retrieveTutorials();
   }
 
@@ -25,7 +31,12 @@ export class TutorialsListComponent implements OnInit {
         this.tutorials = data;
         console.log(data);
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialsListComponent', action: 'retrieveTutorials' },
+        });
+        console.error(e);
+      }
     });
   }
 
@@ -46,7 +57,12 @@ export class TutorialsListComponent implements OnInit {
         console.log(res);
         this.refreshList();
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialsListComponent', action: 'removeAllTutorials' },
+        });
+        console.error(e);
+      }
     });
   }
 
@@ -59,7 +75,12 @@ export class TutorialsListComponent implements OnInit {
         this.tutorials = data;
         console.log(data);
       },
-      error: (e) => console.error(e)
+      error: (e) => {
+        Sentry.captureException(e, {
+          tags: { component: 'TutorialsListComponent', action: 'searchTitle' },
+        });
+        console.error(e);
+      }
     });
   }
 }
