@@ -1,0 +1,11 @@
+{
+  "/api/devin": {
+    "target": "https://api.devin.ai",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api/devin": ""
+    },
+    "logLevel": "debug"
+  }
+}

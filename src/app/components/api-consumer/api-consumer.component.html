@@ -1,0 +1,122 @@
+<div class="api-consumer-container">
+  <h3>Devin Enterprise API Consumer</h3>
+  <p class="text-muted">Consume the Devin Enterprise API v2 Consumption Endpoints</p>
+
+  <div class="form-group">
+    <label for="apiKey">API Key <span class="text-danger">*</span></label>
+    <input
+      type="password"
+      class="form-control"
+      id="apiKey"
+      placeholder="Enter your Enterprise Admin API Key (apk_user_*)"
+      [(ngModel)]="apiKey"
+      name="apiKey"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="endpoint">Select Endpoint <span class="text-danger">*</span></label>
+    <select
+      class="form-control"
+      id="endpoint"
+      [(ngModel)]="selectedEndpoint"
+      (ngModelChange)="onEndpointChange()"
+      name="endpoint"
+    >
+      <option [ngValue]="null">-- Select an endpoint --</option>
+      @for (endpoint of endpoints; track endpoint.id) {
+        <option [ngValue]="endpoint">{{ endpoint.name }}</option>
+      }
+    </select>
+    @if (selectedEndpoint) {
+      <small class="form-text text-muted">{{ selectedEndpoint.description }}</small>
+    }
+  </div>
+
+  @if (selectedEndpoint) {
+    @if (selectedEndpoint.requiresUserId) {
+      <div class="form-group">
+        <label for="userId">User ID <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          id="userId"
+          placeholder="Enter the user ID"
+          [(ngModel)]="userId"
+          name="userId"
+        />
+      </div>
+    }
+
+    @if (selectedEndpoint.hasDateParams) {
+      <div class="form-group">
+        <label for="startDate">Start Date (optional)</label>
+        <input
+          type="datetime-local"
+          class="form-control"
+          id="startDate"
+          [(ngModel)]="startDate"
+          name="startDate"
+        />
+        <small class="form-text text-muted">Format: YYYY-MM-DDTHH:MM:SS (e.g., 2025-12-05T08:00:00)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="endDate">End Date (optional)</label>
+        <input
+          type="datetime-local"
+          class="form-control"
+          id="endDate"
+          [(ngModel)]="endDate"
+          name="endDate"
+        />
+        <small class="form-text text-muted">Format: YYYY-MM-DDTHH:MM:SS (e.g., 2026-01-05T08:00:00)</small>
+      </div>
+    }
+
+    @if (selectedEndpoint.hasOrgIds) {
+      <div class="form-group">
+        <label for="orgIds">Organization IDs (optional)</label>
+        <input
+          type="text"
+          class="form-control"
+          id="orgIds"
+          placeholder="Comma-separated org IDs (e.g., org1, org2)"
+          [(ngModel)]="orgIds"
+          name="orgIds"
+        />
+      </div>
+    }
+  }
+
+  <div class="button-group">
+    <button
+      (click)="executeApi()"
+      class="btn btn-primary"
+      [disabled]="loading || !selectedEndpoint || !apiKey"
+    >
+      @if (loading) {
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Executing...
+      } @else {
+        Execute
+      }
+    </button>
+    @if (response || error) {
+      <button (click)="clearResponse()" class="btn btn-secondary">Clear</button>
+    }
+  </div>
+
+  @if (error) {
+    <div class="alert alert-danger mt-3" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  @if (response) {
+    <div class="response-container mt-3">
+      <h5>Response:</h5>
+      <pre class="response-json">{{ response }}</pre>
+    </div>
+  }
+</div>
