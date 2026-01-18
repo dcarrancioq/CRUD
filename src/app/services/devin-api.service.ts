@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const baseUrl = 'https://api.devin.ai/v2/enterprise/consumption';
+const baseUrl = '/api/devin/v2/enterprise/consumption';
 
 export interface ConsumptionCycle {
   start: string;
