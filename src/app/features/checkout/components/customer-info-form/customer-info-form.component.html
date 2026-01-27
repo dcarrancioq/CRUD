@@ -1,0 +1,61 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <h4 class="form-title">Datos personales</h4>
+  <p class="form-subtitle">Introduce tus datos de contacto</p>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Nombre *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="firstName"
+             [class.is-invalid]="isFieldInvalid('firstName')"
+             placeholder="Tu nombre">
+      <div *ngIf="isFieldInvalid('firstName')" class="invalid-feedback">
+        {{ getErrorMessage('firstName') }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Apellidos *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="lastName"
+             [class.is-invalid]="isFieldInvalid('lastName')"
+             placeholder="Tus apellidos">
+      <div *ngIf="isFieldInvalid('lastName')" class="invalid-feedback">
+        {{ getErrorMessage('lastName') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Email *</label>
+    <input type="email" 
+           class="form-control" 
+           formControlName="email"
+           [class.is-invalid]="isFieldInvalid('email')"
+           placeholder="tu@email.com">
+    <div *ngIf="isFieldInvalid('email')" class="invalid-feedback">
+      {{ getErrorMessage('email') }}
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <label class="form-label">Telefono *</label>
+    <input type="tel" 
+           class="form-control" 
+           formControlName="phone"
+           [class.is-invalid]="isFieldInvalid('phone')"
+           placeholder="612345678">
+    <div *ngIf="isFieldInvalid('phone')" class="invalid-feedback">
+      {{ getErrorMessage('phone') }}
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-lg">
+      Continuar al envio
+      <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+</form>

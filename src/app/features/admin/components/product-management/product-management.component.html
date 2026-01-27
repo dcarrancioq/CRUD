@@ -1,0 +1,151 @@
+<div class="product-management">
+  <div class="page-header">
+    <h1>Gestion de Productos</h1>
+    <button type="button" class="btn btn-primary" (click)="createProduct()">
+      <i class="bi bi-plus-lg me-2"></i>
+      Nuevo producto
+    </button>
+  </div>
+
+  <div class="filters-bar">
+    <div class="row align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <input type="text" 
+                 class="form-control" 
+                 placeholder="Buscar productos..."
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearch()">
+          <button type="button" class="btn btn-outline-secondary" (click)="onSearch()">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">Todos los estados</option>
+          <option value="active">Activo</option>
+          <option value="draft">Borrador</option>
+          <option value="archived">Archivado</option>
+        </select>
+      </div>
+      <div class="col-md-5 text-md-end">
+        <span class="results-count">{{ totalItems }} producto(s)</span>
+        <button *ngIf="selectedProducts.size > 0" 
+                type="button" 
+                class="btn btn-outline-danger btn-sm ms-3"
+                (click)="deleteSelected()">
+          Eliminar seleccionados ({{ selectedProducts.size }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando productos..."></app-loading-spinner>
+
+  <div *ngIf="!loading && products.length === 0" class="empty-state">
+    <app-empty-state 
+      icon="box-seam"
+      title="No hay productos"
+      message="Aun no has creado ningun producto."
+      actionLabel="Crear producto"
+      (actionClick)="createProduct()">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!loading && products.length > 0" class="products-table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th class="col-check">
+            <input type="checkbox" 
+                   class="form-check-input"
+                   [checked]="selectedProducts.size === products.length"
+                   (change)="selectAll()">
+          </th>
+          <th class="col-image">Imagen</th>
+          <th class="col-name sortable" (click)="onSort('name')">
+            Nombre
+            <i *ngIf="sortBy === 'name'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th class="col-sku">SKU</th>
+          <th class="col-price sortable" (click)="onSort('price')">
+            Precio
+            <i *ngIf="sortBy === 'price'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th class="col-stock sortable" (click)="onSort('stock')">
+            Stock
+            <i *ngIf="sortBy === 'stock'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th class="col-status">Estado</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let product of products">
+          <td>
+            <input type="checkbox" 
+                   class="form-check-input"
+                   [checked]="selectedProducts.has(product.id)"
+                   (change)="toggleSelection(product.id)">
+          </td>
+          <td>
+            <img [src]="product.images?.[0]?.url || 'assets/images/placeholder.png'" 
+                 [alt]="product.name"
+                 class="product-thumbnail">
+          </td>
+          <td>
+            <a [routerLink]="['/admin/products', product.id, 'edit']" class="product-name">
+              {{ product.name }}
+            </a>
+            <small class="d-block text-muted">{{ product.category?.name }}</small>
+          </td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.price | currency:'EUR' }}</td>
+          <td [ngClass]="getStockClass(getStockStatus(product))">
+            {{ product.stock?.quantity || 0 }}
+          </td>
+          <td>
+            <span class="badge" 
+                  [class.bg-success]="product.status === 'active'"
+                  [class.bg-secondary]="product.status === 'draft'"
+                  [class.bg-warning]="product.status === 'archived'">
+              {{ product.status }}
+            </span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button type="button" 
+                      class="btn btn-outline-primary"
+                      (click)="editProduct(product)"
+                      title="Editar">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-danger"
+                      (click)="deleteProduct(product)"
+                      title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination 
+    *ngIf="totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalItems"
+    [itemsPerPage]="itemsPerPage"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

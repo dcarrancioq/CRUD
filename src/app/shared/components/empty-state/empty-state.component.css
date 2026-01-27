@@ -1,0 +1,17 @@
+.empty-state {
+  padding: 40px 20px;
+}
+
+.empty-state-icon {
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.empty-state-message {
+  max-width: 400px;
+  margin: 0 auto;
+}

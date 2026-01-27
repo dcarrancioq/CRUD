@@ -1,0 +1,83 @@
+<div class="order-tracking">
+  <div class="container">
+    <app-breadcrumb [items]="[
+      {label: 'Mis Pedidos', link: '/orders'},
+      {label: 'Pedido #' + order?.orderNumber, link: '/orders/' + order?.orderNumber},
+      {label: 'Seguimiento'}
+    ]"></app-breadcrumb>
+
+    <app-loading-spinner *ngIf="loading" message="Cargando seguimiento..."></app-loading-spinner>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <div *ngIf="order && tracking && !loading" class="tracking-content">
+      <div class="tracking-header">
+        <h1>Seguimiento del envio</h1>
+        <p>Pedido #{{ order.orderNumber }}</p>
+      </div>
+
+      <div class="tracking-info-card">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="info-item">
+              <span class="label">Transportista:</span>
+              <span class="value">{{ tracking.carrier }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Numero de seguimiento:</span>
+              <span class="value">
+                <a [href]="tracking.trackingUrl" target="_blank" rel="noopener">
+                  {{ tracking.trackingNumber }}
+                  <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
+              </span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="info-item">
+              <span class="label">Estado actual:</span>
+              <span class="value status">{{ tracking.currentStatus }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Entrega estimada:</span>
+              <span class="value">{{ tracking.estimatedDelivery | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tracking-timeline">
+        <h5>Historial de envio</h5>
+        
+        <div class="timeline">
+          <div *ngFor="let event of tracking.events; let i = index; let last = last" 
+               class="timeline-item"
+               [class.completed]="true"
+               [class.current]="last">
+            <div class="timeline-marker">
+              <i class="bi bi-{{ getStatusIcon(event.status) }}"></i>
+            </div>
+            <div class="timeline-content">
+              <h6>{{ event.description }}</h6>
+              <p class="location" *ngIf="event.location">
+                <i class="bi bi-geo-alt me-1"></i>{{ event.location }}
+              </p>
+              <p class="datetime">{{ event.timestamp | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="delivery-address">
+        <h5>Direccion de entrega</h5>
+        <p>
+          {{ order.customer?.firstName }} {{ order.customer?.lastName }}<br>
+          {{ order.shippingAddress?.street }}, {{ order.shippingAddress?.number }}<br>
+          <span *ngIf="order.shippingAddress?.apartment">{{ order.shippingAddress?.apartment }}<br></span>
+          {{ order.shippingAddress?.postalCode }} {{ order.shippingAddress?.city }}<br>
+          {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.country }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

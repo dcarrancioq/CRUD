@@ -1,0 +1,139 @@
+.order-confirmation {
+  padding: 40px 0;
+}
+
+.confirmation-content {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 80px;
+  color: #28a745;
+  margin-bottom: 20px;
+}
+
+.confirmation-content h1 {
+  margin-bottom: 10px;
+}
+
+.confirmation-content .lead {
+  color: #6c757d;
+  margin-bottom: 30px;
+}
+
+.order-info-card {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.order-number {
+  font-size: 18px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 15px;
+}
+
+.order-number strong {
+  display: block;
+  font-size: 24px;
+  color: #007bff;
+  margin-top: 5px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.shipping-info,
+.order-items {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.shipping-info h5,
+.order-items h5 {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item .item-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.order-item .item-info {
+  flex: 1;
+}
+
+.order-item .item-name {
+  display: block;
+  font-weight: 500;
+}
+
+.order-item .item-qty {
+  font-size: 13px;
+  color: #666;
+}
+
+.order-item .item-price {
+  font-weight: 500;
+}
+
+.email-notice {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background-color: #e7f3ff;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.email-notice i {
+  font-size: 32px;
+  color: #007bff;
+}
+
+.email-notice p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+@media (max-width: 576px) {
+  .confirmation-actions {
+    flex-direction: column;
+  }
+}

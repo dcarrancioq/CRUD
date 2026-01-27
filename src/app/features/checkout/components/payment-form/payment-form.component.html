@@ -1,0 +1,109 @@
+<div class="payment-form">
+  <h4 class="form-title">Metodo de pago</h4>
+  <p class="form-subtitle">Selecciona como quieres pagar</p>
+
+  <div class="payment-methods">
+    <div *ngFor="let method of paymentMethods" 
+         class="payment-method"
+         [class.selected]="selectedMethod === method.id"
+         (click)="selectMethod(method.id)">
+      <div class="method-radio">
+        <input type="radio" 
+               [checked]="selectedMethod === method.id"
+               [id]="'payment-' + method.id"
+               name="paymentMethod">
+      </div>
+      <i class="bi bi-{{ method.icon }} method-icon"></i>
+      <label [for]="'payment-' + method.id" class="method-name">{{ method.name }}</label>
+    </div>
+  </div>
+
+  <div *ngIf="selectedMethod === 'card'" class="card-form mt-4">
+    <form [formGroup]="cardForm">
+      <div class="mb-3">
+        <label class="form-label">Numero de tarjeta *</label>
+        <input type="text" 
+               class="form-control" 
+               formControlName="cardNumber"
+               [class.is-invalid]="isFieldInvalid('cardNumber')"
+               placeholder="1234 5678 9012 3456"
+               maxlength="16"
+               (input)="formatCardNumber($event)">
+        <div *ngIf="isFieldInvalid('cardNumber')" class="invalid-feedback">
+          {{ getErrorMessage('cardNumber') }}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Titular de la tarjeta *</label>
+        <input type="text" 
+               class="form-control" 
+               formControlName="cardHolder"
+               [class.is-invalid]="isFieldInvalid('cardHolder')"
+               placeholder="NOMBRE APELLIDOS">
+        <div *ngIf="isFieldInvalid('cardHolder')" class="invalid-feedback">
+          {{ getErrorMessage('cardHolder') }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Fecha de expiracion *</label>
+          <input type="text" 
+                 class="form-control" 
+                 formControlName="expiryDate"
+                 [class.is-invalid]="isFieldInvalid('expiryDate')"
+                 placeholder="MM/YY"
+                 maxlength="5"
+                 (input)="formatExpiryDate($event)">
+          <div *ngIf="isFieldInvalid('expiryDate')" class="invalid-feedback">
+            {{ getErrorMessage('expiryDate') }}
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">CVV *</label>
+          <input type="text" 
+                 class="form-control" 
+                 formControlName="cvv"
+                 [class.is-invalid]="isFieldInvalid('cvv')"
+                 placeholder="123"
+                 maxlength="4">
+          <div *ngIf="isFieldInvalid('cvv')" class="invalid-feedback">
+            {{ getErrorMessage('cvv') }}
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="security-note">
+      <i class="bi bi-shield-lock"></i>
+      <span>Tus datos estan protegidos con encriptacion SSL</span>
+    </div>
+  </div>
+
+  <div *ngIf="selectedMethod === 'paypal'" class="paypal-info mt-4">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      Seras redirigido a PayPal para completar el pago de forma segura.
+    </div>
+  </div>
+
+  <div *ngIf="selectedMethod === 'transfer'" class="transfer-info mt-4">
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      Recibiras los datos bancarios para realizar la transferencia una vez confirmes el pedido.
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-outline-secondary btn-lg" (click)="onBack()">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver
+    </button>
+    <button type="button" class="btn btn-primary btn-lg" (click)="onSubmit()">
+      Revisar pedido
+      <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+</div>

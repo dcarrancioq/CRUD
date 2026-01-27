@@ -1,0 +1,26 @@
+<div class="coupon-input">
+  <button type="button" 
+          class="coupon-toggle"
+          (click)="toggleExpand()">
+    <i class="bi bi-tag me-2"></i>
+    Tengo un codigo de descuento
+    <i class="bi" [class.bi-chevron-down]="!isExpanded" [class.bi-chevron-up]="isExpanded"></i>
+  </button>
+
+  <div class="coupon-form" [class.expanded]="isExpanded">
+    <div class="input-group">
+      <input type="text" 
+             class="form-control" 
+             placeholder="Ingresa tu codigo"
+             [(ngModel)]="couponCode"
+             [disabled]="loading"
+             (keyup.enter)="applyCoupon()">
+      <button type="button" 
+              class="btn btn-outline-primary"
+              [disabled]="loading || !couponCode.trim()"
+              (click)="applyCoupon()">
+        {{ loading ? 'Aplicando...' : 'Aplicar' }}
+      </button>
+    </div>
+  </div>
+</div>

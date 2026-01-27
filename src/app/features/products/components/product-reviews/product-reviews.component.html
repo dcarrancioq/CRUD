@@ -1,0 +1,98 @@
+<div class="product-reviews">
+  <div class="reviews-header d-flex justify-content-between align-items-center mb-4">
+    <h4>Opiniones de clientes ({{ totalReviews }})</h4>
+    <button type="button" 
+            class="btn btn-primary"
+            (click)="toggleReviewForm()">
+      Escribir una opinion
+    </button>
+  </div>
+
+  <div *ngIf="showReviewForm" class="review-form card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Tu opinion</h5>
+      
+      <div class="mb-3">
+        <label class="form-label">Valoracion:</label>
+        <app-rating-stars 
+          [rating]="newReview.rating" 
+          [readonly]="false"
+          [showValue]="false"
+          size="large"
+          (ratingChange)="onRatingChange($event)">
+        </app-rating-stars>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Titulo:</label>
+        <input type="text" 
+               class="form-control" 
+               [(ngModel)]="newReview.title"
+               placeholder="Resume tu opinion en una frase"
+               maxlength="100">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Comentario:</label>
+        <textarea class="form-control" 
+                  [(ngModel)]="newReview.comment"
+                  rows="4"
+                  placeholder="Comparte tu experiencia con este producto"
+                  maxlength="1000"></textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="button" 
+                class="btn btn-primary"
+                [disabled]="submitting"
+                (click)="submitReview()">
+          {{ submitting ? 'Enviando...' : 'Enviar opinion' }}
+        </button>
+        <button type="button" 
+                class="btn btn-outline-secondary"
+                (click)="cancelReview()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading"></app-loading-spinner>
+
+  <div *ngIf="!loading && reviews.length === 0" class="text-center py-4">
+    <p class="text-muted">Este producto aun no tiene opiniones. Se el primero en opinar.</p>
+  </div>
+
+  <div *ngIf="!loading && reviews.length > 0" class="reviews-list">
+    <div *ngFor="let review of reviews" class="review-item card mb-3">
+      <div class="card-body">
+        <div class="review-header d-flex justify-content-between align-items-start">
+          <div>
+            <app-rating-stars [rating]="review.rating" [readonly]="true" [showValue]="false" size="small"></app-rating-stars>
+            <h6 class="review-title mt-1">{{ review.title }}</h6>
+          </div>
+          <span *ngIf="review.isVerifiedPurchase" class="badge bg-success">Compra verificada</span>
+        </div>
+        
+        <p class="review-comment">{{ review.comment }}</p>
+        
+        <div class="review-footer d-flex justify-content-between align-items-center">
+          <small class="text-muted">
+            Por {{ review.userName }} - {{ review.createdAt | date:'dd/MM/yyyy' }}
+          </small>
+          <small class="text-muted" *ngIf="review.helpfulCount > 0">
+            {{ review.helpfulCount }} personas encontraron esto util
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <app-pagination 
+    *ngIf="totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalReviews"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+</div>

@@ -1,0 +1,11 @@
+<div class="price-display" [ngClass]="size">
+  <span class="current-price" [class.discounted]="hasDiscount">
+    {{ price | currency:currency:'symbol':'1.2-2' }}
+  </span>
+  <span *ngIf="hasDiscount" class="original-price">
+    {{ compareAtPrice | currency:currency:'symbol':'1.2-2' }}
+  </span>
+  <span *ngIf="hasDiscount && showDiscount" class="discount-badge">
+    -{{ discountPercentage }}%
+  </span>
+</div>

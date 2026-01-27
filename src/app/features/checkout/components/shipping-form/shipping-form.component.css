@@ -1,0 +1,77 @@
+.form-title {
+  margin-bottom: 5px;
+}
+
+.form-subtitle {
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.shipping-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.shipping-method {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shipping-method:hover {
+  border-color: #007bff;
+}
+
+.shipping-method.selected {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.method-radio {
+  margin-right: 15px;
+}
+
+.method-radio input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.method-info {
+  flex: 1;
+}
+
+.method-name {
+  display: block;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+
+.method-time {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.method-price {
+  font-weight: 600;
+  color: #007bff;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+}

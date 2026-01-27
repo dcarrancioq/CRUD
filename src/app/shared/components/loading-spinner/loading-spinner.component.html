@@ -1,0 +1,8 @@
+<div class="spinner-container" [class.overlay]="overlay">
+  <div class="spinner" [ngClass]="size">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+  <p *ngIf="message" class="spinner-message">{{ message }}</p>
+</div>

@@ -1,0 +1,104 @@
+<div class="order-review">
+  <h4 class="form-title">Revisar pedido</h4>
+  <p class="form-subtitle">Verifica que todos los datos son correctos antes de confirmar</p>
+
+  <div *ngIf="checkoutData" class="review-sections">
+    <div class="review-section">
+      <div class="section-header">
+        <h6><i class="bi bi-person me-2"></i>Datos de contacto</h6>
+        <button type="button" class="btn btn-link btn-sm p-0">Editar</button>
+      </div>
+      <div class="section-content">
+        <p class="mb-1">{{ checkoutData.customer?.firstName }} {{ checkoutData.customer?.lastName }}</p>
+        <p class="mb-1">{{ checkoutData.customer?.email }}</p>
+        <p class="mb-0">{{ checkoutData.customer?.phone }}</p>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="section-header">
+        <h6><i class="bi bi-geo-alt me-2"></i>Direccion de envio</h6>
+        <button type="button" class="btn btn-link btn-sm p-0">Editar</button>
+      </div>
+      <div class="section-content">
+        <p class="mb-1">{{ checkoutData.shippingAddress?.street }}, {{ checkoutData.shippingAddress?.number }}</p>
+        <p *ngIf="checkoutData.shippingAddress?.apartment" class="mb-1">{{ checkoutData.shippingAddress?.apartment }}</p>
+        <p class="mb-1">{{ checkoutData.shippingAddress?.postalCode }} {{ checkoutData.shippingAddress?.city }}</p>
+        <p class="mb-0">{{ checkoutData.shippingAddress?.state }}, {{ checkoutData.shippingAddress?.country }}</p>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="section-header">
+        <h6><i class="bi bi-truck me-2"></i>Metodo de envio</h6>
+        <button type="button" class="btn btn-link btn-sm p-0">Editar</button>
+      </div>
+      <div class="section-content">
+        <p class="mb-1">{{ checkoutData.shippingMethod?.name }}</p>
+        <p class="mb-0 text-muted">{{ checkoutData.shippingMethod?.estimatedDays }}</p>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="section-header">
+        <h6><i class="bi bi-credit-card me-2"></i>Metodo de pago</h6>
+        <button type="button" class="btn btn-link btn-sm p-0">Editar</button>
+      </div>
+      <div class="section-content">
+        <p class="mb-0">{{ paymentMethodName }}</p>
+        <p *ngIf="checkoutData.paymentMethod === 'card' && checkoutData.paymentDetails?.cardNumber" class="mb-0 text-muted">
+          **** **** **** {{ checkoutData.paymentDetails?.cardNumber?.slice(-4) }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="cart" class="order-items-review mt-4">
+    <h6>Productos ({{ cart.items.length }})</h6>
+    <div class="items-list">
+      <div *ngFor="let item of cart.items" class="review-item">
+        <img [src]="item.product?.images?.[0]?.url || 'assets/images/placeholder.png'" 
+             [alt]="item.product?.name"
+             class="item-image">
+        <div class="item-info">
+          <span class="item-name">{{ item.product?.name }}</span>
+          <span class="item-qty">Cantidad: {{ item.quantity }}</span>
+        </div>
+        <span class="item-price">{{ item.totalPrice | currency:'EUR' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="terms-section mt-4">
+    <div class="form-check">
+      <input type="checkbox" 
+             class="form-check-input" 
+             id="acceptTerms"
+             [(ngModel)]="acceptedTerms">
+      <label class="form-check-label" for="acceptTerms">
+        He leido y acepto los <a href="/terms" target="_blank">terminos y condiciones</a> 
+        y la <a href="/privacy" target="_blank">politica de privacidad</a>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-outline-secondary btn-lg" (click)="onBack()">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver
+    </button>
+    <button type="button" 
+            class="btn btn-success btn-lg"
+            [disabled]="!canPlaceOrder"
+            (click)="onPlaceOrder()">
+      <span *ngIf="placing">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Procesando...
+      </span>
+      <span *ngIf="!placing">
+        <i class="bi bi-check-circle me-2"></i>
+        Confirmar pedido
+      </span>
+    </button>
+  </div>
+</div>

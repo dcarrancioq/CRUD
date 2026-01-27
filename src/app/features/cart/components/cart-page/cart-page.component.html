@@ -1,0 +1,65 @@
+<div class="cart-page">
+  <div class="container">
+    <app-breadcrumb [items]="[{label: 'Carrito de Compras'}]"></app-breadcrumb>
+    
+    <h1 class="page-title">Carrito de Compras</h1>
+
+    <app-loading-spinner *ngIf="loading" message="Cargando carrito..."></app-loading-spinner>
+
+    <div *ngIf="!loading && isEmpty">
+      <app-empty-state 
+        icon="cart"
+        title="Tu carrito esta vacio"
+        message="Parece que aun no has agregado productos a tu carrito."
+        actionLabel="Explorar productos"
+        actionLink="/products">
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="!loading && !isEmpty && cart" class="cart-content">
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="cart-items-container">
+            <div class="cart-header d-flex justify-content-between align-items-center mb-3">
+              <span class="items-count">{{ cart.items.length }} producto(s)</span>
+              <button type="button" 
+                      class="btn btn-link text-danger p-0"
+                      (click)="onClearCart()">
+                Vaciar carrito
+              </button>
+            </div>
+
+            <div class="cart-items" [class.updating]="updating">
+              <app-cart-item 
+                *ngFor="let item of cart.items"
+                [item]="item"
+                (quantityChange)="onQuantityChange(item, $event)"
+                (remove)="onRemoveItem(item)">
+              </app-cart-item>
+            </div>
+
+            <div class="cart-actions mt-4">
+              <button type="button" 
+                      class="btn btn-outline-primary"
+                      (click)="continueShopping()">
+                <i class="bi bi-arrow-left me-2"></i>
+                Continuar comprando
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="cart-sidebar">
+            <app-coupon-input (couponApplied)="onCouponApplied($event)"></app-coupon-input>
+            
+            <app-cart-summary 
+              [cart]="cart"
+              (checkout)="proceedToCheckout()">
+            </app-cart-summary>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

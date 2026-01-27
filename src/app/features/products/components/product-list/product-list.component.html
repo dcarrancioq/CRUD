@@ -1,0 +1,103 @@
+<div class="product-list-page">
+  <div class="container">
+    <app-breadcrumb [items]="currentCategory ? [{label: 'Productos', link: '/products'}, {label: currentCategory.name}] : [{label: 'Productos'}]"></app-breadcrumb>
+    
+    <div class="page-header">
+      <h1>{{ currentCategory ? currentCategory.name : 'Todos los Productos' }}</h1>
+      <p *ngIf="currentCategory?.description" class="category-description">{{ currentCategory.description }}</p>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-3">
+        <app-product-filter 
+          [categories]="categories"
+          [currentCategory]="currentCategory"
+          (filterChange)="onFilterChange($event)"
+          (clearFilters)="clearFilters()">
+        </app-product-filter>
+      </div>
+
+      <div class="col-lg-9">
+        <div class="toolbar d-flex justify-content-between align-items-center mb-4">
+          <div class="results-info">
+            <span *ngIf="!loading">{{ totalItems }} productos encontrados</span>
+          </div>
+          
+          <div class="toolbar-actions d-flex align-items-center gap-3">
+            <div class="sort-options">
+              <label class="me-2">Ordenar por:</label>
+              <select class="form-select form-select-sm d-inline-block w-auto" 
+                      [value]="sortBy" 
+                      (change)="onSortChange($any($event.target).value)">
+                <option value="createdAt">Mas recientes</option>
+                <option value="price">Precio</option>
+                <option value="name">Nombre</option>
+                <option value="rating">Valoracion</option>
+              </select>
+            </div>
+            
+            <div class="view-toggle btn-group">
+              <button type="button" 
+                      class="btn btn-outline-secondary btn-sm" 
+                      [class.active]="viewMode === 'grid'"
+                      (click)="viewMode = 'grid'"
+                      title="Vista en cuadricula">
+                <i class="bi bi-grid"></i>
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-secondary btn-sm" 
+                      [class.active]="viewMode === 'list'"
+                      (click)="viewMode = 'list'"
+                      title="Vista en lista">
+                <i class="bi bi-list"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <app-loading-spinner *ngIf="loading" message="Cargando productos..."></app-loading-spinner>
+
+        <div *ngIf="error" class="alert alert-danger">
+          {{ error }}
+          <button type="button" class="btn btn-link" (click)="loadProducts()">Reintentar</button>
+        </div>
+
+        <div *ngIf="!loading && !error && products.length === 0">
+          <app-empty-state 
+            icon="box"
+            title="No se encontraron productos"
+            message="Intenta ajustar los filtros o buscar algo diferente."
+            [actionLabel]="filters.search || filters.minPrice || filters.maxPrice ? 'Limpiar filtros' : ''"
+            (click)="clearFilters()">
+          </app-empty-state>
+        </div>
+
+        <div *ngIf="!loading && !error && products.length > 0" 
+             class="products-container"
+             [ngClass]="viewMode">
+          <div class="row" *ngIf="viewMode === 'grid'">
+            <div *ngFor="let product of products" class="col-md-6 col-lg-4 mb-4">
+              <app-product-card [product]="product"></app-product-card>
+            </div>
+          </div>
+          
+          <div *ngIf="viewMode === 'list'" class="product-list-view">
+            <app-product-card *ngFor="let product of products" 
+                              [product]="product" 
+                              [horizontal]="true">
+            </app-product-card>
+          </div>
+        </div>
+
+        <app-pagination 
+          *ngIf="totalPages > 1"
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalItems]="totalItems"
+          [itemsPerPage]="itemsPerPage"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
+      </div>
+    </div>
+  </div>
+</div>

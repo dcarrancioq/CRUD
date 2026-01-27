@@ -1,0 +1,29 @@
+<div class="variant-selector">
+  <div *ngFor="let group of groupedAttributes" class="variant-group mb-3">
+    <label class="variant-label">{{ group.name }}:</label>
+    <div class="variant-options">
+      <button *ngFor="let option of group.values"
+              type="button"
+              class="variant-option"
+              [class.selected]="isSelected(option.variant)"
+              [class.unavailable]="!isAvailable(option.variant)"
+              [disabled]="!isAvailable(option.variant)"
+              (click)="selectVariant(option.variant)">
+        {{ option.value }}
+        <span *ngIf="!isAvailable(option.variant)" class="unavailable-text">(Agotado)</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="variants.length > 0 && !groupedAttributes.length" class="variant-list">
+    <label class="variant-label">Variante:</label>
+    <select class="form-select" 
+            [value]="selectedVariant?.id"
+            (change)="selectVariant(variants[$any($event.target).selectedIndex])">
+      <option *ngFor="let variant of variants" [value]="variant.id">
+        {{ variant.name }} - {{ variant.price | currency:'EUR' }}
+        <span *ngIf="variant.stock <= 0">(Agotado)</span>
+      </option>
+    </select>
+  </div>
+</div>

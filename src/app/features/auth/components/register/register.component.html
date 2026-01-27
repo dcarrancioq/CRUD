@@ -1,0 +1,97 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <a routerLink="/" class="brand">
+        <i class="bi bi-shop"></i>
+        <span>E-Commerce</span>
+      </a>
+      <h1>Crear cuenta</h1>
+      <p>Registrate para empezar a comprar</p>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Nombre</label>
+          <input type="text" 
+                 class="form-control" 
+                 formControlName="firstName"
+                 [class.is-invalid]="isFieldInvalid('firstName')"
+                 placeholder="Tu nombre">
+          <div class="invalid-feedback">Nombre requerido</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Apellidos</label>
+          <input type="text" 
+                 class="form-control" 
+                 formControlName="lastName"
+                 [class.is-invalid]="isFieldInvalid('lastName')"
+                 placeholder="Tus apellidos">
+          <div class="invalid-feedback">Apellidos requeridos</div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" 
+               class="form-control" 
+               formControlName="email"
+               [class.is-invalid]="isFieldInvalid('email')"
+               placeholder="tu@email.com">
+        <div class="invalid-feedback">Introduce un email valido</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Contrasena</label>
+        <div class="input-group">
+          <input [type]="showPassword ? 'text' : 'password'" 
+                 class="form-control" 
+                 formControlName="password"
+                 [class.is-invalid]="isFieldInvalid('password')"
+                 placeholder="Minimo 6 caracteres">
+          <button type="button" class="btn btn-outline-secondary" (click)="togglePassword()">
+            <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+          </button>
+        </div>
+        <div *ngIf="isFieldInvalid('password')" class="text-danger small mt-1">
+          La contrasena debe tener al menos 6 caracteres
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Confirmar contrasena</label>
+        <input type="password" 
+               class="form-control" 
+               formControlName="confirmPassword"
+               [class.is-invalid]="isFieldInvalid('confirmPassword') || passwordMismatch"
+               placeholder="Repite tu contrasena">
+        <div *ngIf="passwordMismatch" class="text-danger small mt-1">
+          Las contrasenas no coinciden
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="form-check">
+          <input type="checkbox" 
+                 class="form-check-input" 
+                 formControlName="acceptTerms" 
+                 id="acceptTerms"
+                 [class.is-invalid]="isFieldInvalid('acceptTerms')">
+          <label class="form-check-label" for="acceptTerms">
+            Acepto los <a routerLink="/terms" target="_blank">terminos y condiciones</a> 
+            y la <a routerLink="/privacy" target="_blank">politica de privacidad</a>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 btn-lg" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        {{ loading ? 'Creando cuenta...' : 'Crear cuenta' }}
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesion</a></p>
+    </div>
+  </div>
+</div>

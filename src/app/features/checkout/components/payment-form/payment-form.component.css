@@ -1,0 +1,89 @@
+.form-title {
+  margin-bottom: 5px;
+}
+
+.form-subtitle {
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.payment-method:hover {
+  border-color: #007bff;
+}
+
+.payment-method.selected {
+  border-color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.method-radio {
+  margin-right: 15px;
+}
+
+.method-radio input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.method-icon {
+  font-size: 24px;
+  margin-right: 15px;
+  color: #6c757d;
+}
+
+.payment-method.selected .method-icon {
+  color: #007bff;
+}
+
+.method-name {
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+}
+
+.card-form {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.security-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #d4edda;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #155724;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+}

@@ -1,0 +1,156 @@
+<div class="product-detail-page">
+  <div class="container">
+    <app-loading-spinner *ngIf="loading" message="Cargando producto..."></app-loading-spinner>
+
+    <div *ngIf="error" class="alert alert-danger">
+      {{ error }}
+      <a routerLink="/products" class="btn btn-link">Volver a productos</a>
+    </div>
+
+    <div *ngIf="product && !loading" class="product-detail">
+      <app-breadcrumb [items]="[
+        {label: 'Productos', link: '/products'},
+        {label: product.category?.name || '', link: '/products/category/' + product.category?.slug},
+        {label: product.name}
+      ]"></app-breadcrumb>
+
+      <div class="row">
+        <div class="col-lg-6 mb-4">
+          <app-product-gallery [images]="product.images"></app-product-gallery>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="product-info">
+            <div class="product-category" *ngIf="product.category">{{ product.category.name }}</div>
+            <h1 class="product-name">{{ product.name }}</h1>
+            
+            <div class="product-rating" *ngIf="product.ratings?.count > 0">
+              <app-rating-stars [rating]="product.ratings.average" [readonly]="true"></app-rating-stars>
+              <span class="review-count">({{ product.ratings.count }} opiniones)</span>
+            </div>
+
+            <div class="product-price my-3">
+              <app-price-display 
+                [price]="currentPrice" 
+                [compareAtPrice]="product.compareAtPrice"
+                [currency]="product.currency"
+                size="large">
+              </app-price-display>
+            </div>
+
+            <p class="product-short-description">{{ product.shortDescription }}</p>
+
+            <div class="product-stock mb-3" [ngClass]="product.stock?.status">
+              <span *ngIf="!isOutOfStock">
+                <i class="bi bi-check-circle"></i> 
+                {{ currentStock }} unidades disponibles
+              </span>
+              <span *ngIf="isOutOfStock">
+                <i class="bi bi-x-circle"></i> 
+                Producto agotado
+              </span>
+            </div>
+
+            <div *ngIf="product.variants && product.variants.length > 0" class="product-variants mb-3">
+              <app-product-variant-selector 
+                [variants]="product.variants"
+                [selectedVariant]="selectedVariant"
+                (variantChange)="onVariantChange($event)">
+              </app-product-variant-selector>
+            </div>
+
+            <div class="product-quantity mb-3">
+              <label class="form-label">Cantidad:</label>
+              <app-quantity-selector 
+                [min]="1" 
+                [max]="maxQuantity"
+                [(ngModel)]="quantity"
+                [disabled]="isOutOfStock"
+                (quantityChange)="onQuantityChange($event)">
+              </app-quantity-selector>
+            </div>
+
+            <div class="product-actions d-flex gap-2 mb-4">
+              <button type="button" 
+                      class="btn btn-primary btn-lg flex-grow-1"
+                      [disabled]="isOutOfStock || addingToCart"
+                      (click)="addToCart()">
+                <i class="bi bi-cart-plus me-2"></i>
+                {{ addingToCart ? 'Agregando...' : 'Agregar al carrito' }}
+              </button>
+              <button type="button" 
+                      class="btn btn-success btn-lg"
+                      [disabled]="isOutOfStock"
+                      (click)="buyNow()">
+                Comprar ahora
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-secondary btn-lg"
+                      [class.active]="isInWishlist"
+                      (click)="toggleWishlist()"
+                      [title]="isInWishlist ? 'Eliminar de favoritos' : 'Agregar a favoritos'">
+                <i class="bi" [class.bi-heart]="!isInWishlist" [class.bi-heart-fill]="isInWishlist"></i>
+              </button>
+            </div>
+
+            <div class="product-meta">
+              <p><strong>SKU:</strong> {{ selectedVariant?.sku || product.sku }}</p>
+              <p *ngIf="product.tags?.length"><strong>Etiquetas:</strong> {{ product.tags.join(', ') }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-tabs mt-5">
+        <ul class="nav nav-tabs">
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'description'" (click)="setActiveTab('description')">
+              Descripcion
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'specifications'" (click)="setActiveTab('specifications')">
+              Especificaciones
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [class.active]="activeTab === 'reviews'" (click)="setActiveTab('reviews')">
+              Opiniones ({{ product.ratings?.count || 0 }})
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content p-4 border border-top-0">
+          <div *ngIf="activeTab === 'description'" class="tab-pane active">
+            <div [innerHTML]="product.description"></div>
+          </div>
+
+          <div *ngIf="activeTab === 'specifications'" class="tab-pane active">
+            <table class="table table-striped" *ngIf="product.attributes?.length">
+              <tbody>
+                <tr *ngFor="let attr of product.attributes">
+                  <th scope="row" style="width: 30%">{{ attr.name }}</th>
+                  <td>{{ attr.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p *ngIf="!product.attributes?.length">No hay especificaciones disponibles.</p>
+          </div>
+
+          <div *ngIf="activeTab === 'reviews'" class="tab-pane active">
+            <app-product-reviews [productId]="product.id"></app-product-reviews>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="relatedProducts.length > 0" class="related-products mt-5">
+        <h3>Productos relacionados</h3>
+        <div class="row">
+          <div *ngFor="let relatedProduct of relatedProducts" class="col-md-6 col-lg-3 mb-4">
+            <app-product-card [product]="relatedProduct"></app-product-card>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

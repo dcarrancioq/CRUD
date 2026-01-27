@@ -1,0 +1,97 @@
+<div class="checkout-page">
+  <div class="container">
+    <app-breadcrumb [items]="[
+      {label: 'Carrito', link: '/cart'},
+      {label: 'Checkout'}
+    ]"></app-breadcrumb>
+
+    <h1 class="page-title">Finalizar Compra</h1>
+
+    <div class="row">
+      <div class="col-lg-8">
+        <app-checkout-steps 
+          [steps]="steps" 
+          [currentStep]="currentStep"
+          (stepClick)="onStepChange($event)">
+        </app-checkout-steps>
+
+        <div class="checkout-form-container">
+          <app-customer-info-form 
+            *ngIf="currentStep === 1"
+            [initialData]="checkoutData?.customer"
+            (submit)="onCustomerInfoSubmit($event)">
+          </app-customer-info-form>
+
+          <app-shipping-form 
+            *ngIf="currentStep === 2"
+            [initialAddress]="checkoutData?.shippingAddress"
+            [initialMethod]="checkoutData?.shippingMethod"
+            (submit)="onShippingSubmit($event)"
+            (back)="goBack()">
+          </app-shipping-form>
+
+          <app-payment-form 
+            *ngIf="currentStep === 3"
+            [initialMethod]="checkoutData?.paymentMethod"
+            (submit)="onPaymentSubmit($event)"
+            (back)="goBack()">
+          </app-payment-form>
+
+          <app-order-review 
+            *ngIf="currentStep === 4"
+            [cart]="cart"
+            [checkoutData]="checkoutData"
+            [placing]="placing"
+            (placeOrder)="onPlaceOrder()"
+            (back)="goBack()">
+          </app-order-review>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="order-summary-sidebar">
+          <h5>Resumen del pedido</h5>
+          
+          <div *ngIf="cart" class="order-items">
+            <div *ngFor="let item of cart.items" class="order-item">
+              <img [src]="item.product?.images?.[0]?.url || 'assets/images/placeholder.png'" 
+                   [alt]="item.product?.name"
+                   class="item-image">
+              <div class="item-info">
+                <span class="item-name">{{ item.product?.name }}</span>
+                <span class="item-qty">x{{ item.quantity }}</span>
+              </div>
+              <span class="item-price">{{ item.totalPrice | currency:'EUR' }}</span>
+            </div>
+          </div>
+
+          <hr>
+
+          <div *ngIf="cart" class="order-totals">
+            <div class="total-row">
+              <span>Subtotal</span>
+              <span>{{ cart.subtotal | currency:'EUR' }}</span>
+            </div>
+            <div *ngIf="cart.discount > 0" class="total-row discount">
+              <span>Descuento</span>
+              <span>-{{ cart.discount | currency:'EUR' }}</span>
+            </div>
+            <div class="total-row">
+              <span>IVA (21%)</span>
+              <span>{{ cart.tax | currency:'EUR' }}</span>
+            </div>
+            <div class="total-row">
+              <span>Envio</span>
+              <span>{{ cart.shipping > 0 ? (cart.shipping | currency:'EUR') : 'Gratis' }}</span>
+            </div>
+            <hr>
+            <div class="total-row total">
+              <span>Total</span>
+              <strong>{{ cart.total | currency:'EUR' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

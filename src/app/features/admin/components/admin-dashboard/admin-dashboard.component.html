@@ -1,0 +1,151 @@
+<div class="admin-dashboard">
+  <div class="dashboard-header">
+    <h1>Panel de Administracion</h1>
+    <div class="period-selector">
+      <select class="form-select" [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
+        <option *ngFor="let option of periodOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando datos..."></app-loading-spinner>
+
+  <div *ngIf="!loading && stats" class="dashboard-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon sales">
+          <i class="bi bi-currency-euro"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalSales | currency:'EUR' }}</span>
+          <span class="stat-label">Ventas totales</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon orders">
+          <i class="bi bi-bag"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalOrders }}</span>
+          <span class="stat-label">Pedidos</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon customers">
+          <i class="bi bi-people"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalCustomers }}</span>
+          <span class="stat-label">Clientes</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon products">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.totalProducts }}</span>
+          <span class="stat-label">Productos</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alerts-row" *ngIf="stats.pendingOrders > 0 || stats.lowStockProducts > 0">
+      <div *ngIf="stats.pendingOrders > 0" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Tienes <strong>{{ stats.pendingOrders }}</strong> pedidos pendientes de procesar.
+        <a routerLink="/admin/orders" class="alert-link ms-2">Ver pedidos</a>
+      </div>
+      <div *ngIf="stats.lowStockProducts > 0" class="alert alert-danger">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        <strong>{{ stats.lowStockProducts }}</strong> productos con stock bajo.
+        <a routerLink="/admin/products" class="alert-link ms-2">Ver productos</a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h5>Productos mas vendidos</h5>
+            <a routerLink="/admin/products" class="btn btn-link btn-sm">Ver todos</a>
+          </div>
+          <div class="card-body">
+            <div *ngIf="topProducts.length === 0" class="text-center text-muted py-4">
+              No hay datos disponibles
+            </div>
+            <table *ngIf="topProducts.length > 0" class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-center">Ventas</th>
+                  <th class="text-end">Ingresos</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of topProducts">
+                  <td>{{ product.name }}</td>
+                  <td class="text-center">{{ product.sales }}</td>
+                  <td class="text-end">{{ product.revenue | currency:'EUR' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h5>Pedidos recientes</h5>
+            <a routerLink="/admin/orders" class="btn btn-link btn-sm">Ver todos</a>
+          </div>
+          <div class="card-body">
+            <div *ngIf="recentOrders.length === 0" class="text-center text-muted py-4">
+              No hay pedidos recientes
+            </div>
+            <div *ngIf="recentOrders.length > 0" class="recent-orders">
+              <div *ngFor="let order of recentOrders" class="order-row">
+                <div class="order-info">
+                  <span class="order-number">#{{ order.orderNumber }}</span>
+                  <span class="order-customer">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</span>
+                </div>
+                <div class="order-meta">
+                  <span class="badge" [ngClass]="getStatusClass(order.status)">{{ order.status }}</span>
+                  <span class="order-total">{{ order.total | currency:'EUR' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <h5>Acciones rapidas</h5>
+      <div class="actions-grid">
+        <a routerLink="/admin/products/new" class="action-card">
+          <i class="bi bi-plus-circle"></i>
+          <span>Nuevo producto</span>
+        </a>
+        <a routerLink="/admin/orders" class="action-card">
+          <i class="bi bi-list-check"></i>
+          <span>Gestionar pedidos</span>
+        </a>
+        <a routerLink="/admin/coupons" class="action-card">
+          <i class="bi bi-tag"></i>
+          <span>Crear cupon</span>
+        </a>
+        <a routerLink="/admin/customers" class="action-card">
+          <i class="bi bi-person-lines-fill"></i>
+          <span>Ver clientes</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

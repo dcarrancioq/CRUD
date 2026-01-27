@@ -1,0 +1,45 @@
+<div class="cart-item">
+  <div class="item-image">
+    <a [routerLink]="['/products', item.product?.slug]">
+      <img [src]="productImage" [alt]="productName">
+    </a>
+  </div>
+
+  <div class="item-details">
+    <a [routerLink]="['/products', item.product?.slug]" class="item-name">
+      {{ productName }}
+    </a>
+    <p class="item-sku">SKU: {{ item.variant?.sku || item.product?.sku }}</p>
+    <p class="item-price-mobile d-lg-none">{{ item.unitPrice | currency:'EUR' }}</p>
+  </div>
+
+  <div class="item-price d-none d-lg-block">
+    <app-price-display 
+      [price]="item.unitPrice"
+      [compareAtPrice]="item.product?.compareAtPrice"
+      [currency]="item.product?.currency || 'EUR'">
+    </app-price-display>
+  </div>
+
+  <div class="item-quantity">
+    <app-quantity-selector 
+      [min]="1"
+      [max]="maxQuantity"
+      [(ngModel)]="item.quantity"
+      (quantityChange)="onQuantityChange($event)">
+    </app-quantity-selector>
+  </div>
+
+  <div class="item-total">
+    <strong>{{ item.totalPrice | currency:'EUR' }}</strong>
+  </div>
+
+  <div class="item-actions">
+    <button type="button" 
+            class="btn btn-link text-danger p-0"
+            (click)="onRemove()"
+            title="Eliminar">
+      <i class="bi bi-trash"></i>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,24 @@
+<div class="quantity-selector">
+  <button type="button" 
+          class="btn btn-outline-secondary btn-sm" 
+          (click)="decrement()" 
+          [disabled]="disabled || quantity <= min"
+          aria-label="Disminuir cantidad">
+    -
+  </button>
+  <input type="number" 
+         class="form-control form-control-sm quantity-input" 
+         [value]="quantity"
+         [min]="min"
+         [max]="max"
+         [disabled]="disabled"
+         (change)="onInputChange($event)"
+         aria-label="Cantidad">
+  <button type="button" 
+          class="btn btn-outline-secondary btn-sm" 
+          (click)="increment()" 
+          [disabled]="disabled || quantity >= max"
+          aria-label="Aumentar cantidad">
+    +
+  </button>
+</div>

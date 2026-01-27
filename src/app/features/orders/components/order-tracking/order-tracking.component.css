@@ -1,0 +1,153 @@
+.order-tracking {
+  padding: 20px 0 40px;
+}
+
+.tracking-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.tracking-header h1 {
+  margin-bottom: 5px;
+}
+
+.tracking-header p {
+  color: #6c757d;
+}
+
+.tracking-info-card {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.info-item {
+  margin-bottom: 15px;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-item .label {
+  display: block;
+  font-size: 13px;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
+.info-item .value {
+  font-weight: 500;
+}
+
+.info-item .value.status {
+  color: #007bff;
+}
+
+.info-item .value a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.info-item .value a:hover {
+  text-decoration: underline;
+}
+
+.tracking-timeline {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.tracking-timeline h5 {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #e9ecef;
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 25px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -40px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+}
+
+.timeline-item.completed .timeline-marker {
+  background-color: #28a745;
+  color: white;
+}
+
+.timeline-item.current .timeline-marker {
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+}
+
+.timeline-content h6 {
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.timeline-content .location {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 3px;
+}
+
+.timeline-content .datetime {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.delivery-address {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-address h5 {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.delivery-address p {
+  margin: 0;
+  line-height: 1.8;
+}

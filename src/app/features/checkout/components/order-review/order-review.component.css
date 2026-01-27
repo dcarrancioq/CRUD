@@ -1,0 +1,112 @@
+.form-title {
+  margin-bottom: 5px;
+}
+
+.form-subtitle {
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+.review-sections {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.review-section {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header h6 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.section-content {
+  font-size: 14px;
+  color: #555;
+}
+
+.order-items-review h6 {
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.items-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.review-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.review-item:last-child {
+  border-bottom: none;
+}
+
+.review-item .item-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.review-item .item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.review-item .item-name {
+  display: block;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-item .item-qty {
+  font-size: 13px;
+  color: #666;
+}
+
+.review-item .item-price {
+  font-weight: 500;
+}
+
+.terms-section {
+  padding: 15px;
+  background-color: #fff3cd;
+  border-radius: 8px;
+}
+
+.terms-section a {
+  color: #007bff;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .review-sections {
+    grid-template-columns: 1fr;
+  }
+}
