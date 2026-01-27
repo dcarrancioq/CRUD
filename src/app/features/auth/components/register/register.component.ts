@@ -52,7 +52,7 @@ export class RegisterComponent implements OnInit {
     this.loading = true;
     const { firstName, lastName, email, password } = this.form.value;
 
-    this.authService.register({ firstName, lastName, email, password }).subscribe({
+    this.authService.register({ firstName, lastName, email, password, acceptTerms: true }).subscribe({
       next: () => {
         this.notificationService.success('Cuenta creada correctamente. Bienvenido!');
         this.router.navigate(['/']);

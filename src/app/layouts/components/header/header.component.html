@@ -25,8 +25,6 @@
         </ul>
 
         <div class="navbar-nav">
-          <app-product-search class="me-3 d-none d-lg-block"></app-product-search>
-
           <a class="nav-link position-relative" routerLink="/cart" (click)="closeMenus()">
             <i class="bi bi-cart3 fs-5"></i>
             <span *ngIf="cartCount > 0" class="cart-badge">{{ cartCount }}</span>

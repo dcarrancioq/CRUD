@@ -11,10 +11,10 @@
     <span>-{{ cart.discount | currency:'EUR' }}</span>
   </div>
 
-  <div *ngIf="cart.appliedCoupon" class="summary-row coupon">
+  <div *ngIf="cart.appliedCoupons && cart.appliedCoupons.length > 0" class="summary-row coupon">
     <span>
-      Cupon: {{ cart.appliedCoupon.code }}
-      <small class="d-block text-muted">{{ cart.appliedCoupon.description }}</small>
+      Cupon: {{ cart.appliedCoupons[0].code }}
+      <small class="d-block text-muted">{{ cart.appliedCoupons[0].appliedDiscount | currency:'EUR' }} descuento</small>
     </span>
     <span class="text-success">Aplicado</span>
   </div>

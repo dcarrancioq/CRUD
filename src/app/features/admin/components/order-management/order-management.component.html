@@ -68,12 +68,14 @@
           <td>{{ order.total | currency:'EUR' }}</td>
           <td>
             <select class="form-select form-select-sm status-select"
-                    [ngClass]="getStatusClass(order.status)"
-                    [value]="order.status"
+                    [ngClass]="getStatusClass(order.orderStatus)"
+                    [value]="order.orderStatus"
                     (change)="updateStatus(order, $any($event.target).value)">
-              <option *ngFor="let option of statusOptions" [value]="option.value" *ngIf="option.value">
-                {{ option.label }}
-              </option>
+              <ng-container *ngFor="let option of statusOptions">
+                <option *ngIf="option.value" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </ng-container>
             </select>
           </td>
           <td>
@@ -133,7 +135,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of selectedOrder.items">
-              <td>{{ item.product?.name }}</td>
+              <td>{{ item.name }}</td>
               <td class="text-center">{{ item.quantity }}</td>
               <td class="text-end">{{ item.totalPrice | currency:'EUR' }}</td>
             </tr>

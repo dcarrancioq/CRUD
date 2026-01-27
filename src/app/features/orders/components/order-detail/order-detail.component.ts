@@ -43,11 +43,11 @@ export class OrderDetailComponent implements OnInit {
   }
 
   get canCancel(): boolean {
-    return this.order?.status === 'pending' || this.order?.status === 'processing';
+    return this.order?.orderStatus === 'pending' || this.order?.orderStatus === 'processing';
   }
 
   get canTrack(): boolean {
-    return this.order?.status === 'shipped';
+    return this.order?.orderStatus === 'shipped';
   }
 
   cancelOrder(): void {

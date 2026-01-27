@@ -32,7 +32,7 @@ export class LoginComponent implements OnInit {
 
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
 
-    if (this.authService.isAuthenticated()) {
+    if (this.authService.isAuthenticated) {
       this.router.navigate([this.returnUrl]);
     }
   }
@@ -48,7 +48,7 @@ export class LoginComponent implements OnInit {
     this.loading = true;
     const { email, password, rememberMe } = this.form.value;
 
-    this.authService.login(email, password, rememberMe).subscribe({
+    this.authService.login({ email, password, rememberMe }).subscribe({
       next: () => {
         this.notificationService.success('Bienvenido!');
         this.router.navigate([this.returnUrl]);

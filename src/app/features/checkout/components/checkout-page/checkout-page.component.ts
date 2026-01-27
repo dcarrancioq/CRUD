@@ -15,7 +15,7 @@ import { CheckoutData } from '../../../../core/models/order.model';
 })
 export class CheckoutPageComponent implements OnInit, OnDestroy {
   cart: Cart | null = null;
-  checkoutData: CheckoutData | null = null;
+  checkoutData: Partial<CheckoutData> | null = null;
   currentStep: number = 1;
   loading = false;
   placing = false;
@@ -76,7 +76,12 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   }
 
   onPaymentSubmit(data: { method: string; details: any }): void {
-    this.checkoutService.setPaymentMethod(data.method, data.details);
+    const paymentMethod = {
+      type: data.method as 'credit_card' | 'debit_card' | 'paypal' | 'bank_transfer' | 'wallet',
+      provider: data.method === 'paypal' ? 'PayPal' : data.method === 'card' ? 'Stripe' : 'Bank',
+      details: data.details
+    };
+    this.checkoutService.setPaymentMethod(paymentMethod);
     this.checkoutService.nextStep();
   }
 

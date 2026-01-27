@@ -48,8 +48,8 @@ export class ShippingFormComponent implements OnInit {
       },
       error: () => {
         this.shippingMethods = [
-          { id: 'standard', name: 'Envio estandar', price: 4.99, estimatedDays: '3-5 dias laborables' },
-          { id: 'express', name: 'Envio express', price: 9.99, estimatedDays: '1-2 dias laborables' }
+          { id: 'standard', name: 'Envio estandar', description: 'Entrega en 3-5 dias laborables', price: 4.99, estimatedDays: { min: 3, max: 5 }, carrier: 'Correos' },
+          { id: 'express', name: 'Envio express', description: 'Entrega en 1-2 dias laborables', price: 9.99, estimatedDays: { min: 1, max: 2 }, carrier: 'SEUR' }
         ];
         this.selectedMethod = this.shippingMethods[0];
         this.loading = false;

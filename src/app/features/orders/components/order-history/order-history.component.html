@@ -45,15 +45,15 @@
             <span class="order-number">Pedido #{{ order.orderNumber }}</span>
             <span class="order-date">{{ order.createdAt | date:'dd/MM/yyyy' }}</span>
           </div>
-          <span class="badge" [ngClass]="getStatusClass(order.status)">
-            {{ getStatusLabel(order.status) }}
+          <span class="badge" [ngClass]="getStatusClass(order.orderStatus)">
+            {{ getStatusLabel(order.orderStatus) }}
           </span>
         </div>
 
         <div class="order-items-preview">
           <div *ngFor="let item of order.items?.slice(0, 3)" class="item-preview">
-            <img [src]="item.product?.images?.[0]?.url || 'assets/images/placeholder.png'" 
-                 [alt]="item.product?.name">
+            <img [src]="item.image || 'assets/images/placeholder.png'" 
+                 [alt]="item.name">
           </div>
           <div *ngIf="order.items && order.items.length > 3" class="more-items">
             +{{ order.items.length - 3 }}
@@ -71,7 +71,7 @@
                     (click)="viewOrder(order)">
               Ver detalles
             </button>
-            <button *ngIf="order.status === 'shipped'" 
+            <button *ngIf="order.orderStatus === 'shipped'" 
                     type="button" 
                     class="btn btn-primary btn-sm"
                     (click)="trackOrder(order)">

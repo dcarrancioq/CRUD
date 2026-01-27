@@ -5,12 +5,16 @@ export interface Coupon {
   discountType: 'percentage' | 'fixed';
   discountValue: number;
   minPurchase?: number;
+  minimumPurchase?: number;
   maxDiscount?: number;
+  maximumDiscount?: number;
   usageLimit?: number;
   usageCount: number;
   perUserLimit?: number;
   validFrom: Date;
   validUntil: Date;
+  startDate?: Date;
+  endDate?: Date;
   applicableProducts?: string[];
   applicableCategories?: string[];
   isActive: boolean;

@@ -89,7 +89,7 @@ export class ProductFormComponent implements OnInit {
 
   loadProduct(id: string): void {
     this.loading = true;
-    this.adminService.getProducts({ id }).subscribe({
+    this.adminService.getProducts(1, 1, id).subscribe({
       next: (response) => {
         if (response.data.length > 0) {
           this.populateForm(response.data[0]);

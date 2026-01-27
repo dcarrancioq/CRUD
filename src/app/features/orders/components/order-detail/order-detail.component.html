@@ -17,8 +17,8 @@
             <p class="order-date">Realizado el {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
           </div>
           <div class="col-md-6 text-md-end">
-            <span class="badge fs-6" [ngClass]="getStatusClass(order.status)">
-              {{ getStatusLabel(order.status) }}
+            <span class="badge fs-6" [ngClass]="getStatusClass(order.orderStatus)">
+              {{ getStatusLabel(order.orderStatus) }}
             </span>
           </div>
         </div>
@@ -30,14 +30,14 @@
             <h5>Productos</h5>
             <div class="order-items">
               <div *ngFor="let item of order.items" class="order-item">
-                <img [src]="item.product?.images?.[0]?.url || 'assets/images/placeholder.png'" 
-                     [alt]="item.product?.name"
+                <img [src]="item.image || 'assets/images/placeholder.png'" 
+                     [alt]="item.name"
                      class="item-image">
                 <div class="item-info">
-                  <a [routerLink]="['/products', item.product?.slug]" class="item-name">
-                    {{ item.product?.name }}
+                  <a [routerLink]="['/products', item.productId]" class="item-name">
+                    {{ item.name }}
                   </a>
-                  <span class="item-sku">SKU: {{ item.variant?.sku || item.product?.sku }}</span>
+                  <span class="item-sku">SKU: {{ item.sku }}</span>
                   <span class="item-qty">Cantidad: {{ item.quantity }}</span>
                 </div>
                 <div class="item-price">

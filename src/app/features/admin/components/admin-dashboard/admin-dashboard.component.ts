@@ -1,21 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { AdminService } from '../../../../core/services/admin.service';
-
-interface DashboardStats {
-  totalSales: number;
-  totalOrders: number;
-  totalCustomers: number;
-  totalProducts: number;
-  pendingOrders: number;
-  lowStockProducts: number;
-}
-
-interface TopProduct {
-  id: string;
-  name: string;
-  sales: number;
-  revenue: number;
-}
+import { AdminService, DashboardStats, ProductReport } from '../../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -23,14 +7,13 @@ interface TopProduct {
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
-  stats?: DashboardStats;
-  topProducts: TopProduct[] = [];
+  stats?: DashboardStats & { totalCustomers?: number; totalProducts?: number };
+  topProducts: ProductReport[] = [];
   recentOrders: any[] = [];
   loading = true;
   
-  selectedPeriod: string = 'month';
-  periodOptions = [
-    { value: 'today', label: 'Hoy' },
+  selectedPeriod: 'week' | 'month' | 'year' = 'month';
+  periodOptions: { value: 'week' | 'month' | 'year'; label: string }[] = [
     { value: 'week', label: 'Esta semana' },
     { value: 'month', label: 'Este mes' },
     { value: 'year', label: 'Este ano' }
@@ -55,7 +38,7 @@ export class AdminDashboardComponent implements OnInit {
       }
     });
 
-    this.adminService.getTopProducts(this.selectedPeriod, 5).subscribe({
+    this.adminService.getTopProducts(5, this.selectedPeriod).subscribe({
       next: (products) => this.topProducts = products
     });
 

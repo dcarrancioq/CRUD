@@ -89,8 +89,8 @@
               </thead>
               <tbody>
                 <tr *ngFor="let product of topProducts">
-                  <td>{{ product.name }}</td>
-                  <td class="text-center">{{ product.sales }}</td>
+                  <td>{{ product.productName }}</td>
+                  <td class="text-center">{{ product.quantitySold }}</td>
                   <td class="text-end">{{ product.revenue | currency:'EUR' }}</td>
                 </tr>
               </tbody>

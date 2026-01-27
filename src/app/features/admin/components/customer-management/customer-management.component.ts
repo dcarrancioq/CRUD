@@ -54,9 +54,13 @@ export class CustomerManagementComponent implements OnInit {
 
     if (this.searchQuery) params.search = this.searchQuery;
 
-    this.adminService.getCustomers(params).subscribe({
+    this.adminService.getCustomers(this.currentPage, 20, this.searchQuery || undefined).subscribe({
       next: (response) => {
-        this.customers = response.data;
+        this.customers = response.data.map(user => ({
+          ...user,
+          totalOrders: 0,
+          totalSpent: 0
+        }));
         this.totalPages = response.totalPages;
         this.totalItems = response.total;
         this.loading = false;

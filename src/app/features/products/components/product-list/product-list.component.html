@@ -4,7 +4,7 @@
     
     <div class="page-header">
       <h1>{{ currentCategory ? currentCategory.name : 'Todos los Productos' }}</h1>
-      <p *ngIf="currentCategory?.description" class="category-description">{{ currentCategory.description }}</p>
+      <p *ngIf="currentCategory && currentCategory.description" class="category-description">{{ currentCategory.description }}</p>
     </div>
 
     <div class="row">

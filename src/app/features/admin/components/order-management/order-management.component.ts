@@ -87,7 +87,7 @@ export class OrderManagementComponent implements OnInit {
     this.adminService.updateOrderStatus(order.id, newStatus).subscribe({
       next: () => {
         this.notificationService.success('Estado actualizado');
-        order.status = newStatus;
+        order.orderStatus = newStatus as Order['orderStatus'];
       },
       error: () => {
         this.notificationService.error('Error al actualizar estado');
@@ -96,12 +96,10 @@ export class OrderManagementComponent implements OnInit {
   }
 
   exportOrders(): void {
-    const params: any = {};
-    if (this.statusFilter) params.status = this.statusFilter;
-    if (this.dateFrom) params.dateFrom = this.dateFrom;
-    if (this.dateTo) params.dateTo = this.dateTo;
+    const startDate = this.dateFrom ? new Date(this.dateFrom) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const endDate = this.dateTo ? new Date(this.dateTo) : new Date();
 
-    this.adminService.exportOrders(params).subscribe({
+    this.adminService.exportOrders(startDate, endDate, 'csv').subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

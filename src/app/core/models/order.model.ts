@@ -48,6 +48,9 @@ export interface Address {
   company?: string;
   addressLine1: string;
   addressLine2?: string;
+  street?: string;
+  number?: string;
+  apartment?: string;
   city: string;
   state: string;
   postalCode: string;
@@ -80,6 +83,8 @@ export interface TrackingInfo {
   carrier: string;
   trackingNumber: string;
   trackingUrl: string;
+  currentStatus?: string;
+  estimatedDelivery?: Date;
   events: TrackingEvent[];
 }
 

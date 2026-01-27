@@ -8,6 +8,8 @@ export interface Product {
   price: number;
   compareAtPrice?: number;
   costPrice?: number;
+  cost?: number;
+  weight?: number;
   currency: string;
   images: ProductImage[];
   category: Category;

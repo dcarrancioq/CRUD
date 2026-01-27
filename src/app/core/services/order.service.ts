@@ -48,10 +48,11 @@ export class OrderService {
     return this.http.post<Order>(`${this.API_URL}/${orderId}/cancel`, { reason });
   }
 
-  getShippingMethods(address: { country: string; postalCode: string }): Observable<ShippingMethod[]> {
-    const params = new HttpParams()
-      .set('country', address.country)
-      .set('postalCode', address.postalCode);
+  getShippingMethods(address?: { country: string; postalCode: string }): Observable<ShippingMethod[]> {
+    let params = new HttpParams();
+    if (address) {
+      params = params.set('country', address.country).set('postalCode', address.postalCode);
+    }
     return this.http.get<ShippingMethod[]>(`${environment.apiUrl}/shipping/methods`, { params });
   }
 

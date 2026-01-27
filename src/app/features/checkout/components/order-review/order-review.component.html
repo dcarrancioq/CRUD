@@ -35,7 +35,7 @@
       </div>
       <div class="section-content">
         <p class="mb-1">{{ checkoutData.shippingMethod?.name }}</p>
-        <p class="mb-0 text-muted">{{ checkoutData.shippingMethod?.estimatedDays }}</p>
+        <p class="mb-0 text-muted">{{ checkoutData.shippingMethod?.estimatedDays?.min }}-{{ checkoutData.shippingMethod?.estimatedDays?.max }} dias laborables</p>
       </div>
     </div>
 
@@ -46,8 +46,8 @@
       </div>
       <div class="section-content">
         <p class="mb-0">{{ paymentMethodName }}</p>
-        <p *ngIf="checkoutData.paymentMethod === 'card' && checkoutData.paymentDetails?.cardNumber" class="mb-0 text-muted">
-          **** **** **** {{ checkoutData.paymentDetails?.cardNumber?.slice(-4) }}
+        <p *ngIf="checkoutData.paymentMethod?.details?.cardLast4" class="mb-0 text-muted">
+          **** **** **** {{ checkoutData.paymentMethod?.details?.cardLast4 }}
         </p>
       </div>
     </div>

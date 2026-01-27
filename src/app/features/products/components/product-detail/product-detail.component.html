@@ -24,7 +24,7 @@
             <div class="product-category" *ngIf="product.category">{{ product.category.name }}</div>
             <h1 class="product-name">{{ product.name }}</h1>
             
-            <div class="product-rating" *ngIf="product.ratings?.count > 0">
+            <div class="product-rating" *ngIf="product.ratings && product.ratings.count > 0">
               <app-rating-stars [rating]="product.ratings.average" [readonly]="true"></app-rating-stars>
               <span class="review-count">({{ product.ratings.count }} opiniones)</span>
             </div>

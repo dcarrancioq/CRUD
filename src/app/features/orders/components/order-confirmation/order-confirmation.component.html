@@ -27,7 +27,7 @@
           </div>
           <div class="detail-row">
             <span>Estado:</span>
-            <span class="badge bg-success">{{ order.status }}</span>
+            <span class="badge bg-success">{{ order.orderStatus }}</span>
           </div>
           <div class="detail-row">
             <span>Total:</span>
@@ -48,11 +48,11 @@
       <div class="order-items">
         <h5>Productos ({{ order.items?.length }})</h5>
         <div *ngFor="let item of order.items" class="order-item">
-          <img [src]="item.product?.images?.[0]?.url || 'assets/images/placeholder.png'" 
-               [alt]="item.product?.name"
+          <img [src]="item.image || 'assets/images/placeholder.png'" 
+               [alt]="item.name"
                class="item-image">
           <div class="item-info">
-            <span class="item-name">{{ item.product?.name }}</span>
+            <span class="item-name">{{ item.name }}</span>
             <span class="item-qty">Cantidad: {{ item.quantity }}</span>
           </div>
           <span class="item-price">{{ item.totalPrice | currency:'EUR' }}</span>

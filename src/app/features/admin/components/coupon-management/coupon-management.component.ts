@@ -48,8 +48,8 @@ export class CouponManagementComponent implements OnInit {
   loadCoupons(): void {
     this.loading = true;
     this.adminService.getCoupons().subscribe({
-      next: (coupons) => {
-        this.coupons = coupons;
+      next: (response) => {
+        this.coupons = response.data;
         this.loading = false;
       },
       error: () => {
@@ -82,8 +82,8 @@ export class CouponManagementComponent implements OnInit {
       minimumPurchase: coupon.minimumPurchase,
       maximumDiscount: coupon.maximumDiscount,
       usageLimit: coupon.usageLimit,
-      startDate: this.formatDate(coupon.startDate),
-      endDate: this.formatDate(coupon.endDate),
+      startDate: this.formatDate(coupon.startDate || coupon.validFrom),
+      endDate: this.formatDate(coupon.endDate || coupon.validUntil),
       isActive: coupon.isActive
     });
     this.showForm = true;
@@ -132,7 +132,7 @@ export class CouponManagementComponent implements OnInit {
   }
 
   toggleStatus(coupon: Coupon): void {
-    this.adminService.toggleCouponStatus(coupon.id).subscribe({
+    this.adminService.toggleCouponStatus(coupon.id, !coupon.isActive).subscribe({
       next: () => {
         coupon.isActive = !coupon.isActive;
         this.notificationService.success(
@@ -165,6 +165,7 @@ export class CouponManagementComponent implements OnInit {
   }
 
   isExpired(coupon: Coupon): boolean {
-    return new Date(coupon.endDate) < new Date();
+    const endDate = coupon.endDate || coupon.validUntil;
+    return new Date(endDate) < new Date();
   }
 }

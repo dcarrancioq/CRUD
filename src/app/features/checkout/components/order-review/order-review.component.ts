@@ -9,7 +9,7 @@ import { CheckoutData } from '../../../../core/models/order.model';
 })
 export class OrderReviewComponent {
   @Input() cart!: Cart | null;
-  @Input() checkoutData!: CheckoutData | null;
+  @Input() checkoutData!: Partial<CheckoutData> | null;
   @Input() placing: boolean = false;
   @Output() placeOrder = new EventEmitter<void>();
   @Output() back = new EventEmitter<void>();
@@ -21,10 +21,13 @@ export class OrderReviewComponent {
   }
 
   get paymentMethodName(): string {
-    switch (this.checkoutData?.paymentMethod) {
-      case 'card': return 'Tarjeta de credito/debito';
+    const type = this.checkoutData?.paymentMethod?.type;
+    switch (type) {
+      case 'credit_card': 
+      case 'debit_card': return 'Tarjeta de credito/debito';
       case 'paypal': return 'PayPal';
-      case 'transfer': return 'Transferencia bancaria';
+      case 'bank_transfer': return 'Transferencia bancaria';
+      case 'wallet': return 'Wallet digital';
       default: return '';
     }
   }
