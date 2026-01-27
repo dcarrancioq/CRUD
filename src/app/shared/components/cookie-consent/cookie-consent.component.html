@@ -1,0 +1,109 @@
+<div *ngIf="showBanner" class="cookie-consent-banner" role="dialog" aria-labelledby="cookie-title" aria-describedby="cookie-description">
+  <div class="cookie-content">
+    <div class="cookie-header">
+      <h4 id="cookie-title">Configuracion de Cookies</h4>
+      <button type="button" class="btn-close" (click)="rejectAll()" aria-label="Cerrar"></button>
+    </div>
+
+    <div id="cookie-description" class="cookie-body">
+      <p>
+        Utilizamos cookies para mejorar tu experiencia en nuestra tienda. 
+        Algunas cookies son necesarias para el funcionamiento del sitio, 
+        mientras que otras nos ayudan a personalizar tu experiencia y analizar el trafico.
+      </p>
+
+      <div *ngIf="!showDetails" class="cookie-actions-simple">
+        <button type="button" class="btn btn-outline-secondary" (click)="toggleDetails()">
+          Personalizar
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="rejectAll()">
+          Rechazar todas
+        </button>
+        <button type="button" class="btn btn-primary" (click)="acceptAll()">
+          Aceptar todas
+        </button>
+      </div>
+
+      <div *ngIf="showDetails" class="cookie-details">
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="necessary" 
+                     [checked]="true" disabled>
+              <label class="form-check-label" for="necessary">
+                <strong>Cookies necesarias</strong>
+              </label>
+            </div>
+            <span class="badge bg-secondary">Siempre activas</span>
+          </div>
+          <p class="category-description">
+            Estas cookies son esenciales para el funcionamiento del sitio web. 
+            Incluyen cookies de sesion, carrito de compras y autenticacion.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="analytics"
+                     [(ngModel)]="consent.analytics">
+              <label class="form-check-label" for="analytics">
+                <strong>Cookies de analisis</strong>
+              </label>
+            </div>
+          </div>
+          <p class="category-description">
+            Nos ayudan a entender como los visitantes interactuan con el sitio web, 
+            recopilando informacion de forma anonima.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="marketing"
+                     [(ngModel)]="consent.marketing">
+              <label class="form-check-label" for="marketing">
+                <strong>Cookies de marketing</strong>
+              </label>
+            </div>
+          </div>
+          <p class="category-description">
+            Se utilizan para mostrar anuncios relevantes y medir la efectividad 
+            de las campanas publicitarias.
+          </p>
+        </div>
+
+        <div class="cookie-category">
+          <div class="category-header">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="preferences"
+                     [(ngModel)]="consent.preferences">
+              <label class="form-check-label" for="preferences">
+                <strong>Cookies de preferencias</strong>
+              </label>
+            </div>
+          </div>
+          <p class="category-description">
+            Permiten recordar tus preferencias como el idioma, la region 
+            y otras configuraciones personalizadas.
+          </p>
+        </div>
+
+        <div class="cookie-actions-detailed">
+          <button type="button" class="btn btn-outline-secondary" (click)="toggleDetails()">
+            Volver
+          </button>
+          <button type="button" class="btn btn-primary" (click)="savePreferences()">
+            Guardar preferencias
+          </button>
+        </div>
+      </div>
+
+      <div class="cookie-links">
+        <a routerLink="/legal/privacy-policy">Politica de privacidad</a>
+        <a routerLink="/legal/cookie-policy">Politica de cookies</a>
+      </div>
+    </div>
+  </div>
+</div>

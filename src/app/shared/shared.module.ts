@@ -12,6 +12,7 @@ import { PriceDisplayComponent } from './components/price-display/price-display.
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
+import { CookieConsentComponent } from './components/cookie-consent/cookie-consent.component';
 
 import { CurrencyFormatPipe } from './pipes/currency-format.pipe';
 import { TruncatePipe } from './pipes/truncate.pipe';
@@ -26,9 +27,10 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     RatingStarsComponent,
     PriceDisplayComponent,
     EmptyStateComponent,
-    ConfirmDialogComponent,
-    BreadcrumbComponent,
-    CurrencyFormatPipe,
+        ConfirmDialogComponent,
+        BreadcrumbComponent,
+        CookieConsentComponent,
+        CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe
   ],
@@ -52,6 +54,7 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     EmptyStateComponent,
     ConfirmDialogComponent,
     BreadcrumbComponent,
+    CookieConsentComponent,
     CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe
