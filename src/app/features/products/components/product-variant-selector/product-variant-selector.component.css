@@ -1,0 +1,55 @@
+.variant-selector {
+  margin-bottom: 15px;
+}
+
+.variant-group {
+  margin-bottom: 15px;
+}
+
+.variant-label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.variant-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.variant-option {
+  padding: 8px 16px;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.variant-option:hover:not(:disabled) {
+  border-color: #007bff;
+}
+
+.variant-option.selected {
+  border-color: #007bff;
+  background-color: #007bff;
+  color: white;
+}
+
+.variant-option.unavailable {
+  opacity: 0.5;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.unavailable-text {
+  font-size: 12px;
+  color: #dc3545;
+}
+
+.variant-option.selected .unavailable-text {
+  color: #ffcdd2;
+}

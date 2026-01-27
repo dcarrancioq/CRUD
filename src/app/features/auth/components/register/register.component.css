@@ -1,0 +1,77 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #007bff;
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.brand i {
+  font-size: 1.8rem;
+}
+
+.auth-header h1 {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.auth-header p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.form-check-label a {
+  color: #007bff;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid #eee;
+}
+
+.auth-footer p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.auth-footer a {
+  color: #007bff;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}

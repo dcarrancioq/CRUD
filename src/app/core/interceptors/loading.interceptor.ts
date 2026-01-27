@@ -1,0 +1,42 @@
+import { Injectable } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { LoadingService } from '../services/loading.service';
+
+@Injectable()
+export class LoadingInterceptor implements HttpInterceptor {
+  private activeRequests = 0;
+
+  constructor(private loadingService: LoadingService) {}
+
+  intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    if (this.shouldShowLoading(request)) {
+      if (this.activeRequests === 0) {
+        this.loadingService.show();
+      }
+      this.activeRequests++;
+
+      return next.handle(request).pipe(
+        finalize(() => {
+          this.activeRequests--;
+          if (this.activeRequests === 0) {
+            this.loadingService.hide();
+          }
+        })
+      );
+    }
+
+    return next.handle(request);
+  }
+
+  private shouldShowLoading(request: HttpRequest<unknown>): boolean {
+    const skipUrls = ['/api/cart', '/api/wishlist/count'];
+    return !skipUrls.some(url => request.url.includes(url));
+  }
+}

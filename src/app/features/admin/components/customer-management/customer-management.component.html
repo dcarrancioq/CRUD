@@ -1,0 +1,151 @@
+<div class="customer-management">
+  <div class="page-header">
+    <h1>Gestion de Clientes</h1>
+  </div>
+
+  <div class="filters-bar">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="input-group">
+          <input type="text" 
+                 class="form-control" 
+                 placeholder="Buscar por nombre o email..."
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearch()">
+          <button type="button" class="btn btn-outline-secondary" (click)="onSearch()">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <span class="results-count">{{ totalItems }} cliente(s)</span>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando clientes..."></app-loading-spinner>
+
+  <div *ngIf="!loading && customers.length === 0">
+    <app-empty-state 
+      icon="people"
+      title="No hay clientes"
+      message="No se encontraron clientes con los filtros seleccionados.">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!loading && customers.length > 0" class="customers-table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th class="sortable" (click)="onSort('lastName')">
+            Cliente
+            <i *ngIf="sortBy === 'lastName'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th>Email</th>
+          <th class="text-center sortable" (click)="onSort('totalOrders')">
+            Pedidos
+            <i *ngIf="sortBy === 'totalOrders'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th class="text-end sortable" (click)="onSort('totalSpent')">
+            Total gastado
+            <i *ngIf="sortBy === 'totalSpent'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th class="sortable" (click)="onSort('createdAt')">
+            Registro
+            <i *ngIf="sortBy === 'createdAt'" class="bi" 
+               [class.bi-sort-up]="sortOrder === 'asc'"
+               [class.bi-sort-down]="sortOrder === 'desc'"></i>
+          </th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let customer of customers">
+          <td>
+            <span class="customer-name">{{ customer.firstName }} {{ customer.lastName }}</span>
+          </td>
+          <td>{{ customer.email }}</td>
+          <td class="text-center">{{ customer.totalOrders }}</td>
+          <td class="text-end">{{ customer.totalSpent | currency:'EUR' }}</td>
+          <td>{{ customer.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <button type="button" 
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="viewCustomer(customer)">
+              <i class="bi bi-eye"></i> Ver
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination 
+    *ngIf="totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalItems"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+
+  <div *ngIf="showDetailModal && selectedCustomer" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5>{{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="customer-info">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Email:</strong> {{ selectedCustomer.email }}</p>
+              <p><strong>Telefono:</strong> {{ selectedCustomer.phone || 'No disponible' }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Total pedidos:</strong> {{ selectedCustomer.totalOrders }}</p>
+              <p><strong>Total gastado:</strong> {{ selectedCustomer.totalSpent | currency:'EUR' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <h6>Historial de pedidos</h6>
+        <div *ngIf="customerOrders.length === 0" class="text-muted">
+          Este cliente no tiene pedidos.
+        </div>
+        <table *ngIf="customerOrders.length > 0" class="table table-sm">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th class="text-end">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of customerOrders">
+              <td>#{{ order.orderNumber }}</td>
+              <td>{{ order.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" 
+                      [class.bg-warning]="order.status === 'pending'"
+                      [class.bg-info]="order.status === 'processing'"
+                      [class.bg-primary]="order.status === 'shipped'"
+                      [class.bg-success]="order.status === 'delivered'"
+                      [class.bg-danger]="order.status === 'cancelled'">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="text-end">{{ order.total | currency:'EUR' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

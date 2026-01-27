@@ -1,0 +1,18 @@
+<div class="admin-layout" [class.sidebar-collapsed]="sidebarCollapsed">
+  <app-admin-sidebar [collapsed]="sidebarCollapsed"></app-admin-sidebar>
+  <div class="admin-main">
+    <header class="admin-header">
+      <button type="button" class="btn btn-link toggle-btn" (click)="toggleSidebar()">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="header-right">
+        <a routerLink="/" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-shop me-1"></i> Ver tienda
+        </a>
+      </div>
+    </header>
+    <main class="admin-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

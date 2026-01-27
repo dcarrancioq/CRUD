@@ -1,0 +1,15 @@
+<div class="checkout-steps">
+  <div *ngFor="let step of steps; let last = last" 
+       class="step-item"
+       [class.completed]="isCompleted(step)"
+       [class.current]="isCurrent(step)"
+       [class.clickable]="isClickable(step)"
+       (click)="onStepClick(step)">
+    <div class="step-circle">
+      <i *ngIf="isCompleted(step)" class="bi bi-check"></i>
+      <span *ngIf="!isCompleted(step)">{{ step.number }}</span>
+    </div>
+    <span class="step-title">{{ step.title }}</span>
+    <div *ngIf="!last" class="step-line"></div>
+  </div>
+</div>

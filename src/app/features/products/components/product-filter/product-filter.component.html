@@ -1,0 +1,70 @@
+<div class="product-filter">
+  <div class="filter-header d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Filtros</h5>
+    <button *ngIf="hasActiveFilters()" 
+            type="button" 
+            class="btn btn-link btn-sm p-0"
+            (click)="onClearFilters()">
+      Limpiar filtros
+    </button>
+  </div>
+
+  <div class="filter-section" *ngIf="categories.length > 0 && !currentCategory">
+    <h6 class="filter-title">Categorias</h6>
+    <ul class="filter-list">
+      <li *ngFor="let category of categories">
+        <a [routerLink]="['/products/category', category.slug]"
+           [class.active]="selectedCategoryId === category.id"
+           (click)="selectCategory(category.id)">
+          {{ category.name }}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="filter-section">
+    <h6 class="filter-title">Precio</h6>
+    <ul class="filter-list">
+      <li *ngFor="let range of priceRanges">
+        <a href="javascript:void(0)"
+           [class.active]="minPrice === range.min && maxPrice === range.max"
+           (click)="selectPriceRange(range)">
+          {{ range.label }}
+        </a>
+      </li>
+    </ul>
+    
+    <div class="price-range-custom mt-3">
+      <div class="row g-2">
+        <div class="col-6">
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 placeholder="Min"
+                 [(ngModel)]="minPrice"
+                 (change)="applyFilters()">
+        </div>
+        <div class="col-6">
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 placeholder="Max"
+                 [(ngModel)]="maxPrice"
+                 (change)="applyFilters()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <h6 class="filter-title">Disponibilidad</h6>
+    <div class="form-check">
+      <input type="checkbox" 
+             class="form-check-input" 
+             id="inStockFilter"
+             [checked]="inStock"
+             (change)="toggleInStock()">
+      <label class="form-check-label" for="inStockFilter">
+        Solo productos en stock
+      </label>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,175 @@
+<div class="product-form">
+  <div class="page-header">
+    <h1>{{ isEditMode ? 'Editar Producto' : 'Nuevo Producto' }}</h1>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando producto..."></app-loading-spinner>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="form-card">
+          <h5>Informacion basica</h5>
+          
+          <div class="mb-3">
+            <label class="form-label">Nombre del producto *</label>
+            <input type="text" class="form-control" formControlName="name"
+                   [class.is-invalid]="isFieldInvalid('name')">
+            <div class="invalid-feedback">El nombre es obligatorio (min. 3 caracteres)</div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Slug (URL) *</label>
+              <input type="text" class="form-control" formControlName="slug"
+                     [class.is-invalid]="isFieldInvalid('slug')">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">SKU *</label>
+              <input type="text" class="form-control" formControlName="sku"
+                     [class.is-invalid]="isFieldInvalid('sku')">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripcion corta *</label>
+            <textarea class="form-control" formControlName="shortDescription" rows="2"
+                      [class.is-invalid]="isFieldInvalid('shortDescription')"
+                      maxlength="200"></textarea>
+            <small class="text-muted">{{ form.get('shortDescription')?.value?.length || 0 }}/200</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripcion completa</label>
+            <textarea class="form-control" formControlName="description" rows="6"></textarea>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h5>Precios</h5>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Precio de venta *</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="price" step="0.01"
+                       [class.is-invalid]="isFieldInvalid('price')">
+                <span class="input-group-text">EUR</span>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Precio anterior</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="compareAtPrice" step="0.01">
+                <span class="input-group-text">EUR</span>
+              </div>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Coste</label>
+              <div class="input-group">
+                <input type="number" class="form-control" formControlName="cost" step="0.01">
+                <span class="input-group-text">EUR</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h5>Inventario</h5>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Cantidad en stock *</label>
+              <input type="number" class="form-control" formControlName="stockQuantity"
+                     [class.is-invalid]="isFieldInvalid('stockQuantity')">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Umbral de stock bajo</label>
+              <input type="number" class="form-control" formControlName="lowStockThreshold">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Peso (kg)</label>
+            <input type="number" class="form-control" formControlName="weight" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Atributos</h5>
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="addAttribute()">
+              <i class="bi bi-plus-lg me-1"></i> Agregar atributo
+            </button>
+          </div>
+          
+          <div formArrayName="attributes">
+            <div *ngFor="let attr of attributes.controls; let i = index" [formGroupName]="i" class="attribute-row">
+              <input type="text" class="form-control" formControlName="name" placeholder="Nombre">
+              <input type="text" class="form-control" formControlName="value" placeholder="Valor">
+              <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeAttribute(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <p *ngIf="attributes.length === 0" class="text-muted">No hay atributos definidos</p>
+        </div>
+
+        <div class="form-card">
+          <h5>SEO</h5>
+          
+          <div class="mb-3">
+            <label class="form-label">Meta titulo</label>
+            <input type="text" class="form-control" formControlName="metaTitle" maxlength="60">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Meta descripcion</label>
+            <textarea class="form-control" formControlName="metaDescription" rows="2" maxlength="160"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="form-card">
+          <h5>Organizacion</h5>
+          
+          <div class="mb-3">
+            <label class="form-label">Estado *</label>
+            <select class="form-select" formControlName="status">
+              <option value="draft">Borrador</option>
+              <option value="active">Activo</option>
+              <option value="archived">Archivado</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Categoria *</label>
+            <select class="form-select" formControlName="categoryId"
+                    [class.is-invalid]="isFieldInvalid('categoryId')">
+              <option value="">Seleccionar categoria</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Etiquetas</label>
+            <input type="text" class="form-control" formControlName="tags"
+                   placeholder="etiqueta1, etiqueta2">
+            <small class="text-muted">Separadas por comas</small>
+          </div>
+        </div>
+
+        <div class="form-card actions-card">
+          <button type="submit" class="btn btn-primary w-100 mb-2" [disabled]="saving">
+            {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar producto' : 'Crear producto') }}
+          </button>
+          <button type="button" class="btn btn-outline-secondary w-100" (click)="cancel()">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

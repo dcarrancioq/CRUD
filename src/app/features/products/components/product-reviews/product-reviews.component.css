@@ -1,0 +1,31 @@
+.product-reviews {
+  padding: 10px 0;
+}
+
+.review-form {
+  background-color: #f8f9fa;
+}
+
+.review-item {
+  transition: box-shadow 0.3s;
+}
+
+.review-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.review-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.review-comment {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.review-footer {
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}

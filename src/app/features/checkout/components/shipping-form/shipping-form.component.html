@@ -1,0 +1,128 @@
+<form [formGroup]="addressForm" (ngSubmit)="onSubmit()">
+  <h4 class="form-title">Direccion de envio</h4>
+  <p class="form-subtitle">Donde quieres recibir tu pedido?</p>
+
+  <div class="row">
+    <div class="col-md-8 mb-3">
+      <label class="form-label">Calle *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="street"
+             [class.is-invalid]="isFieldInvalid('street')"
+             placeholder="Nombre de la calle">
+      <div *ngIf="isFieldInvalid('street')" class="invalid-feedback">
+        {{ getErrorMessage('street') }}
+      </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+      <label class="form-label">Numero *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="number"
+             [class.is-invalid]="isFieldInvalid('number')"
+             placeholder="123">
+      <div *ngIf="isFieldInvalid('number')" class="invalid-feedback">
+        {{ getErrorMessage('number') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Piso/Puerta</label>
+    <input type="text" 
+           class="form-control" 
+           formControlName="apartment"
+           placeholder="Ej: 2o B">
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Ciudad *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="city"
+             [class.is-invalid]="isFieldInvalid('city')"
+             placeholder="Tu ciudad">
+      <div *ngIf="isFieldInvalid('city')" class="invalid-feedback">
+        {{ getErrorMessage('city') }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Provincia *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="state"
+             [class.is-invalid]="isFieldInvalid('state')"
+             placeholder="Tu provincia">
+      <div *ngIf="isFieldInvalid('state')" class="invalid-feedback">
+        {{ getErrorMessage('state') }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Codigo Postal *</label>
+      <input type="text" 
+             class="form-control" 
+             formControlName="postalCode"
+             [class.is-invalid]="isFieldInvalid('postalCode')"
+             placeholder="28001">
+      <div *ngIf="isFieldInvalid('postalCode')" class="invalid-feedback">
+        {{ getErrorMessage('postalCode') }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label class="form-label">Pais *</label>
+      <select class="form-select" formControlName="country">
+        <option value="ES">Espana</option>
+        <option value="PT">Portugal</option>
+        <option value="FR">Francia</option>
+        <option value="IT">Italia</option>
+        <option value="DE">Alemania</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <h5>Metodo de envio</h5>
+  
+  <div *ngIf="loading" class="text-center py-3">
+    <app-loading-spinner size="small"></app-loading-spinner>
+  </div>
+
+  <div *ngIf="!loading" class="shipping-methods">
+    <div *ngFor="let method of shippingMethods" 
+         class="shipping-method"
+         [class.selected]="selectedMethod?.id === method.id"
+         (click)="selectMethod(method)">
+      <div class="method-radio">
+        <input type="radio" 
+               [checked]="selectedMethod?.id === method.id"
+               [id]="'method-' + method.id">
+      </div>
+      <div class="method-info">
+        <label [for]="'method-' + method.id" class="method-name">{{ method.name }}</label>
+        <span class="method-time">{{ method.estimatedDays }}</span>
+      </div>
+      <div class="method-price">
+        {{ method.price > 0 ? (method.price | currency:'EUR') : 'Gratis' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-outline-secondary btn-lg" (click)="onBack()">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver
+    </button>
+    <button type="submit" class="btn btn-primary btn-lg">
+      Continuar al pago
+      <i class="bi bi-arrow-right ms-2"></i>
+    </button>
+  </div>
+</form>

@@ -1,0 +1,12 @@
+<div class="empty-state text-center py-5">
+  <div class="empty-state-icon mb-3">
+    <i class="bi bi-{{ icon }}" style="font-size: 48px; color: #ccc;"></i>
+  </div>
+  <h4 class="empty-state-title">{{ title }}</h4>
+  <p *ngIf="message" class="empty-state-message text-muted">{{ message }}</p>
+  <a *ngIf="actionLabel && actionLink" 
+     [routerLink]="actionLink" 
+     class="btn btn-primary mt-3">
+    {{ actionLabel }}
+  </a>
+</div>

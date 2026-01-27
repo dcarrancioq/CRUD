@@ -1,0 +1,38 @@
+<div class="product-gallery">
+  <div class="main-image-container" 
+       (mouseenter)="onMouseEnter()"
+       (mouseleave)="onMouseLeave()"
+       (mousemove)="onMouseMove($event)">
+    <img *ngIf="selectedImage" 
+         [src]="selectedImage.url" 
+         [alt]="selectedImage.altText || 'Imagen del producto'"
+         class="main-image"
+         [style.transform-origin]="zoomPosition.x + '% ' + zoomPosition.y + '%'"
+         [class.zoomed]="isZoomed">
+    
+    <button *ngIf="images.length > 1" 
+            type="button" 
+            class="nav-btn prev" 
+            (click)="previousImage()"
+            aria-label="Imagen anterior">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <button *ngIf="images.length > 1" 
+            type="button" 
+            class="nav-btn next" 
+            (click)="nextImage()"
+            aria-label="Imagen siguiente">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+  </div>
+
+  <div *ngIf="images.length > 1" class="thumbnails">
+    <button *ngFor="let image of images; let i = index"
+            type="button"
+            class="thumbnail"
+            [class.active]="i === selectedIndex"
+            (click)="selectImage(i)">
+      <img [src]="image.url" [alt]="image.altText || 'Miniatura ' + (i + 1)">
+    </button>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+<div class="product-search">
+  <form (ngSubmit)="onSubmit()" class="search-form">
+    <div class="input-group">
+      <input type="text" 
+             class="form-control" 
+             placeholder="Buscar productos..."
+             [(ngModel)]="searchQuery"
+             name="searchQuery"
+             (input)="onInputChange()"
+             (focus)="onFocus()"
+             (blur)="hideSuggestions()"
+             autocomplete="off">
+      <button *ngIf="searchQuery" 
+              type="button" 
+              class="btn btn-clear"
+              (click)="clearSearch()">
+        <i class="bi bi-x"></i>
+      </button>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </form>
+
+  <div *ngIf="showSuggestions && (suggestions.length > 0 || loading)" class="search-suggestions">
+    <div *ngIf="loading" class="suggestion-loading">
+      <app-loading-spinner size="small"></app-loading-spinner>
+    </div>
+    
+    <div *ngIf="!loading && suggestions.length > 0" class="suggestions-list">
+      <a *ngFor="let product of suggestions" 
+         class="suggestion-item"
+         (mousedown)="selectProduct(product)">
+        <img [src]="product.images?.[0]?.url || 'assets/images/placeholder.png'" 
+             [alt]="product.name"
+             class="suggestion-image">
+        <div class="suggestion-info">
+          <span class="suggestion-name">{{ product.name }}</span>
+          <span class="suggestion-price">{{ product.price | currency:'EUR' }}</span>
+        </div>
+      </a>
+    </div>
+
+    <a *ngIf="!loading && suggestions.length > 0" 
+       class="view-all-link"
+       (mousedown)="onSubmit()">
+      Ver todos los resultados para "{{ searchQuery }}"
+    </a>
+  </div>
+</div>

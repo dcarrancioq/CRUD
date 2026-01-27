@@ -1,0 +1,32 @@
+<nav *ngIf="totalPages > 1" aria-label="Paginacion">
+  <ul class="pagination justify-content-center">
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <a class="page-link" (click)="firstPage()" aria-label="Primera">
+        <span aria-hidden="true">&laquo;&laquo;</span>
+      </a>
+    </li>
+    <li class="page-item" [class.disabled]="currentPage === 1">
+      <a class="page-link" (click)="previousPage()" aria-label="Anterior">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    <li *ngFor="let page of pages" 
+        class="page-item" 
+        [class.active]="page === currentPage">
+      <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+    </li>
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <a class="page-link" (click)="nextPage()" aria-label="Siguiente">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+    <li class="page-item" [class.disabled]="currentPage === totalPages">
+      <a class="page-link" (click)="lastPage()" aria-label="Ultima">
+        <span aria-hidden="true">&raquo;&raquo;</span>
+      </a>
+    </li>
+  </ul>
+  <p class="text-center text-muted small">
+    Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ currentPage * itemsPerPage > totalItems ? totalItems : currentPage * itemsPerPage }} de {{ totalItems }} resultados
+  </p>
+</nav>

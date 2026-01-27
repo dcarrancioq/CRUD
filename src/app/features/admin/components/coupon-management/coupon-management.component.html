@@ -1,0 +1,175 @@
+<div class="coupon-management">
+  <div class="page-header">
+    <h1>Gestion de Cupones</h1>
+    <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+      <i class="bi bi-plus-lg me-2"></i>
+      Nuevo cupon
+    </button>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando cupones..."></app-loading-spinner>
+
+  <div *ngIf="!loading && coupons.length === 0 && !showForm">
+    <app-empty-state 
+      icon="tag"
+      title="No hay cupones"
+      message="Aun no has creado ningun cupon de descuento."
+      actionLabel="Crear cupon"
+      (actionClick)="openCreateForm()">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="showForm" class="coupon-form-card">
+    <h5>{{ isEditMode ? 'Editar Cupon' : 'Nuevo Cupon' }}</h5>
+    
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Codigo *</label>
+          <input type="text" class="form-control" formControlName="code"
+                 [class.is-invalid]="isFieldInvalid('code')"
+                 style="text-transform: uppercase;">
+          <div class="invalid-feedback">Codigo requerido (3-20 caracteres)</div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Descripcion *</label>
+          <input type="text" class="form-control" formControlName="description"
+                 [class.is-invalid]="isFieldInvalid('description')">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Tipo de descuento *</label>
+          <select class="form-select" formControlName="discountType">
+            <option value="percentage">Porcentaje (%)</option>
+            <option value="fixed">Cantidad fija (EUR)</option>
+          </select>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Valor del descuento *</label>
+          <input type="number" class="form-control" formControlName="discountValue"
+                 [class.is-invalid]="isFieldInvalid('discountValue')">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Compra minima</label>
+          <div class="input-group">
+            <input type="number" class="form-control" formControlName="minimumPurchase">
+            <span class="input-group-text">EUR</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Descuento maximo</label>
+          <div class="input-group">
+            <input type="number" class="form-control" formControlName="maximumDiscount">
+            <span class="input-group-text">EUR</span>
+          </div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Limite de usos</label>
+          <input type="number" class="form-control" formControlName="usageLimit"
+                 placeholder="Sin limite">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Estado</label>
+          <div class="form-check form-switch mt-2">
+            <input type="checkbox" class="form-check-input" formControlName="isActive" id="isActive">
+            <label class="form-check-label" for="isActive">Activo</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Fecha inicio *</label>
+          <input type="date" class="form-control" formControlName="startDate"
+                 [class.is-invalid]="isFieldInvalid('startDate')">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Fecha fin *</label>
+          <input type="date" class="form-control" formControlName="endDate"
+                 [class.is-invalid]="isFieldInvalid('endDate')">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeForm()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : (isEditMode ? 'Actualizar' : 'Crear cupon') }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="!loading && coupons.length > 0" class="coupons-table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Codigo</th>
+          <th>Descripcion</th>
+          <th>Descuento</th>
+          <th>Validez</th>
+          <th class="text-center">Usos</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let coupon of coupons" [class.expired]="isExpired(coupon)">
+          <td>
+            <code class="coupon-code">{{ coupon.code }}</code>
+          </td>
+          <td>{{ coupon.description }}</td>
+          <td>
+            <span *ngIf="coupon.discountType === 'percentage'">{{ coupon.discountValue }}%</span>
+            <span *ngIf="coupon.discountType === 'fixed'">{{ coupon.discountValue | currency:'EUR' }}</span>
+          </td>
+          <td>
+            {{ coupon.startDate | date:'dd/MM/yyyy' }} - {{ coupon.endDate | date:'dd/MM/yyyy' }}
+          </td>
+          <td class="text-center">
+            {{ coupon.usageCount || 0 }}
+            <span *ngIf="coupon.usageLimit">/ {{ coupon.usageLimit }}</span>
+          </td>
+          <td>
+            <span class="badge" 
+                  [class.bg-success]="coupon.isActive && !isExpired(coupon)"
+                  [class.bg-secondary]="!coupon.isActive"
+                  [class.bg-danger]="isExpired(coupon)">
+              {{ isExpired(coupon) ? 'Expirado' : (coupon.isActive ? 'Activo' : 'Inactivo') }}
+            </span>
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <button type="button" 
+                      class="btn btn-outline-primary"
+                      (click)="editCoupon(coupon)"
+                      title="Editar">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" 
+                      class="btn"
+                      [class.btn-outline-success]="!coupon.isActive"
+                      [class.btn-outline-warning]="coupon.isActive"
+                      (click)="toggleStatus(coupon)"
+                      [title]="coupon.isActive ? 'Desactivar' : 'Activar'">
+                <i class="bi" [class.bi-toggle-on]="coupon.isActive" [class.bi-toggle-off]="!coupon.isActive"></i>
+              </button>
+              <button type="button" 
+                      class="btn btn-outline-danger"
+                      (click)="deleteCoupon(coupon)"
+                      title="Eliminar">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

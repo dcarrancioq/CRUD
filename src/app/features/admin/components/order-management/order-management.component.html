@@ -1,0 +1,153 @@
+<div class="order-management">
+  <div class="page-header">
+    <h1>Gestion de Pedidos</h1>
+    <button type="button" class="btn btn-outline-primary" (click)="exportOrders()">
+      <i class="bi bi-download me-2"></i>
+      Exportar CSV
+    </button>
+  </div>
+
+  <div class="filters-bar">
+    <div class="row align-items-end">
+      <div class="col-md-3 mb-3 mb-md-0">
+        <label class="form-label">Estado</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of statusOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-3 mb-3 mb-md-0">
+        <label class="form-label">Desde</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFrom" (change)="onFilterChange()">
+      </div>
+      <div class="col-md-3 mb-3 mb-md-0">
+        <label class="form-label">Hasta</label>
+        <input type="date" class="form-control" [(ngModel)]="dateTo" (change)="onFilterChange()">
+      </div>
+      <div class="col-md-3 text-md-end">
+        <span class="results-count">{{ totalItems }} pedido(s)</span>
+      </div>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" message="Cargando pedidos..."></app-loading-spinner>
+
+  <div *ngIf="!loading && orders.length === 0">
+    <app-empty-state 
+      icon="bag"
+      title="No hay pedidos"
+      message="No se encontraron pedidos con los filtros seleccionados.">
+    </app-empty-state>
+  </div>
+
+  <div *ngIf="!loading && orders.length > 0" class="orders-table-container">
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th>Pedido</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td>
+            <a href="javascript:void(0)" (click)="viewOrder(order)" class="order-link">
+              #{{ order.orderNumber }}
+            </a>
+          </td>
+          <td>
+            <span class="customer-name">{{ order.customer?.firstName }} {{ order.customer?.lastName }}</span>
+            <small class="d-block text-muted">{{ order.customer?.email }}</small>
+          </td>
+          <td>{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ order.total | currency:'EUR' }}</td>
+          <td>
+            <select class="form-select form-select-sm status-select"
+                    [ngClass]="getStatusClass(order.orderStatus)"
+                    [value]="order.orderStatus"
+                    (change)="updateStatus(order, $any($event.target).value)">
+              <ng-container *ngFor="let option of statusOptions">
+                <option *ngIf="option.value" [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </ng-container>
+            </select>
+          </td>
+          <td>
+            <button type="button" 
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="viewOrder(order)">
+              <i class="bi bi-eye"></i> Ver
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination 
+    *ngIf="totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalItems]="totalItems"
+    (pageChange)="onPageChange($event)">
+  </app-pagination>
+
+  <div *ngIf="showDetailModal && selectedOrder" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h5>Pedido #{{ selectedOrder.orderNumber }}</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Cliente</h6>
+            <p>
+              {{ selectedOrder.customer?.firstName }} {{ selectedOrder.customer?.lastName }}<br>
+              {{ selectedOrder.customer?.email }}<br>
+              {{ selectedOrder.customer?.phone }}
+            </p>
+          </div>
+          <div class="col-md-6">
+            <h6>Direccion de envio</h6>
+            <p>
+              {{ selectedOrder.shippingAddress?.street }}, {{ selectedOrder.shippingAddress?.number }}<br>
+              {{ selectedOrder.shippingAddress?.postalCode }} {{ selectedOrder.shippingAddress?.city }}<br>
+              {{ selectedOrder.shippingAddress?.country }}
+            </p>
+          </div>
+        </div>
+        
+        <h6>Productos</h6>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Cantidad</th>
+              <th class="text-end">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of selectedOrder.items">
+              <td>{{ item.name }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-end">{{ item.totalPrice | currency:'EUR' }}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2" class="text-end"><strong>Total:</strong></td>
+              <td class="text-end"><strong>{{ selectedOrder.total | currency:'EUR' }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

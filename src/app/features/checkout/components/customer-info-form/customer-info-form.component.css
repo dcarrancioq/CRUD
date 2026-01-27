@@ -1,0 +1,18 @@
+.form-title {
+  margin-bottom: 5px;
+}
+
+.form-subtitle {
+  color: #6c757d;
+  margin-bottom: 25px;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}

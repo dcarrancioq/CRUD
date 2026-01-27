@@ -1,0 +1,131 @@
+<div class="order-detail">
+  <div class="container">
+    <app-breadcrumb [items]="[
+      {label: 'Mis Pedidos', link: '/orders'},
+      {label: 'Pedido #' + order?.orderNumber}
+    ]"></app-breadcrumb>
+
+    <app-loading-spinner *ngIf="loading" message="Cargando pedido..."></app-loading-spinner>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <div *ngIf="order && !loading" class="order-content">
+      <div class="order-header-card">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h1>Pedido #{{ order.orderNumber }}</h1>
+            <p class="order-date">Realizado el {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <span class="badge fs-6" [ngClass]="getStatusClass(order.orderStatus)">
+              {{ getStatusLabel(order.orderStatus) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="detail-card">
+            <h5>Productos</h5>
+            <div class="order-items">
+              <div *ngFor="let item of order.items" class="order-item">
+                <img [src]="item.image || 'assets/images/placeholder.png'" 
+                     [alt]="item.name"
+                     class="item-image">
+                <div class="item-info">
+                  <a [routerLink]="['/products', item.productId]" class="item-name">
+                    {{ item.name }}
+                  </a>
+                  <span class="item-sku">SKU: {{ item.sku }}</span>
+                  <span class="item-qty">Cantidad: {{ item.quantity }}</span>
+                </div>
+                <div class="item-price">
+                  <span class="unit-price">{{ item.unitPrice | currency:'EUR' }} c/u</span>
+                  <strong>{{ item.totalPrice | currency:'EUR' }}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-card">
+            <h5>Direccion de envio</h5>
+            <p class="mb-0">
+              {{ order.customer?.firstName }} {{ order.customer?.lastName }}<br>
+              {{ order.shippingAddress?.street }}, {{ order.shippingAddress?.number }}<br>
+              <span *ngIf="order.shippingAddress?.apartment">{{ order.shippingAddress?.apartment }}<br></span>
+              {{ order.shippingAddress?.postalCode }} {{ order.shippingAddress?.city }}<br>
+              {{ order.shippingAddress?.state }}, {{ order.shippingAddress?.country }}<br>
+              Tel: {{ order.customer?.phone }}
+            </p>
+          </div>
+
+          <div class="detail-card" *ngIf="order.shippingMethod">
+            <h5>Metodo de envio</h5>
+            <p class="mb-0">
+              {{ order.shippingMethod.name }}<br>
+              <small class="text-muted">{{ order.shippingMethod.estimatedDays }}</small>
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="summary-card">
+            <h5>Resumen</h5>
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span>{{ order.subtotal | currency:'EUR' }}</span>
+            </div>
+            <div *ngIf="order.discount > 0" class="summary-row discount">
+              <span>Descuento</span>
+              <span>-{{ order.discount | currency:'EUR' }}</span>
+            </div>
+            <div class="summary-row">
+              <span>IVA (21%)</span>
+              <span>{{ order.tax | currency:'EUR' }}</span>
+            </div>
+            <div class="summary-row">
+              <span>Envio</span>
+              <span>{{ order.shipping > 0 ? (order.shipping | currency:'EUR') : 'Gratis' }}</span>
+            </div>
+            <hr>
+            <div class="summary-row total">
+              <span>Total</span>
+              <strong>{{ order.total | currency:'EUR' }}</strong>
+            </div>
+          </div>
+
+          <div class="actions-card">
+            <button *ngIf="canTrack" 
+                    type="button" 
+                    class="btn btn-primary w-100 mb-2"
+                    (click)="trackOrder()">
+              <i class="bi bi-geo-alt me-2"></i>
+              Seguir envio
+            </button>
+            <button type="button" 
+                    class="btn btn-outline-primary w-100 mb-2"
+                    (click)="reorder()">
+              <i class="bi bi-arrow-repeat me-2"></i>
+              Volver a pedir
+            </button>
+            <button type="button" 
+                    class="btn btn-outline-secondary w-100 mb-2"
+                    (click)="downloadInvoice()">
+              <i class="bi bi-download me-2"></i>
+              Descargar factura
+            </button>
+            <button *ngIf="canCancel" 
+                    type="button" 
+                    class="btn btn-outline-danger w-100"
+                    [disabled]="cancelling"
+                    (click)="cancelOrder()">
+              <i class="bi bi-x-circle me-2"></i>
+              {{ cancelling ? 'Cancelando...' : 'Cancelar pedido' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

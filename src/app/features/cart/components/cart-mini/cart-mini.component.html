@@ -1,0 +1,60 @@
+<div class="cart-mini" (clickOutside)="closeCart()">
+  <button type="button" class="cart-toggle" (click)="toggleCart()">
+    <i class="bi bi-cart3"></i>
+    <span *ngIf="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+  </button>
+
+  <div class="cart-dropdown" [class.open]="isOpen">
+    <div class="cart-dropdown-header">
+      <h6>Carrito de Compras</h6>
+      <button type="button" class="btn-close" (click)="closeCart()"></button>
+    </div>
+
+    <div *ngIf="!cart || cart.items.length === 0" class="cart-empty">
+      <i class="bi bi-cart-x"></i>
+      <p>Tu carrito esta vacio</p>
+    </div>
+
+    <div *ngIf="cart && cart.items.length > 0" class="cart-dropdown-body">
+      <div class="cart-items-list">
+        <div *ngFor="let item of cart.items" class="mini-cart-item">
+          <img [src]="getItemImage(item)" [alt]="item.product?.name" class="item-image">
+          <div class="item-info">
+            <a [routerLink]="['/products', item.product?.slug]" 
+               class="item-name"
+               (click)="closeCart()">
+              {{ item.product?.name }}
+            </a>
+            <span class="item-qty-price">
+              {{ item.quantity }} x {{ item.unitPrice | currency:'EUR' }}
+            </span>
+          </div>
+          <button type="button" 
+                  class="btn-remove"
+                  (click)="removeItem(item)">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="cart-dropdown-footer">
+        <div class="cart-total">
+          <span>Total:</span>
+          <strong>{{ cart.total | currency:'EUR' }}</strong>
+        </div>
+        <div class="cart-actions">
+          <button type="button" 
+                  class="btn btn-outline-primary btn-sm"
+                  (click)="goToCart()">
+            Ver carrito
+          </button>
+          <button type="button" 
+                  class="btn btn-primary btn-sm"
+                  (click)="goToCheckout()">
+            Checkout
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

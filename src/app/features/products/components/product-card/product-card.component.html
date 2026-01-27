@@ -1,0 +1,59 @@
+<div class="product-card" [class.horizontal]="horizontal" (click)="goToProduct()">
+  <div class="product-image-container">
+    <img [src]="mainImage" [alt]="product.name" class="product-image">
+    
+    <div *ngIf="hasDiscount" class="discount-badge">-{{ discountPercentage }}%</div>
+    <div *ngIf="isOutOfStock" class="out-of-stock-badge">Agotado</div>
+    
+    <div class="product-actions">
+      <button type="button" 
+              class="btn-action btn-wishlist" 
+              [class.active]="isInWishlist"
+              (click)="toggleWishlist($event)"
+              [title]="isInWishlist ? 'Eliminar de favoritos' : 'Agregar a favoritos'">
+        <i class="bi" [class.bi-heart]="!isInWishlist" [class.bi-heart-fill]="isInWishlist"></i>
+      </button>
+      <button type="button" 
+              class="btn-action btn-quick-view" 
+              (click)="goToProduct(); $event.stopPropagation()"
+              title="Ver detalles">
+        <i class="bi bi-eye"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="product-info">
+    <div class="product-category" *ngIf="product.category">{{ product.category.name }}</div>
+    <h3 class="product-name">{{ product.name }}</h3>
+    
+    <div class="product-rating" *ngIf="product.ratings && product.ratings.count > 0">
+      <app-rating-stars [rating]="product.ratings.average" [readonly]="true" size="small"></app-rating-stars>
+      <span class="review-count">({{ product.ratings.count }})</span>
+    </div>
+
+    <p class="product-description" *ngIf="horizontal">{{ product.shortDescription | truncate:150 }}</p>
+
+    <div class="product-price">
+      <app-price-display 
+        [price]="product.price" 
+        [compareAtPrice]="product.compareAtPrice"
+        [currency]="product.currency">
+      </app-price-display>
+    </div>
+
+    <div class="product-stock" [ngClass]="product.stock?.status">
+      <span *ngIf="product.stock?.status === 'in_stock'">En stock</span>
+      <span *ngIf="product.stock?.status === 'low_stock'">Pocas unidades</span>
+      <span *ngIf="product.stock?.status === 'out_of_stock'">Agotado</span>
+    </div>
+
+    <button type="button" 
+            class="btn btn-primary btn-add-cart w-100 mt-2"
+            [disabled]="isOutOfStock || addingToCart"
+            (click)="addToCart($event)">
+      <span *ngIf="addingToCart">Agregando...</span>
+      <span *ngIf="!addingToCart && !isOutOfStock">Agregar al carrito</span>
+      <span *ngIf="!addingToCart && isOutOfStock">No disponible</span>
+    </button>
+  </div>
+</div>

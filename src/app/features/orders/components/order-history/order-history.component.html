@@ -1,0 +1,93 @@
+<div class="order-history">
+  <div class="container">
+    <app-breadcrumb [items]="[{label: 'Mis Pedidos'}]"></app-breadcrumb>
+    
+    <h1 class="page-title">Mis Pedidos</h1>
+
+    <div class="filters-bar mb-4">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <span class="results-count" *ngIf="!loading">{{ totalItems }} pedido(s)</span>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex justify-content-md-end">
+            <select class="form-select" 
+                    style="width: auto;"
+                    [(ngModel)]="statusFilter"
+                    (change)="onStatusFilterChange()">
+              <option *ngFor="let option of statusOptions" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-loading-spinner *ngIf="loading" message="Cargando pedidos..."></app-loading-spinner>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <div *ngIf="!loading && orders.length === 0">
+      <app-empty-state 
+        icon="bag"
+        title="No tienes pedidos"
+        message="Aun no has realizado ninguna compra."
+        actionLabel="Explorar productos"
+        actionLink="/products">
+      </app-empty-state>
+    </div>
+
+    <div *ngIf="!loading && orders.length > 0" class="orders-list">
+      <div *ngFor="let order of orders" class="order-card">
+        <div class="order-header">
+          <div class="order-info">
+            <span class="order-number">Pedido #{{ order.orderNumber }}</span>
+            <span class="order-date">{{ order.createdAt | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <span class="badge" [ngClass]="getStatusClass(order.orderStatus)">
+            {{ getStatusLabel(order.orderStatus) }}
+          </span>
+        </div>
+
+        <div class="order-items-preview">
+          <div *ngFor="let item of order.items?.slice(0, 3)" class="item-preview">
+            <img [src]="item.image || 'assets/images/placeholder.png'" 
+                 [alt]="item.name">
+          </div>
+          <div *ngIf="order.items && order.items.length > 3" class="more-items">
+            +{{ order.items.length - 3 }}
+          </div>
+        </div>
+
+        <div class="order-footer">
+          <div class="order-total">
+            <span>Total:</span>
+            <strong>{{ order.total | currency:'EUR' }}</strong>
+          </div>
+          <div class="order-actions">
+            <button type="button" 
+                    class="btn btn-outline-primary btn-sm"
+                    (click)="viewOrder(order)">
+              Ver detalles
+            </button>
+            <button *ngIf="order.orderStatus === 'shipped'" 
+                    type="button" 
+                    class="btn btn-primary btn-sm"
+                    (click)="trackOrder(order)">
+              Seguir envio
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <app-pagination 
+      *ngIf="totalPages > 1"
+      [currentPage]="currentPage"
+      [totalPages]="totalPages"
+      [totalItems]="totalItems"
+      (pageChange)="onPageChange($event)">
+    </app-pagination>
+  </div>
+</div>

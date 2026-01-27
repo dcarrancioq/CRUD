@@ -1,0 +1,29 @@
+<aside class="admin-sidebar" [class.collapsed]="collapsed">
+  <div class="sidebar-header">
+    <a routerLink="/admin" class="sidebar-brand">
+      <i class="bi bi-shop"></i>
+      <span *ngIf="!collapsed">Admin</span>
+    </a>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list">
+      <li *ngFor="let item of menuItems" class="nav-item">
+        <a [routerLink]="item.route" 
+           class="nav-link"
+           [class.active]="isActive(item.route)"
+           [title]="collapsed ? item.label : ''">
+          <i class="bi bi-{{ item.icon }}"></i>
+          <span *ngIf="!collapsed">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <a href="javascript:void(0)" class="nav-link" (click)="logout()" [title]="collapsed ? 'Cerrar sesion' : ''">
+      <i class="bi bi-box-arrow-left"></i>
+      <span *ngIf="!collapsed">Cerrar sesion</span>
+    </a>
+  </div>
+</aside>

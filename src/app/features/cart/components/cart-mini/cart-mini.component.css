@@ -1,0 +1,161 @@
+.cart-mini {
+  position: relative;
+}
+
+.cart-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  position: relative;
+  cursor: pointer;
+  padding: 5px;
+  color: #333;
+}
+
+.cart-toggle:hover {
+  color: #007bff;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #dc3545;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.cart-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 350px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.3s;
+}
+
+.cart-dropdown.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.cart-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.cart-dropdown-header h6 {
+  margin: 0;
+}
+
+.cart-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.cart-empty i {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.cart-dropdown-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.cart-items-list {
+  padding: 10px 15px;
+}
+
+.mini-cart-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.mini-cart-item:last-child {
+  border-bottom: none;
+}
+
+.mini-cart-item .item-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.mini-cart-item .item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.mini-cart-item .item-name {
+  display: block;
+  font-size: 13px;
+  color: #333;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-cart-item .item-name:hover {
+  color: #007bff;
+}
+
+.mini-cart-item .item-qty-price {
+  font-size: 12px;
+  color: #666;
+}
+
+.btn-remove {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.btn-remove:hover {
+  color: #dc3545;
+}
+
+.cart-dropdown-footer {
+  padding: 15px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.cart-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cart-actions .btn {
+  flex: 1;
+}
