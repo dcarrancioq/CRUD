@@ -1,0 +1,49 @@
+{
+  "name": "ecommerce-backend",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node -r tsconfig-paths/register src/main.ts",
+    "seed": "ts-node -r tsconfig-paths/register src/seed.ts",
+    "lint": "echo 'No linter configured'",
+    "test": "echo 'No tests configured'"
+  },
+  "keywords": ["nestjs", "ecommerce", "api"],
+  "author": "Devin AI",
+  "license": "MIT",
+  "description": "Backend API for e-commerce platform built with NestJS",
+  "dependencies": {
+    "@nestjs/common": "^11.1.12",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.12",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.1.12",
+    "@nestjs/swagger": "^11.2.5",
+    "@nestjs/typeorm": "^11.0.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.3",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "pg": "^8.17.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.1.0",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-local": "^1.0.38",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.9.3"
+  }
+}
