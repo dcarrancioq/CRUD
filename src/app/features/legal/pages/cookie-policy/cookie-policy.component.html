@@ -1,0 +1,209 @@
+<div class="legal-page">
+  <div class="container py-5">
+    <h1>Politica de Cookies</h1>
+    <p class="text-muted">Ultima actualizacion: {{ lastUpdated | date:'dd/MM/yyyy' }}</p>
+
+    <section class="legal-section">
+      <h2>1. Que son las Cookies</h2>
+      <p>Las cookies son pequenos archivos de texto que se almacenan en su dispositivo cuando visita 
+        un sitio web. Se utilizan ampliamente para hacer que los sitios web funcionen de manera mas 
+        eficiente y para proporcionar informacion a los propietarios del sitio.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>2. Como Utilizamos las Cookies</h2>
+      <p>Utilizamos cookies para:</p>
+      <ul>
+        <li>Recordar sus preferencias y configuraciones</li>
+        <li>Mantener su sesion iniciada</li>
+        <li>Gestionar su carrito de compras</li>
+        <li>Analizar el trafico y uso del sitio</li>
+        <li>Personalizar contenido y anuncios</li>
+        <li>Mejorar la seguridad del sitio</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>3. Tipos de Cookies que Utilizamos</h2>
+      
+      <h3>3.1 Cookies Necesarias</h3>
+      <p>Estas cookies son esenciales para el funcionamiento del sitio web. Sin ellas, el sitio no 
+        funcionaria correctamente.</p>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Cookie</th>
+            <th>Proposito</th>
+            <th>Duracion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>session_id</td>
+            <td>Mantiene la sesion del usuario</td>
+            <td>Sesion</td>
+          </tr>
+          <tr>
+            <td>cart_token</td>
+            <td>Identifica el carrito de compras</td>
+            <td>30 dias</td>
+          </tr>
+          <tr>
+            <td>csrf_token</td>
+            <td>Proteccion contra ataques CSRF</td>
+            <td>Sesion</td>
+          </tr>
+          <tr>
+            <td>cookie_consent</td>
+            <td>Almacena sus preferencias de cookies</td>
+            <td>1 ano</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.2 Cookies de Analisis</h3>
+      <p>Nos ayudan a entender como los visitantes interactuan con el sitio web, recopilando 
+        informacion de forma anonima.</p>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Cookie</th>
+            <th>Proposito</th>
+            <th>Duracion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>_ga</td>
+            <td>Google Analytics - Distingue usuarios</td>
+            <td>2 anos</td>
+          </tr>
+          <tr>
+            <td>_gid</td>
+            <td>Google Analytics - Distingue usuarios</td>
+            <td>24 horas</td>
+          </tr>
+          <tr>
+            <td>_gat</td>
+            <td>Google Analytics - Limita solicitudes</td>
+            <td>1 minuto</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.3 Cookies de Marketing</h3>
+      <p>Se utilizan para mostrar anuncios relevantes y medir la efectividad de las campanas 
+        publicitarias.</p>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Cookie</th>
+            <th>Proposito</th>
+            <th>Duracion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>_fbp</td>
+            <td>Facebook Pixel - Seguimiento de conversiones</td>
+            <td>3 meses</td>
+          </tr>
+          <tr>
+            <td>ads_prefs</td>
+            <td>Preferencias de publicidad</td>
+            <td>1 ano</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>3.4 Cookies de Preferencias</h3>
+      <p>Permiten recordar sus preferencias como el idioma, la region y otras configuraciones 
+        personalizadas.</p>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Cookie</th>
+            <th>Proposito</th>
+            <th>Duracion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>language</td>
+            <td>Idioma preferido</td>
+            <td>1 ano</td>
+          </tr>
+          <tr>
+            <td>currency</td>
+            <td>Moneda preferida</td>
+            <td>1 ano</td>
+          </tr>
+          <tr>
+            <td>accessibility_settings</td>
+            <td>Configuracion de accesibilidad</td>
+            <td>1 ano</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="legal-section">
+      <h2>4. Gestion de Cookies</h2>
+      <p>Puede gestionar sus preferencias de cookies en cualquier momento:</p>
+      <button type="button" class="btn btn-primary mb-3" (click)="openCookieSettings()">
+        Configurar preferencias de cookies
+      </button>
+      
+      <h3>4.1 A traves del Navegador</h3>
+      <p>La mayoria de los navegadores le permiten controlar las cookies a traves de sus configuraciones. 
+        Aqui tiene enlaces a las instrucciones de los navegadores mas comunes:</p>
+      <ul>
+        <li><a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Google Chrome</a></li>
+        <li><a href="https://support.mozilla.org/es/kb/habilitar-y-deshabilitar-cookies-sitios-web-rastrear-preferencias" target="_blank" rel="noopener">Mozilla Firefox</a></li>
+        <li><a href="https://support.apple.com/es-es/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Safari</a></li>
+        <li><a href="https://support.microsoft.com/es-es/microsoft-edge/eliminar-cookies-en-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener">Microsoft Edge</a></li>
+      </ul>
+      
+      <h3>4.2 Consecuencias de Deshabilitar Cookies</h3>
+      <p>Si deshabilita las cookies, algunas funciones del sitio web pueden no funcionar correctamente:</p>
+      <ul>
+        <li>No podra mantener productos en su carrito de compras</li>
+        <li>Tendra que iniciar sesion cada vez que visite el sitio</li>
+        <li>Sus preferencias no se guardaran</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>5. Cookies de Terceros</h2>
+      <p>Algunos de nuestros socios pueden establecer cookies en su dispositivo. Estos terceros tienen 
+        sus propias politicas de privacidad:</p>
+      <ul>
+        <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Analytics</a></li>
+        <li><a href="https://www.facebook.com/policy.php" target="_blank" rel="noopener">Facebook</a></li>
+        <li><a href="https://stripe.com/es/privacy" target="_blank" rel="noopener">Stripe</a></li>
+        <li><a href="https://www.paypal.com/es/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener">PayPal</a></li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>6. Actualizaciones de esta Politica</h2>
+      <p>Podemos actualizar esta politica de cookies periodicamente para reflejar cambios en nuestras 
+        practicas o por razones legales. Le recomendamos revisar esta pagina regularmente.</p>
+    </section>
+
+    <section class="legal-section">
+      <h2>7. Contacto</h2>
+      <p>Si tiene preguntas sobre nuestra politica de cookies, puede contactarnos:</p>
+      <ul>
+        <li>Email: <a href="mailto:privacidad&#64;tienda.com">privacidad&#64;tienda.com</a></li>
+        <li>Direccion: Calle Ejemplo 123, 28001 Madrid, Espana</li>
+      </ul>
+    </section>
+
+    <section class="legal-section">
+      <h2>8. Mas Informacion</h2>
+      <p>Para mas informacion sobre como tratamos sus datos personales, consulte nuestra 
+        <a routerLink="/legal/privacy-policy">Politica de Privacidad</a>.</p>
+    </section>
+  </div>
+</div>

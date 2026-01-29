@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap, catchError, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, tap, catchError, throwError, of, delay } from 'rxjs';
 import { 
   User, 
   LoginRequest, 
@@ -12,13 +12,80 @@ import {
 } from '../models/user.model';
 import { environment } from '../../../environments/environment';
 
+interface MockUser {
+  email: string;
+  password: string;
+  user: User;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly API_URL = `${environment.apiUrl}/auth`;
+  private readonly USE_MOCK = true;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+
+  private mockUsers: MockUser[] = [
+    {
+      email: 'admin@tienda.com',
+      password: 'Admin123!',
+      user: {
+        id: '1',
+        email: 'admin@tienda.com',
+        firstName: 'Admin',
+        lastName: 'Usuario',
+        role: 'admin',
+        phone: '+34 600 000 001',
+        avatar: '',
+        addresses: [],
+        preferences: { newsletter: false, marketingEmails: false, orderNotifications: true, language: 'es', currency: 'EUR' },
+        isEmailVerified: true,
+        isActive: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01')
+      }
+    },
+    {
+      email: 'usuario@tienda.com',
+      password: 'Usuario123!',
+      user: {
+        id: '2',
+        email: 'usuario@tienda.com',
+        firstName: 'Juan',
+        lastName: 'Garcia',
+        role: 'customer',
+        phone: '+34 600 000 002',
+        avatar: '',
+        addresses: [],
+        preferences: { newsletter: true, marketingEmails: true, orderNotifications: true, language: 'es', currency: 'EUR' },
+        isEmailVerified: true,
+        isActive: true,
+        createdAt: new Date('2024-01-15'),
+        updatedAt: new Date('2024-01-15')
+      }
+    },
+    {
+      email: 'test@test.com',
+      password: 'Test1234!',
+      user: {
+        id: '3',
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        role: 'customer',
+        phone: '+34 600 000 003',
+        avatar: '',
+        addresses: [],
+        preferences: { newsletter: false, marketingEmails: false, orderNotifications: true, language: 'es', currency: 'EUR' },
+        isEmailVerified: true,
+        isActive: true,
+        createdAt: new Date('2024-02-01'),
+        updatedAt: new Date('2024-02-01')
+      }
+    }
+  ];
 
   currentUser$ = this.currentUserSubject.asObservable();
   isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
@@ -37,6 +104,9 @@ export class AuthService {
   }
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
+    if (this.USE_MOCK) {
+      return this.mockLogin(credentials);
+    }
     return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap(response => this.handleAuthResponse(response, credentials.rememberMe)),
       catchError(error => this.handleError(error))
@@ -44,9 +114,77 @@ export class AuthService {
   }
 
   register(data: RegisterRequest): Observable<AuthResponse> {
+    if (this.USE_MOCK) {
+      return this.mockRegister(data);
+    }
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, data).pipe(
       tap(response => this.handleAuthResponse(response, true)),
       catchError(error => this.handleError(error))
+    );
+  }
+
+  private mockLogin(credentials: LoginRequest): Observable<AuthResponse> {
+    const mockUser = this.mockUsers.find(
+      u => u.email.toLowerCase() === credentials.email.toLowerCase() && u.password === credentials.password
+    );
+
+    if (mockUser) {
+      const response: AuthResponse = {
+        user: mockUser.user,
+        accessToken: 'mock-access-token-' + Date.now(),
+        refreshToken: 'mock-refresh-token-' + Date.now(),
+        expiresIn: 3600
+      };
+      return of(response).pipe(
+        delay(500),
+        tap(res => this.handleAuthResponse(res, credentials.rememberMe))
+      );
+    }
+
+    return throwError(() => new Error('Credenciales invalidas. Usuarios de prueba: admin@tienda.com / Admin123! o usuario@tienda.com / Usuario123!'));
+  }
+
+  private mockRegister(data: RegisterRequest): Observable<AuthResponse> {
+    const existingUser = this.mockUsers.find(
+      u => u.email.toLowerCase() === data.email.toLowerCase()
+    );
+
+    if (existingUser) {
+      return throwError(() => new Error('El email ya esta registrado'));
+    }
+
+    const newUser: User = {
+      id: String(this.mockUsers.length + 1),
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: 'customer',
+      phone: data.phone || '',
+      avatar: '',
+      addresses: [],
+      preferences: { newsletter: data.subscribeNewsletter || false, marketingEmails: false, orderNotifications: true, language: 'es', currency: 'EUR' },
+      isEmailVerified: false,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    this.mockUsers.push({
+      email: data.email,
+      password: data.password,
+      user: newUser
+    });
+
+    const response: AuthResponse = {
+      user: newUser,
+      accessToken: 'mock-access-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      expiresIn: 3600
+    };
+
+    return of(response).pipe(
+      delay(500),
+      tap(res => this.handleAuthResponse(res, true))
     );
   }
 

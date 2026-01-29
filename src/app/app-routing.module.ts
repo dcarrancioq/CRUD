@@ -32,12 +32,16 @@ const routes: Routes = [
       }
     ]
   },
-  {
-    path: 'auth',
-    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
-  },
-  {
-    path: 'admin',
+    {
+      path: 'auth',
+      loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
+    },
+    {
+      path: 'legal',
+      loadChildren: () => import('./features/legal/legal.module').then(m => m.LegalModule)
+    },
+    {
+      path: 'admin',
     component: AdminLayoutComponent,
     canActivate: [AuthGuard, AdminGuard],
     loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule)

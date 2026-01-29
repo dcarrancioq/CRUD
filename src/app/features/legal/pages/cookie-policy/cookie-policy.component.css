@@ -1,0 +1,101 @@
+.legal-page {
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.legal-page h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.legal-section {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.legal-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #0d6efd;
+}
+
+.legal-section h3 {
+  color: #555;
+  font-size: 1.2rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-section p {
+  color: #666;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.legal-section ul {
+  color: #666;
+  line-height: 1.8;
+  padding-left: 1.5rem;
+}
+
+.legal-section li {
+  margin-bottom: 0.5rem;
+}
+
+.legal-section a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.legal-section a:hover {
+  text-decoration: underline;
+}
+
+.legal-section .table {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.legal-section .table th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+.high-contrast .legal-page {
+  background: #000;
+}
+
+.high-contrast .legal-section {
+  background: #111;
+  border: 1px solid #fff;
+}
+
+.high-contrast .legal-section h2,
+.high-contrast .legal-section h3,
+.high-contrast .legal-page h1 {
+  color: #fff;
+}
+
+.high-contrast .legal-section p,
+.high-contrast .legal-section ul {
+  color: #ddd;
+}
+
+.high-contrast .legal-section .table {
+  color: #fff;
+  border-color: #fff;
+}
+
+.high-contrast .legal-section .table th {
+  background: #333;
+  color: #fff;
+}
+
+.high-contrast .legal-section .table td {
+  border-color: #666;
+}
