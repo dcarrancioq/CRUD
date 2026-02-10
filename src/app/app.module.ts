@@ -10,10 +10,16 @@ import { LayoutsModule } from './layouts/layouts.module';
 
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { ErrorInterceptor } from './core/interceptors/error.interceptor';
+import { TermsComponent } from './features/legal/terms/terms.component';
+import { PrivacyComponent } from './features/legal/privacy/privacy.component';
+import { CookiesComponent } from './features/legal/cookies/cookies.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    TermsComponent,
+    PrivacyComponent,
+    CookiesComponent
   ],
   imports: [
     BrowserModule,
