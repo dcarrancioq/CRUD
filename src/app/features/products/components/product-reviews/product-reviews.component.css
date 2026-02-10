@@ -3,7 +3,7 @@
 }
 
 .review-form {
-  background-color: #f8f9fa;
+  background-color: var(--san-neutral-10);
 }
 
 .review-item {
@@ -11,7 +11,7 @@
 }
 
 .review-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--san-elevation-02);
 }
 
 .review-title {
@@ -20,12 +20,12 @@
 }
 
 .review-comment {
-  color: #555;
+  color: var(--san-neutral-90);
   line-height: 1.6;
   margin-bottom: 15px;
 }
 
 .review-footer {
   padding-top: 10px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--san-neutral-20);
 }

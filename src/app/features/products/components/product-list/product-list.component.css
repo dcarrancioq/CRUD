@@ -11,28 +11,28 @@
 }
 
 .category-description {
-  color: #666;
+  color: var(--san-neutral-90);
   font-size: 16px;
 }
 
 .toolbar {
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
+  background-color: var(--san-lighter-grey);
+  padding: var(--san-spacing-04);
+  border-radius: var(--san-radius-lg);
 }
 
 .results-info {
-  color: #666;
+  color: var(--san-neutral-90);
 }
 
 .sort-options label {
   font-size: 14px;
-  color: #666;
+  color: var(--san-neutral-90);
 }
 
 .view-toggle .btn.active {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--san-red);
+  color: var(--san-white);
 }
 
 .products-container.list .product-list-view {

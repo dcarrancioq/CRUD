@@ -1,8 +1,8 @@
 .admin-sidebar {
   width: 250px;
   height: 100vh;
-  background: #2c3e50;
-  color: white;
+  background: var(--san-darker-grey);
+  color: var(--san-white);
   position: fixed;
   left: 0;
   top: 0;
@@ -10,6 +10,7 @@
   flex-direction: column;
   transition: width 0.3s;
   z-index: 1000;
+  font-family: var(--san-font);
 }
 
 .admin-sidebar.collapsed {
@@ -18,14 +19,15 @@
 
 .sidebar-header {
   padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: var(--san-red);
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: white;
+  color: var(--san-white);
   text-decoration: none;
   font-size: 1.5rem;
   font-weight: 700;
@@ -41,7 +43,7 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: 20px 0;
+  padding: 16px 0;
   overflow-y: auto;
 }
 
@@ -52,27 +54,30 @@
 }
 
 .nav-item {
-  margin-bottom: 5px;
+  margin-bottom: 2px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
   padding: 12px 20px;
-  color: #bdc3c7;
+  color: var(--san-neutral-40);
   text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
   transition: all 0.2s;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--san-white);
 }
 
 .nav-link.active {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--san-red);
+  color: var(--san-white);
+  border-left: 3px solid var(--san-white);
 }
 
 .nav-link i {
@@ -88,7 +93,7 @@
 
 .sidebar-footer {
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-footer .nav-link {
@@ -105,7 +110,7 @@
   .admin-sidebar {
     transform: translateX(-100%);
   }
-  
+
   .admin-sidebar.collapsed {
     transform: translateX(0);
     width: 70px;

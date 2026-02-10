@@ -22,12 +22,12 @@
   z-index: 10;
   background: none;
   border: none;
-  color: #999;
+  color: var(--san-neutral-60);
   padding: 5px;
 }
 
 .btn-clear:hover {
-  color: #333;
+  color: var(--san-darker-grey);
 }
 
 .search-form .btn-primary {
@@ -40,10 +40,10 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--san-white);
+  border: 1px solid var(--san-neutral-20);
+  border-radius: var(--san-radius-lg);
+  box-shadow: var(--san-elevation-03);
   z-index: 1000;
   margin-top: 5px;
   max-height: 400px;
@@ -66,14 +66,14 @@
 }
 
 .suggestion-item:hover {
-  background-color: #f8f9fa;
+  background-color: var(--san-lighter-sky);
 }
 
 .suggestion-image {
   width: 50px;
   height: 50px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: var(--san-radius);
   margin-right: 15px;
 }
 
@@ -83,22 +83,23 @@
 }
 
 .suggestion-name {
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: var(--san-darker-grey);
 }
 
 .suggestion-price {
   font-size: 14px;
-  color: #007bff;
+  color: var(--san-red);
 }
 
 .view-all-link {
   display: block;
   padding: 12px 15px;
   text-align: center;
-  color: #007bff;
+  color: var(--san-red);
   text-decoration: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--san-neutral-20);
+  font-weight: 600;
   cursor: pointer;
 }
 
