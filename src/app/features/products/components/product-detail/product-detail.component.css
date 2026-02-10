@@ -8,16 +8,18 @@
 
 .product-category {
   font-size: 14px;
-  color: #6c757d;
+  color: var(--san-medium-grey);
   text-transform: uppercase;
   margin-bottom: 10px;
+  font-family: var(--san-font);
 }
 
 .product-name {
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 15px;
-  color: #333;
+  color: var(--san-darker-grey);
+  font-family: var(--san-font);
 }
 
 .product-rating {
@@ -27,13 +29,13 @@
 }
 
 .review-count {
-  color: #6c757d;
+  color: var(--san-medium-grey);
   font-size: 14px;
 }
 
 .product-short-description {
   font-size: 16px;
-  color: #666;
+  color: var(--san-neutral-90);
   line-height: 1.6;
   margin-bottom: 20px;
 }
@@ -45,18 +47,18 @@
 }
 
 .product-stock.in_stock {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--san-success-light);
+  color: var(--san-success-dark);
 }
 
 .product-stock.low_stock {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: var(--san-warning-light);
+  color: var(--san-warning-dark);
 }
 
 .product-stock.out_of_stock {
-  background-color: #f8d7da;
-  color: #721c24;
+  background-color: var(--san-error-light);
+  color: var(--san-error-dark);
 }
 
 .product-quantity label {
@@ -65,15 +67,15 @@
 }
 
 .product-actions .btn.active {
-  color: #dc3545;
-  border-color: #dc3545;
+  color: var(--san-red);
+  border-color: var(--san-red);
 }
 
 .product-meta {
   padding-top: 20px;
-  border-top: 1px solid #dee2e6;
+  border-top: 1px solid var(--san-neutral-20);
   font-size: 14px;
-  color: #666;
+  color: var(--san-neutral-90);
 }
 
 .product-meta p {
@@ -82,22 +84,24 @@
 
 .nav-tabs .nav-link {
   cursor: pointer;
-  color: #495057;
+  color: var(--san-dark-grey);
 }
 
 .nav-tabs .nav-link.active {
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--san-red);
+  border-bottom-color: var(--san-red);
 }
 
 .tab-content {
-  background-color: #fff;
-  border-radius: 0 0 4px 4px;
+  background-color: var(--san-white);
+  border-radius: 0 0 var(--san-radius) var(--san-radius);
 }
 
 .related-products h3 {
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #007bff;
+  border-bottom: 2px solid var(--san-red);
 }
 
 @media (max-width: 991px) {

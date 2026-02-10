@@ -8,8 +8,8 @@
   position: relative;
   width: 100%;
   padding-top: 100%;
-  background-color: #f8f9fa;
-  border-radius: 8px;
+  background-color: var(--san-neutral-10);
+  border-radius: var(--san-radius-lg);
   overflow: hidden;
   cursor: zoom-in;
 }
@@ -72,19 +72,19 @@
   height: 80px;
   padding: 0;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--san-radius-lg);
   overflow: hidden;
   cursor: pointer;
-  background: #f8f9fa;
+  background: var(--san-neutral-10);
   transition: border-color 0.3s;
 }
 
 .thumbnail:hover {
-  border-color: #007bff;
+  border-color: var(--san-red);
 }
 
 .thumbnail.active {
-  border-color: #007bff;
+  border-color: var(--san-red);
 }
 
 .thumbnail img {

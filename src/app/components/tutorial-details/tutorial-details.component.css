@@ -1,4 +1,9 @@
 .edit-form {
-  max-width: 400px;
+  max-width: 480px;
   margin: auto;
+  font-family: var(--san-font);
+  background: var(--san-white);
+  padding: var(--san-spacing-06);
+  border-radius: var(--san-radius-lg);
+  box-shadow: var(--san-elevation-01);
 }

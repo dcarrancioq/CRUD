@@ -7,7 +7,7 @@
   flex: 1;
   margin-left: 250px;
   transition: margin-left 0.3s;
-  background-color: #f4f6f9;
+  background-color: var(--san-neutral-10);
 }
 
 .admin-layout.sidebar-collapsed .admin-main {
@@ -19,8 +19,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: var(--san-white);
+  box-shadow: var(--san-elevation-01);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -28,7 +28,7 @@
 
 .toggle-btn {
   font-size: 24px;
-  color: #333;
+  color: var(--san-dark-grey);
   padding: 5px 10px;
 }
 

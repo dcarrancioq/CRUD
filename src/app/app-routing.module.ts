@@ -5,6 +5,9 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { TermsComponent } from './features/legal/terms/terms.component';
+import { PrivacyComponent } from './features/legal/privacy/privacy.component';
+import { CookiesComponent } from './features/legal/cookies/cookies.component';
 
 const routes: Routes = [
   {
@@ -29,7 +32,10 @@ const routes: Routes = [
         path: 'orders',
         loadChildren: () => import('./features/orders/orders.module').then(m => m.OrdersModule),
         canActivate: [AuthGuard]
-      }
+      },
+      { path: 'terms', component: TermsComponent },
+      { path: 'privacy', component: PrivacyComponent },
+      { path: 'cookies', component: CookiesComponent }
     ]
   },
   {

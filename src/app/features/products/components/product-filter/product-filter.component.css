@@ -1,14 +1,14 @@
 .product-filter {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--san-white);
+  padding: var(--san-spacing-05);
+  border-radius: var(--san-radius-lg);
+  box-shadow: var(--san-elevation-01);
 }
 
 .filter-section {
   margin-bottom: 25px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--san-neutral-20);
 }
 
 .filter-section:last-child {
@@ -20,7 +20,8 @@
 .filter-title {
   font-weight: 600;
   margin-bottom: 15px;
-  color: #333;
+  color: var(--san-darker-grey);
+  font-family: var(--san-font);
 }
 
 .filter-list {
@@ -34,19 +35,19 @@
 }
 
 .filter-list a {
-  color: #666;
+  color: var(--san-neutral-90);
   text-decoration: none;
   font-size: 14px;
   transition: color 0.2s;
 }
 
 .filter-list a:hover {
-  color: #007bff;
+  color: var(--san-red);
 }
 
 .filter-list a.active {
-  color: #007bff;
-  font-weight: 500;
+  color: var(--san-red);
+  font-weight: 600;
 }
 
 .price-range-custom input {

@@ -1,0 +1,32 @@
+.navbar-santander {
+  background-color: var(--san-red);
+  padding: 12px 20px;
+}
+
+.navbar-santander .navbar-brand {
+  color: var(--san-white);
+  font-family: var(--san-font);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+}
+
+.navbar-santander .navbar-brand:hover {
+  color: var(--san-white);
+}
+
+.navbar-santander .nav-link {
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--san-font);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 16px;
+  border-radius: var(--san-radius);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.navbar-santander .nav-link:hover,
+.navbar-santander .nav-link.active {
+  color: var(--san-white);
+  background-color: rgba(255, 255, 255, 0.15);
+}
