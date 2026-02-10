@@ -1,0 +1,7 @@
+.legal-page {
+  font-family: var(--san-font);
+}
+
+.legal-page h1 {
+  color: var(--san-darker-grey);
+}
