@@ -1,0 +1,19 @@
+{
+  "name": "devin-session-replicator",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Web UI to replicate a Devin session via the Devin API",
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.2.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.61.1"
+  }
+}
