@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devin Session Replicator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Devin Session Replicator</h1>
+    <p class="subtitle">Replica los pasos de una sesión de Devin vía API, desde una interfaz web.</p>
+  </header>
+
+  <main>
+    <!-- Step 1: Connection -->
+    <section class="card" id="step-config">
+      <h2><span class="step-num">1</span> Configurar conexión</h2>
+      <div class="field">
+        <label for="baseUrl">API Base URL</label>
+        <input id="baseUrl" type="text" placeholder="https://api.devin.ai/v1" />
+        <small>Para instancias Enterprise usa la base de tu organización (p. ej. https://tu-org.devinenterprise.com/api/v1).</small>
+      </div>
+      <div class="field">
+        <label for="apiKey">API Key</label>
+        <input id="apiKey" type="password" placeholder="Bearer token" />
+        <small>Se guarda solo en tu navegador (localStorage) y se envía por cabecera al proxy. No se persiste en el servidor.</small>
+      </div>
+      <div class="actions">
+        <button id="saveConfig" class="primary">Guardar y comprobar</button>
+        <span id="configStatus" class="status"></span>
+      </div>
+    </section>
+
+    <!-- Step 2: Upload attachment -->
+    <section class="card" id="step-upload">
+      <h2><span class="step-num">2</span> Subir documento (opcional)</h2>
+      <p>Sube el documento del proceso (p. ej. la grabación en .docx) para adjuntarlo al prompt.</p>
+      <div class="field">
+        <input id="fileInput" type="file" />
+      </div>
+      <div class="actions">
+        <button id="uploadBtn">Subir a Devin</button>
+        <span id="uploadStatus" class="status"></span>
+      </div>
+      <div class="field" id="attachmentUrlWrap" style="display:none">
+        <label>URL del adjunto</label>
+        <input id="attachmentUrl" type="text" readonly />
+        <small>Se incluirá automáticamente en el prompt al crear la sesión.</small>
+      </div>
+    </section>
+
+    <!-- Step 3: Create session -->
+    <section class="card" id="step-create">
+      <h2><span class="step-num">3</span> Crear sesión con el prompt</h2>
+      <div class="field">
+        <label for="prompt">Prompt inicial</label>
+        <textarea id="prompt" rows="4" placeholder="Toma este documento como la grabación de la descripción de un proceso. Analiza el detalle y dibuja el proceso"></textarea>
+      </div>
+      <div class="field checkbox">
+        <label><input id="idempotent" type="checkbox" /> Idempotente</label>
+      </div>
+      <div class="actions">
+        <button id="createBtn" class="primary">Crear sesión</button>
+        <span id="createStatus" class="status"></span>
+      </div>
+      <div class="field" id="sessionInfo" style="display:none">
+        <label>Session ID</label>
+        <input id="sessionId" type="text" readonly />
+        <a id="sessionLink" href="#" target="_blank" rel="noopener">Abrir sesión en el navegador ↗</a>
+      </div>
+    </section>
+
+    <!-- Step 4: Follow-up messages -->
+    <section class="card" id="step-message">
+      <h2><span class="step-num">4</span> Enviar mensajes de seguimiento</h2>
+      <p>Replica los pasos: "Crea un plan para implementar este flujo", "Lo quiero implementar directamente con Appian", etc.</p>
+      <div class="quick">
+        <button class="chip" data-msg="Crea un plan para implementar este flujo">Plan de implementación</button>
+        <button class="chip" data-msg="Lo quiero implementar directamente con appian">Con Appian</button>
+      </div>
+      <div class="field">
+        <textarea id="messageText" rows="3" placeholder="Escribe un mensaje de seguimiento..."></textarea>
+      </div>
+      <div class="actions">
+        <button id="sendMsgBtn" class="primary">Enviar mensaje</button>
+        <span id="messageStatus" class="status"></span>
+      </div>
+    </section>
+
+    <!-- Step 5: View results -->
+    <section class="card" id="step-results">
+      <h2><span class="step-num">5</span> Ver estado y resultados</h2>
+      <div class="actions">
+        <button id="refreshBtn" class="primary">Actualizar</button>
+        <label class="checkbox inline"><input id="autoRefresh" type="checkbox" /> Auto (5s)</label>
+        <span id="resultsStatus" class="status"></span>
+      </div>
+      <div class="result-grid">
+        <div>
+          <h3>Estado</h3>
+          <div id="statusBadge" class="badge">—</div>
+        </div>
+      </div>
+      <h3>Mensajes</h3>
+      <div id="messages" class="messages"></div>
+      <h3>Salida estructurada / detalles</h3>
+      <pre id="rawOutput" class="raw"></pre>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
