@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flow &amp; Stories Generator — Deloitte</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="wordmark">Deloitte<span class="dot">.</span></span>
+        <span class="app-title">Flow &amp; Stories Generator</span>
+      </div>
+      <div class="brand-right">Diagramas de flujo e historias de usuario</div>
+    </header>
+
+    <main class="container">
+      <p class="intro">
+        Sube una transcripción (o pega el texto), escribe una instrucción y genera
+        automáticamente un <strong>diagrama de flujo</strong> y las
+        <strong>historias de usuario</strong>. Descarga el diagrama en PNG, JPEG,
+        SVG o GIF.
+      </p>
+
+      <section class="card">
+        <h2><span class="step">1</span> Entrada</h2>
+
+        <label class="field">
+          <span>Instrucción / prompt</span>
+          <textarea id="prompt" rows="3" placeholder="Ej.: Dibuja el flujo del proceso de negocio descrito y escribe las historias de usuario. Target en Appian."></textarea>
+        </label>
+
+        <div class="row">
+          <label class="field grow">
+            <span>Transcripción (fichero .docx / .txt / .md)</span>
+            <input id="fileInput" type="file" accept=".docx,.txt,.md,.csv" />
+          </label>
+          <label class="chk">
+            <input id="optFlow" type="checkbox" checked /> Diagrama
+          </label>
+          <label class="chk">
+            <input id="optStories" type="checkbox" checked /> Historias
+          </label>
+        </div>
+
+        <details class="advanced">
+          <summary>…o pega el texto de la transcripción</summary>
+          <textarea id="transcript" rows="5" placeholder="Pega aquí el texto de la transcripción (opcional si subes un fichero)."></textarea>
+        </details>
+
+        <div class="actions">
+          <button id="generateBtn" class="primary">Generar</button>
+          <span id="genStatus" class="status"></span>
+        </div>
+        <p class="hint" id="cfgHint"></p>
+      </section>
+
+      <section class="card">
+        <h2><span class="step">2</span> Diagrama de flujo</h2>
+        <div class="toolbar">
+          <div class="dl-group">
+            <span>Descargar:</span>
+            <button class="ghost" data-dl="png">PNG</button>
+            <button class="ghost" data-dl="jpeg">JPEG</button>
+            <button class="ghost" data-dl="svg">SVG</button>
+            <button class="ghost" data-dl="gif">GIF</button>
+          </div>
+          <button id="reRenderBtn" class="ghost">Re-render</button>
+        </div>
+        <div id="diagram" class="diagram">
+          <p class="placeholder">El diagrama aparecerá aquí.</p>
+        </div>
+        <details class="advanced">
+          <summary>Ver / editar Mermaid</summary>
+          <textarea id="mermaidSrc" rows="10" spellcheck="false"></textarea>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2><span class="step">3</span> Historias de usuario</h2>
+        <div class="toolbar">
+          <div class="dl-group">
+            <span>Descargar:</span>
+            <button class="ghost" data-dls="md">Markdown</button>
+            <button class="ghost" data-dls="txt">TXT</button>
+          </div>
+        </div>
+        <div id="stories" class="stories">
+          <p class="placeholder">Las historias de usuario aparecerán aquí.</p>
+        </div>
+        <textarea id="storiesSrc" rows="8" spellcheck="false" style="display:none"></textarea>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span class="wordmark small">Deloitte<span class="dot">.</span></span>
+      <span>Uso interno · Flow &amp; Stories Generator</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
