@@ -75,10 +75,23 @@
             <button class="ghost" data-dl="svg">SVG</button>
             <button class="ghost" data-dl="gif">GIF</button>
           </div>
+          <div class="dl-group">
+            <button id="copyImgBtn" class="secondary">Copiar imagen</button>
+            <button id="fullscreenBtn" class="ghost">Pantalla completa</button>
+          </div>
+          <div class="dl-group zoom-group">
+            <span>Zoom:</span>
+            <button id="zoomOutBtn" class="ghost">−</button>
+            <button id="zoomFitBtn" class="ghost">Ajustar</button>
+            <button id="zoomInBtn" class="ghost">+</button>
+          </div>
           <button id="reRenderBtn" class="ghost">Re-render</button>
+          <span id="copyStatus" class="status"></span>
         </div>
-        <div id="diagram" class="diagram">
-          <p class="placeholder">El diagrama aparecerá aquí.</p>
+        <div id="diagramWrap" class="diagram-wrap">
+          <div id="diagram" class="diagram">
+            <p class="placeholder">El diagrama aparecerá aquí.</p>
+          </div>
         </div>
         <details class="advanced">
           <summary>Ver / editar Mermaid</summary>

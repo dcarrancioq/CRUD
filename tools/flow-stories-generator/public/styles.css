@@ -123,17 +123,36 @@ button.secondary:disabled { border-color: var(--grey-300); color: var(--grey-700
 .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
 .dl-group { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--grey-700); }
 
-.diagram {
+.zoom-group button { min-width: 34px; font-weight: 700; }
+.diagram-wrap {
   border: 1px dashed var(--grey-300);
   border-radius: 6px;
-  padding: 16px;
-  overflow: auto;
   background: #fff;
+  overflow: auto;
+  max-height: 70vh;
+  resize: vertical;
+}
+.diagram {
+  padding: 16px;
   min-height: 120px;
   text-align: center;
 }
-.diagram svg { max-width: 100%; height: auto; }
+/* El zoom se aplica escalando el SVG mediante --zoom */
+.diagram svg {
+  width: calc(100% * var(--zoom, 1));
+  max-width: none;
+  height: auto;
+}
 .placeholder { color: var(--grey-700); font-style: italic; }
+
+/* Pantalla completa del diagrama */
+.diagram-wrap:fullscreen {
+  max-height: none;
+  height: 100%;
+  padding: 24px;
+  background: #fff;
+}
+.diagram-wrap:fullscreen .diagram { min-height: 100%; }
 
 .stories {
   border: 1px solid var(--grey-300);

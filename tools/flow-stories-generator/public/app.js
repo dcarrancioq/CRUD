@@ -284,6 +284,10 @@ function svgString() {
   if (!svg) return null;
   const clone = svg.cloneNode(true);
   clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  // Fija un tamaño explícito para que el rasterizado no dependa del zoom en pantalla
+  const nat = svgNaturalSize();
+  clone.setAttribute("width", Math.ceil(nat.w));
+  clone.setAttribute("height", Math.ceil(nat.h));
   return new XMLSerializer().serializeToString(clone);
 }
 
@@ -299,13 +303,31 @@ function triggerDownload(blobOrUrl, filename) {
   if (typeof blobOrUrl !== "string") setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-async function svgToCanvas(scale = 2) {
+// Tamaño natural del diagrama (viewBox del SVG), independiente del zoom en pantalla
+function svgNaturalSize() {
+  const svg = getSvgEl();
+  if (!svg) return { w: 800, h: 600 };
+  const vb = svg.viewBox && svg.viewBox.baseVal;
+  if (vb && vb.width && vb.height) return { w: vb.width, h: vb.height };
+  try {
+    const b = svg.getBBox();
+    if (b.width && b.height) return { w: b.width, h: b.height };
+  } catch {}
+  const r = svg.getBoundingClientRect();
+  return { w: r.width || 800, h: r.height || 600 };
+}
+
+// Rasteriza el SVG a un canvas de alta resolución.
+// Se garantiza al menos MIN_W px de ancho para que nunca salga pequeño.
+async function svgToCanvas(scale = 3) {
   const str = svgString();
   if (!str) throw new Error("No hay diagrama para exportar.");
-  const svg = getSvgEl();
-  const rect = svg.getBoundingClientRect();
-  const w = Math.ceil((rect.width || 800) * scale);
-  const h = Math.ceil((rect.height || 600) * scale);
+  const MIN_W = 1600;
+  const nat = svgNaturalSize();
+  let s = scale;
+  if (nat.w * s < MIN_W) s = MIN_W / nat.w;
+  const w = Math.ceil(nat.w * s);
+  const h = Math.ceil(nat.h * s);
   const img = new Image();
   const svgBlob = new Blob([str], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
@@ -335,7 +357,7 @@ async function downloadDiagram(fmt) {
       );
       return;
     }
-    const canvas = await svgToCanvas(2);
+    const canvas = await svgToCanvas(3);
     if (fmt === "png") {
       canvas.toBlob((b) => triggerDownload(b, "diagrama.png"), "image/png");
     } else if (fmt === "jpeg") {
@@ -372,6 +394,51 @@ async function downloadGif(canvas) {
 
 document.querySelectorAll("[data-dl]").forEach((btn) => {
   btn.addEventListener("click", () => downloadDiagram(btn.getAttribute("data-dl")));
+});
+
+// ---- Copiar imagen al portapapeles (alta resolución) ----
+$("copyImgBtn").addEventListener("click", async () => {
+  try {
+    if (!getSvgEl()) throw new Error("Genera primero el diagrama.");
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      throw new Error("El navegador no permite copiar imágenes; usa Descargar PNG.");
+    }
+    setStatus($("copyStatus"), "Copiando…", "busy");
+    const canvas = await svgToCanvas(3);
+    const blob = await new Promise((r) => canvas.toBlob(r, "image/png"));
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    setStatus($("copyStatus"), "Imagen copiada ✓ pégala donde quieras", "ok");
+  } catch (e) {
+    setStatus($("copyStatus"), "No se pudo copiar: " + e.message, "err");
+  }
+});
+
+// ---- Zoom en pantalla ----
+let zoom = 1;
+function applyZoom() {
+  $("diagram").style.setProperty("--zoom", String(zoom));
+}
+$("zoomInBtn").addEventListener("click", () => {
+  zoom = Math.min(zoom + 0.25, 6);
+  applyZoom();
+});
+$("zoomOutBtn").addEventListener("click", () => {
+  zoom = Math.max(zoom - 0.25, 0.25);
+  applyZoom();
+});
+$("zoomFitBtn").addEventListener("click", () => {
+  zoom = 1;
+  applyZoom();
+});
+
+// ---- Pantalla completa del diagrama ----
+$("fullscreenBtn").addEventListener("click", () => {
+  const wrap = $("diagramWrap");
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else if (wrap.requestFullscreen) {
+    wrap.requestFullscreen();
+  }
 });
 
 // ---- Descargas de historias ----
