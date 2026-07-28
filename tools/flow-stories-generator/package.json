@@ -1,0 +1,14 @@
+{
+  "name": "flow-stories-generator",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "description": "Genera diagramas de flujo e historias de usuario a partir de un prompt y una transcripcion, via la Devin API. Look & feel Deloitte.",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  }
+}
