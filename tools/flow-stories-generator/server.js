@@ -31,20 +31,18 @@ function hasValidKey(apiKey) {
   return apiKey && apiKey !== "PON_AQUI_TU_API_KEY";
 }
 
-async function devinFetch(req, endpoint, options = {}) {
-  const { baseUrl, apiKey } = getConfig(req);
-  if (!hasValidKey(apiKey)) {
-    const err = new Error(
-      "Falta la API key de Devin. Ponla en config.js o en la cabecera de la app."
-    );
-    err.status = 400;
-    throw err;
-  }
+// Raiz de la API (sin el sufijo de version): .../api/v1 -> .../api
+function apiRootFrom(baseUrl) {
+  return baseUrl.replace(/\/v\d+[a-z0-9]*$/i, "").replace(/\/+$/, "");
+}
+
+// Peticion generica a una URL absoluta de la Devin API
+async function apiFetch(url, apiKey, options = {}) {
   const headers = Object.assign(
     { Authorization: `Bearer ${apiKey}` },
     options.headers || {}
   );
-  const resp = await fetch(`${baseUrl}${endpoint}`, { ...options, headers });
+  const resp = await fetch(url, { ...options, headers });
   const text = await resp.text();
   let body;
   try {
@@ -53,6 +51,43 @@ async function devinFetch(req, endpoint, options = {}) {
     body = { raw: text };
   }
   return { status: resp.status, ok: resp.ok, body };
+}
+
+// El org_id de un service user se descubre una vez y se cachea
+const orgIdCache = new Map();
+async function resolveOrgId(apiRoot, apiKey) {
+  if (config.DEVIN_ORG_ID) return config.DEVIN_ORG_ID;
+  const cacheKey = apiRoot + "|" + apiKey;
+  if (orgIdCache.has(cacheKey)) return orgIdCache.get(cacheKey);
+  const self = await apiFetch(`${apiRoot}/v3/enterprise/self`, apiKey, {
+    method: "GET",
+  });
+  const orgId = self.ok && self.body ? self.body.org_id : null;
+  if (!orgId) {
+    const err = new Error(
+      "No se pudo obtener el org_id del service user (¿API key válida con permiso ManageOrgSessions?)."
+    );
+    err.status = self.status || 403;
+    throw err;
+  }
+  orgIdCache.set(cacheKey, orgId);
+  return orgId;
+}
+
+// Prepara el contexto v3 org-scoped a partir de la request
+async function orgContext(req) {
+  const { baseUrl, apiKey } = getConfig(req);
+  if (!hasValidKey(apiKey)) {
+    const err = new Error(
+      "Falta la API key de Devin. Ponla en config.js o en la cabecera de la app."
+    );
+    err.status = 400;
+    throw err;
+  }
+  const apiRoot = apiRootFrom(baseUrl);
+  const orgId = await resolveOrgId(apiRoot, apiKey);
+  const base = `${apiRoot}/v3/organizations/${encodeURIComponent(orgId)}`;
+  return { base, apiKey };
 }
 
 // Extrae texto plano a partir de un buffer + nombre (.docx / .txt / .md ...)
@@ -189,10 +224,11 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
     };
     const prompt = buildPrompt(req.body.prompt || "", transcript, options);
 
-    const result = await devinFetch(req, "/sessions", {
+    const { base, apiKey } = await orgContext(req);
+    const result = await apiFetch(`${base}/sessions`, apiKey, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, title: "Flow & Stories Generator" }),
     });
     send(res, result);
   } catch (e) {
@@ -203,19 +239,25 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
 // Consulta el estado de la sesion y devuelve el mermaid + historias parseados
 app.get("/api/generate/:id", async (req, res) => {
   try {
-    const result = await devinFetch(
-      req,
-      `/session/${encodeURIComponent(req.params.id)}`,
+    const { base, apiKey } = await orgContext(req);
+    const id = encodeURIComponent(req.params.id);
+
+    const detail = await apiFetch(`${base}/sessions/${id}`, apiKey, {
+      method: "GET",
+    });
+    if (!detail.ok) return send(res, detail);
+
+    const msgs = await apiFetch(
+      `${base}/sessions/${id}/messages?first=100`,
+      apiKey,
       { method: "GET" }
     );
-    if (!result.ok) return send(res, result);
-
-    const j = result.body;
-    const messages = j.messages || [];
-    const textBlobs = messages
-      .map((m) => m.message || m.content || m.text || "")
-      .filter(Boolean);
-    const combined = textBlobs.join("\n\n");
+    const items = (msgs.ok && msgs.body && msgs.body.items) || [];
+    const combined = items
+      .filter((m) => m.source === "devin")
+      .map((m) => m.message || "")
+      .filter(Boolean)
+      .join("\n\n");
 
     const mermaidMatch = combined.match(/```mermaid\s*([\s\S]*?)```/i);
     const mermaid = mermaidMatch ? mermaidMatch[1].trim() : null;
@@ -226,8 +268,9 @@ app.get("/api/generate/:id", async (req, res) => {
     );
     if (storiesMatch) stories = storiesMatch[1].trim();
 
+    const j = detail.body || {};
     res.json({
-      status: j.status_enum || j.status || "unknown",
+      status: j.status || "unknown",
       session_id: j.session_id || req.params.id,
       mermaid,
       stories,

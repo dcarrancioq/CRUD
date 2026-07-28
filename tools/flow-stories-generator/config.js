@@ -19,6 +19,10 @@ module.exports = {
   DEVIN_API_BASE_URL:
     process.env.DEVIN_API_BASE_URL || "https://deloitte-es.devinenterprise.com/api/v1",
 
+  // Opcional: si lo dejas vacio, la app descubre el org_id del service user
+  // automaticamente (GET /v3/enterprise/self). Ponlo solo si quieres forzarlo.
+  DEVIN_ORG_ID: process.env.DEVIN_ORG_ID || "",
+
   PORT: process.env.PORT || 3100,
 
   // Carpeta con transcripciones de ejemplo que la app ofrece en un desplegable

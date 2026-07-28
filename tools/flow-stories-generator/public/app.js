@@ -244,9 +244,12 @@ function startPolling() {
       const done =
         (j.mermaid || !$("optFlow").checked) &&
         (j.stories || !$("optStories").checked);
-      const finished = ["finished", "blocked", "expired", "completed"].includes(
+      // Estados terminales de la Devin API v3 (no "suspended", que solo
+      // indica que Devin está a la espera; seguimos consultando la salida).
+      const terminal = ["finished", "blocked", "expired", "completed", "exit", "error"].includes(
         String(j.status).toLowerCase()
       );
+      const timedOut = ticks >= 240; // ~20 min de guardia
 
       setStatus(
         $("genStatus"),
@@ -254,11 +257,13 @@ function startPolling() {
         done ? "ok" : "busy"
       );
 
-      if (done || finished) {
+      if (done || terminal || timedOut) {
         clearInterval(pollTimer);
         pollTimer = null;
         $("generateBtn").disabled = false;
         if (done) setStatus($("genStatus"), "Listo.", "ok");
+        else if (timedOut)
+          setStatus($("genStatus"), "Tiempo de espera agotado. Estado: " + j.status, "err");
       }
     } catch (e) {
       clearInterval(pollTimer);
