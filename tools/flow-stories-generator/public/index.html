@@ -31,9 +31,17 @@
           <textarea id="prompt" rows="3" placeholder="Ej.: Dibuja el flujo del proceso de negocio descrito y escribe las historias de usuario. Target en Appian."></textarea>
         </label>
 
-        <div class="row">
+        <div class="row" id="sampleRow" hidden>
           <label class="field grow">
-            <span>Transcripción (fichero .docx / .txt / .md)</span>
+            <span>Transcripción de ejemplo (en el servidor)</span>
+            <select id="sampleSelect"></select>
+          </label>
+          <button id="loadSampleBtn" type="button" class="secondary">Cargar</button>
+        </div>
+
+        <div class="row">
+          <label class="field grow" id="fileDrop">
+            <span>Transcripción (fichero .docx / .txt / .md) — o arrástralo aquí</span>
             <input id="fileInput" type="file" accept=".docx,.txt,.md,.csv" />
           </label>
           <label class="chk">
@@ -44,9 +52,10 @@
           </label>
         </div>
 
-        <details class="advanced">
+        <details class="advanced" id="transcriptAdv">
           <summary>…o pega el texto de la transcripción</summary>
           <textarea id="transcript" rows="5" placeholder="Pega aquí el texto de la transcripción (opcional si subes un fichero)."></textarea>
+          <p class="hint" id="loadedHint"></p>
         </details>
 
         <div class="actions">

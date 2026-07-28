@@ -109,6 +109,10 @@ button.primary:hover { background: var(--deloitte-green-dark); color: #fff; }
 button.primary:disabled { background: var(--grey-300); color: var(--grey-700); cursor: not-allowed; }
 button.ghost { background: #fff; border: 1px solid var(--grey-300); color: var(--grey-900); padding: 7px 12px; }
 button.ghost:hover { border-color: var(--deloitte-green); color: var(--deloitte-green-dark); }
+button.secondary { background: #fff; border: 1px solid var(--deloitte-green); color: var(--deloitte-green-dark); font-weight: 600; }
+button.secondary:hover { background: var(--deloitte-green); color: #000; }
+button.secondary:disabled { border-color: var(--grey-300); color: var(--grey-700); cursor: not-allowed; }
+.field.dragging { outline: 2px dashed var(--deloitte-green); outline-offset: 3px; border-radius: 6px; }
 
 .status { font-size: 0.9rem; }
 .status.ok { color: var(--deloitte-green-dark); }

@@ -42,6 +42,87 @@ async function checkHealth() {
 }
 checkHealth();
 
+// ---- Transcripciones de ejemplo (sin diálogo del sistema) ----
+async function loadSamplesList() {
+  try {
+    const r = await fetch("/api/samples");
+    const j = await r.json();
+    const samples = j.samples || [];
+    if (!samples.length) return;
+    const sel = $("sampleSelect");
+    sel.innerHTML = "";
+    for (const name of samples) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    }
+    $("sampleRow").hidden = false;
+  } catch {
+    /* sin ejemplos disponibles */
+  }
+}
+loadSamplesList();
+
+$("loadSampleBtn").addEventListener("click", async () => {
+  const name = $("sampleSelect").value;
+  if (!name) return;
+  const btn = $("loadSampleBtn");
+  btn.disabled = true;
+  btn.textContent = "Cargando…";
+  try {
+    const r = await fetch("/api/samples/" + encodeURIComponent(name));
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "No se pudo cargar el ejemplo.");
+    $("transcript").value = j.text || "";
+    $("fileInput").value = "";
+    $("transcriptAdv").open = true;
+    $("loadedHint").textContent =
+      "Transcripción cargada: " + name + " (" + (j.text || "").length + " caracteres).";
+  } catch (e) {
+    $("loadedHint").textContent = "Error: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Cargar";
+  }
+});
+
+// Feedback al elegir un fichero + soporte de arrastrar y soltar
+$("fileInput").addEventListener("change", () => {
+  const f = $("fileInput").files[0];
+  if (f) {
+    $("transcript").value = "";
+    $("loadedHint").textContent = "Fichero seleccionado: " + f.name;
+  }
+});
+
+(function enableDrop() {
+  const drop = $("fileDrop");
+  if (!drop) return;
+  ["dragover", "dragenter"].forEach((ev) =>
+    drop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      drop.classList.add("dragging");
+    })
+  );
+  ["dragleave", "drop"].forEach((ev) =>
+    drop.addEventListener(ev, (e) => {
+      e.preventDefault();
+      drop.classList.remove("dragging");
+    })
+  );
+  drop.addEventListener("drop", (e) => {
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) {
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      $("fileInput").files = dt.files;
+      $("transcript").value = "";
+      $("loadedHint").textContent = "Fichero seleccionado: " + f.name;
+    }
+  });
+})();
+
 // ---- Render Mermaid ----
 async function renderMermaid(src) {
   const container = $("diagram");
