@@ -50,7 +50,7 @@
         </div>
       </div>
       <div class="verdict-actions">
-        <button type="button" class="btn btn-dark btn-sm" (click)="prepareDevinInvestigation()">
+        <button type="button" class="btn btn-dark btn-sm" (click)="investigateWithAi()">
           Investigar con IA
         </button>
       </div>
@@ -139,10 +139,55 @@
       </div>
     </div>
 
-    <div class="detail-card" *ngIf="devinRequest">
-      <h5>Llamada a la API de Devin</h5>
-      <p class="small text-muted mb-1">POST /v3/organizations/&#123;org_id&#125;/sessions</p>
-      <pre class="devin-payload">{{ devinRequestJson }}</pre>
-    </div>
   </ng-container>
+
+  <div class="investigation-backdrop" *ngIf="investigationOpen" (click)="closeInvestigation()"></div>
+  <div class="investigation-dialog" *ngIf="investigationOpen" role="dialog" aria-modal="true">
+    <div class="investigation-head">
+      <h5 class="mb-0">Investigacion asistida por IA</h5>
+      <button type="button" class="close-dialog" aria-label="Cerrar" (click)="closeInvestigation()">&times;</button>
+    </div>
+
+    <div class="investigation-body">
+      <ng-container *ngIf="investigationState === 'launching' || investigationState === 'running'">
+        <p class="mb-2">
+          {{ investigationState === 'launching' ? 'Lanzando la investigacion...' : 'La IA esta revisando las dos facturas. Puedes cerrar esta ventana y volver mas tarde.' }}
+        </p>
+        <p class="small text-muted mb-1">Que esta comprobando:</p>
+        <ul class="investigation-plan">
+          <li *ngFor="let step of investigationPlan">{{ step }}</li>
+        </ul>
+      </ng-container>
+
+      <ng-container *ngIf="investigationState === 'done' && findings">
+        <div class="investigation-verdict">
+          <span class="investigation-verdict-text">{{ findings.verdict }}</span>
+          <span class="badge evidence-duplicate" *ngIf="findings.confidence !== undefined">
+            confianza {{ findings.confidence }}%
+          </span>
+        </div>
+
+        <h6 class="mt-3">Evidencias encontradas</h6>
+        <ul class="investigation-plan" *ngIf="findings.evidence.length">
+          <li *ngFor="let item of findings.evidence">{{ item }}</li>
+        </ul>
+        <p class="small text-muted" *ngIf="!findings.evidence.length">Sin evidencias documentadas.</p>
+
+        <h6>Accion recomendada</h6>
+        <p class="mb-2">{{ findings.recommendedAction }}</p>
+        <p class="small text-muted mb-0" *ngIf="findings.notes">{{ findings.notes }}</p>
+        <p class="small text-muted mt-3 mb-0">
+          La decision final (liberar o bloquear el pago) sigue siendo del aprobador humano.
+        </p>
+      </ng-container>
+
+      <p class="mb-0" *ngIf="investigationMessage && !findings">{{ investigationMessage }}</p>
+    </div>
+
+    <div class="investigation-foot">
+      <a class="btn btn-outline-primary btn-sm" *ngIf="investigationSessionUrl"
+         [href]="investigationSessionUrl" target="_blank" rel="noopener">Ver detalle de la sesion</a>
+      <button type="button" class="btn btn-primary btn-sm" (click)="closeInvestigation()">Cerrar</button>
+    </div>
+  </div>
 </div>
