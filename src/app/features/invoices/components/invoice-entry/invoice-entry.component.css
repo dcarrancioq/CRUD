@@ -1,13 +1,11 @@
-.invoice-entry {
-  padding: 1.5rem;
-}
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--vwfs-border);
 }
 
 .header-actions {
@@ -16,10 +14,7 @@
 }
 
 .form-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 1.25rem;
+  padding: 1.5rem;
   margin-bottom: 1.25rem;
 }
 
@@ -30,7 +25,7 @@
 }
 
 .line-row {
-  border-top: 1px solid #f1f3f5;
+  border-top: 1px solid var(--vwfs-border);
   padding-top: 0.75rem;
   margin-top: 0.75rem;
 }
@@ -49,67 +44,68 @@
 }
 
 .totals-row.total {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--vwfs-border);
+  color: var(--vwfs-text-strong);
+  font-weight: 700;
   font-size: 1.1rem;
   padding-top: 0.6rem;
 }
 
 .risk-score {
   font-size: 1.2rem;
-  font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
+  font-weight: 700;
+  padding: 0.6rem 0.85rem;
   margin-bottom: 0.5rem;
 }
 
 .risk-low {
-  background: #e6f4ea;
-  color: #1b5e20;
+  background: var(--vwfs-accent);
+  color: var(--vwfs-primary);
 }
 
 .risk-medium {
-  background: #fff8e1;
-  color: #7f5d00;
+  background: #e6eef2;
+  color: var(--vwfs-primary);
 }
 
 .risk-high {
-  background: #fdecea;
-  color: #8a1c12;
+  background: #fff1d6;
+  color: #8a5a00;
 }
 
 .risk-critical {
-  background: #8a1c12;
+  background: var(--vwfs-danger);
   color: #fff;
 }
 
 .exception {
-  border-left: 4px solid #adb5bd;
-  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--vwfs-border);
+  padding: 0.6rem 0.85rem;
   margin-bottom: 0.75rem;
-  background: #f8f9fa;
+  background: var(--vwfs-surface);
 }
 
 .exception.sev-medium {
-  border-left-color: #f0ad4e;
+  border-left-color: var(--vwfs-accent-dark);
 }
 
 .exception.sev-high {
-  border-left-color: #d9534f;
+  border-left-color: var(--vwfs-warning);
 }
 
 .exception.sev-critical {
-  border-left-color: #8a1c12;
+  border-left-color: var(--vwfs-danger);
 }
 
 .exception-title {
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--vwfs-text-strong);
 }
 
 .devin-payload {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--vwfs-primary-dark);
+  color: #dff6fa;
   padding: 0.75rem;
-  border-radius: 4px;
   font-size: 0.72rem;
   max-height: 320px;
   overflow: auto;

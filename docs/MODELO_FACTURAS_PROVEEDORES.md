@@ -16,6 +16,12 @@ Angular (8081)  ->  NestJS /api (8080)  ->  PostgreSQL
                           +->  api.devin.ai (token solo en servidor)
 ```
 
+La gestion de facturas es una **aplicacion independiente** de la tienda e-commerce del repositorio: shell
+propio (`src/app/layouts/invoice-layout/`) sin la cabecera ni el pie del e-commerce, ruta raiz `/invoices`
+fuera de `MainLayoutComponent`, y look & feel corporativo tipo Volkswagen Financial Services
+(`src/styles/vwfs-theme.css`, acotado a `.vwfs-app`): azul `#004666`, cian `#66e4ee`, texto `#4c5356`, fondo
+`#f2f2f2`, esquinas rectas y botones en mayusculas.
+
 | Pieza | Fichero |
 | --- | --- |
 | Entidades del modelo (maestros) | `backend/src/modules/master-data/entities/` |
@@ -28,6 +34,7 @@ Angular (8081)  ->  NestJS /api (8080)  ->  PostgreSQL
 | Datos de ejemplo | `backend/src/seed.ts` |
 | Tipos compartidos con el API | `src/app/core/models/invoice.model.ts` |
 | Clientes HTTP | `src/app/core/services/invoice.service.ts`, `procurement-master-data.service.ts`, `devin-api.service.ts` |
+| Shell y tema de la aplicacion | `src/app/layouts/invoice-layout/`, `src/styles/vwfs-theme.css` |
 | Pantalla A (alta de factura) | `src/app/features/invoices/components/invoice-entry/` |
 | Pantalla B (comparativa) | `src/app/features/invoices/components/invoice-compare/` |
 | Bandeja de excepciones (entrada) | `src/app/features/invoices/components/invoice-list/` |

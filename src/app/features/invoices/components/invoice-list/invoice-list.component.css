@@ -1,13 +1,11 @@
-.invoice-list {
-  padding: 1.5rem;
-}
-
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--vwfs-border);
 }
 
 .header-actions {
@@ -24,28 +22,19 @@
 
 .kpi {
   flex: 1 1 160px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 0.85rem 1rem;
+  padding: 1rem 1.15rem;
   display: flex;
   flex-direction: column;
+  border-top: 3px solid var(--vwfs-accent) !important;
 }
 
 .kpi-value {
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
 .kpi-label {
-  font-size: 0.78rem;
-  color: #6c757d;
-}
-
-.card-surface {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  font-size: 0.72rem;
 }
 
 .exceptions-cell {
@@ -57,7 +46,7 @@
   justify-content: space-between;
   gap: 0.5rem;
   padding: 0.35rem 0;
-  border-bottom: 1px dashed #e9ecef;
+  border-bottom: 1px dashed var(--vwfs-border);
 }
 
 .exception-item:last-child {
@@ -70,51 +59,10 @@
   align-items: flex-start;
 }
 
-.badge.status-blocked {
-  background: #8a1c12;
-  color: #fff;
-}
-
-.badge.status-under_review {
-  background: #fff3cd;
-  color: #7f5d00;
-}
-
-.badge.status-approved {
-  background: #d4edda;
-  color: #155724;
-}
-
-.badge.status-registered {
-  background: #e2e3e5;
-  color: #383d41;
-}
-
-.badge.risk-low {
-  background: #d4edda;
-  color: #155724;
-}
-
-.badge.risk-medium {
-  background: #fff3cd;
-  color: #7f5d00;
-}
-
-.badge.risk-high {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.badge.risk-critical {
-  background: #8a1c12;
-  color: #fff;
-}
-
 .devin-payload {
-  background: #0f172a;
-  color: #e2e8f0;
+  background: var(--vwfs-primary-dark);
+  color: #dff6fa;
   padding: 0.75rem;
-  border-radius: 4px;
   font-size: 0.72rem;
   max-height: 360px;
   overflow: auto;
