@@ -11,6 +11,7 @@ import {
   SupplierBankAccount,
   ToleranceProfile
 } from '../../../../core/models/invoice.model';
+import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { DevinApiService, DevinSessionRequest } from '../../../../core/services/devin-api.service';
 import { InvoiceService } from '../../../../core/services/invoice.service';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -91,6 +92,43 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   get supplierAccounts(): SupplierBankAccount[] {
     return this.selectedSupplier?.bankAccounts ?? [];
   }
+
+  get supplierOptions(): SearchableOption[] {
+    return this.suppliers.map(supplier => ({
+      value: supplier.id,
+      label: supplier.legalName,
+      hint: `${supplier.taxId} | ${supplier.defaultCategoryCode ?? 'sin categoria'}`
+    }));
+  }
+
+  get categoryOptions(): SearchableOption[] {
+    return this.categories.map(category => ({
+      value: category.code,
+      label: category.name,
+      hint: category.code
+    }));
+  }
+
+  readonly currencyOptions: SearchableOption[] = [
+    { value: 'EUR', label: 'EUR' },
+    { value: 'USD', label: 'USD' },
+    { value: 'GBP', label: 'GBP' }
+  ];
+
+  readonly paymentMethodOptions: SearchableOption[] = [
+    { value: 'transfer', label: 'Transferencia' },
+    { value: 'direct_debit', label: 'Domiciliacion' },
+    { value: 'card', label: 'Tarjeta' },
+    { value: 'check', label: 'Cheque' }
+  ];
+
+  readonly sourceOptions: SearchableOption[] = [
+    { value: 'manual', label: 'Manual' },
+    { value: 'ocr', label: 'OCR' },
+    { value: 'edi', label: 'EDI' },
+    { value: 'email', label: 'Correo' },
+    { value: 'supplier_portal', label: 'Portal proveedor' }
+  ];
 
   get computedSubtotal(): number {
     return this.round(

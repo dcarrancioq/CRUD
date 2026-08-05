@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, interval } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { Invoice, InvoiceComparison, InvoiceComparisonField } from '../../../../core/models/invoice.model';
+import { Subject, Subscription, interval } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { InvoiceComparison, InvoiceComparisonField } from '../../../../core/models/invoice.model';
+import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { DevinApiService, DevinSessionStatus } from '../../../../core/services/devin-api.service';
-import { InvoiceService } from '../../../../core/services/invoice.service';
+import { InvoiceOption, InvoiceService } from '../../../../core/services/invoice.service';
 
 type InvestigationState = 'launching' | 'running' | 'done' | 'unavailable' | 'error';
 
@@ -35,7 +36,7 @@ const ACTION_LABELS: Record<string, string> = {
   styleUrls: ['./invoice-compare.component.css']
 })
 export class InvoiceCompareComponent implements OnInit, OnDestroy {
-  invoices: Invoice[] = [];
+  invoiceOptions: SearchableOption[] = [];
   leftId = '';
   rightId = '';
   comparison?: InvoiceComparison;
@@ -49,6 +50,8 @@ export class InvoiceCompareComponent implements OnInit, OnDestroy {
   findings?: InvestigationFindings;
 
   private pollSubscription?: Subscription;
+  private readonly searchTerm = new Subject<string>();
+  private readonly knownOptions = new Map<string, SearchableOption>();
 
   constructor(
     private invoiceService: InvoiceService,
@@ -59,20 +62,32 @@ export class InvoiceCompareComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
 
-    this.invoiceService.invoices$.subscribe(invoices => {
-      this.invoices = invoices;
-      if (!this.leftId && invoices.length) {
-        this.leftId = params['left'] ?? invoices[0].id;
-        this.rightId = params['right'] ?? (invoices.length > 1 ? invoices[1].id : invoices[0].id);
+    // Con miles de facturas el desplegable no las carga todas: busca en el backend
+    // segun el texto que escribe el usuario.
+    this.searchTerm
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(term => this.invoiceService.getOptions(term))
+      )
+      .subscribe(options => this.applyOptions(options));
+
+    this.invoiceService.getOptions().subscribe(options => {
+      if (!this.leftId && options.length) {
+        this.leftId = params['left'] ?? options[0].id;
+        this.rightId = params['right'] ?? (options.length > 1 ? options[1].id : options[0].id);
         this.compare();
       }
+      this.applyOptions(options);
     });
-
-    this.invoiceService.refresh().subscribe();
   }
 
   ngOnDestroy(): void {
     this.pollSubscription?.unsubscribe();
+  }
+
+  onInvoiceSearch(term: string): void {
+    this.searchTerm.next(term);
   }
 
   compare(): void {
@@ -168,8 +183,25 @@ export class InvoiceCompareComponent implements OnInit, OnDestroy {
     this.investigationOpen = false;
   }
 
-  invoiceLabel(invoice: Invoice): string {
-    return `${invoice.invoiceNumber} - ${invoice.supplierName} (${invoice.totalAmount} ${invoice.currency})`;
+  /**
+   * Las opciones que ya estan seleccionadas se conservan aunque dejen de cumplir el
+   * filtro, para que el desplegable siga mostrando la factura elegida.
+   */
+  private applyOptions(options: InvoiceOption[]): void {
+    options.forEach(option => this.knownOptions.set(option.id, this.toOption(option)));
+    const selected = [this.leftId, this.rightId]
+      .filter(id => id && !options.some(option => option.id === id))
+      .map(id => this.knownOptions.get(id))
+      .filter((option): option is SearchableOption => !!option);
+    this.invoiceOptions = [...selected, ...options.map(option => this.toOption(option))];
+  }
+
+  private toOption(invoice: InvoiceOption): SearchableOption {
+    return {
+      value: invoice.id,
+      label: `${invoice.invoiceNumber} - ${invoice.supplierName}`,
+      hint: `${invoice.issueDate} | ${invoice.totalAmount} ${invoice.currency}`
+    };
   }
 
   private pollSession(sessionId: string): void {

@@ -60,7 +60,9 @@ cd .. && npm start -- --port 8081
 
 | Operacion | Endpoint |
 | --- | --- |
-| Listado / detalle | `GET /api/invoices`, `GET /api/invoices/:id` |
+| Listado / detalle | `GET /api/invoices?supplierId=&limit=`, `GET /api/invoices/:id` |
+| Totales agregados de la bandeja | `GET /api/invoices/summary` |
+| Opciones ligeras para desplegables con busqueda | `GET /api/invoices/options?search=&limit=` |
 | Evaluacion sin registrar (panel en vivo del alta) | `POST /api/invoices/preview` |
 | Registro de factura | `POST /api/invoices` |
 | Excepciones abiertas | `GET /api/invoices/exceptions` |
@@ -69,6 +71,8 @@ cd .. && npm start -- --port 8081
 | Consolidacion | `GET /api/invoices/consolidation-opportunities` |
 | Investigacion con Devin de una excepcion | `POST /api/invoices/:invoiceId/exceptions/:exceptionId/devin-session` |
 | Maestros | `GET /api/master-data/{categories,suppliers,contracts,purchase-orders,tolerance-profile}` |
+| Presupuestos de proveedor | `GET /api/master-data/budgets`, `GET /api/master-data/budget-years`, `GET /api/master-data/suppliers/:id/budgets` |
+| Informe por proveedor y ejercicio | `GET /api/reports/suppliers/:supplierId?year=`, `GET /api/reports/years` |
 | Proxy Devin | `GET/POST /api/integrations/devin/...` |
 
 ---
@@ -84,6 +88,8 @@ erDiagram
   SUPPLIER ||--o{ CONTRACT : "contratos"
   SUPPLIER ||--o{ PURCHASE_ORDER : "pedidos"
   SUPPLIER ||--o{ INVOICE : "facturas"
+  SUPPLIER ||--o{ SUPPLIER_BUDGET : "presupuesto por ejercicio"
+  SUPPLIER_BUDGET ||--o{ INVOICE : "consumido por ejercicio"
   CONTRACT ||--o{ CONTRACT_PRICE : "tarifa"
   PURCHASE_ORDER ||--o{ PURCHASE_ORDER_LINE : ""
   PURCHASE_ORDER ||--o{ GOODS_RECEIPT : "recepciones"
@@ -111,6 +117,10 @@ erDiagram
   verificacion. El pago solo deberia liberarse contra cuentas verificadas.
 - `BankAccountChange`: log inmutable de cambios de cuenta (quien, cuando, por que canal, si se verifico).
   Es la entidad clave para detectar el fraude del "cambio de cuenta del proveedor".
+- `SupplierBudget`: presupuesto asignado al proveedor **por ejercicio** (`supplierId` + `fiscalYear` unico),
+  con divisa, categoria de referencia, umbral de aviso (`alertThresholdPercent`) y responsable. Cada factura
+  consume el presupuesto del ejercicio de su fecha de emision: el consumo no se guarda duplicado, se agrega
+  desde `Invoice` para que no pueda desincronizarse del dato real.
 
 **Compromisos y referencia de precio**
 
@@ -200,11 +210,36 @@ condiciones.
 
 ### 2.2 Pantalla B - Comparativa de dos facturas (`/invoices/compare`)
 
-- Dos desplegables sobre el listado de facturas, con intercambio y filtro "solo diferencias".
+- Dos desplegables buscables sobre el registro de facturas (busqueda en servidor por numero, proveedor o
+  NIF), con intercambio y filtro "solo diferencias".
 - Veredicto de duplicado con score ponderado y campos coincidentes.
 - Tabla campo a campo con delta absoluto y porcentual, marcando cada campo como senal de duplicado,
   senal antifraude o informativo; resaltado especifico de cambios de IBAN, titular y divisa.
-- Detalle de lineas y excepciones de cada factura, y boton para preparar la investigacion con Devin.
+- Detalle de lineas y excepciones de cada factura, y boton "Investigar con IA" que abre un pop-up con la
+  conclusion en lenguaje natural (veredicto, evidencias y accion propuesta), sin exponer el payload tecnico.
+
+### 2.3 Pantalla C - Informe por proveedor (`/invoices/report`)
+
+- Desplegable de proveedor con busqueda incremental, desplegable de ejercicio y boton "Mostrar informe":
+  el informe solo se solicita al pulsarlo.
+- Consumido vs presupuesto: importe asignado, consumido, disponible, porcentaje, desviacion y proyeccion
+  lineal a cierre de ejercicio, con barra de consumo y umbral de aviso.
+- Alertas por presupuesto, proyeccion, pagos bloqueados, excepciones abiertas, duplicados y cambios de IBAN.
+- Seguimiento del proveedor: importe medio y maximo, dias de pago reales frente a los contratados, riesgo
+  medio, tasa de excepcion, facturas sin pedido y variacion frente al ejercicio anterior.
+- Evolucion mensual (gasto, acumulado y presupuesto acumulado), desviaciones, gasto por categoria y ultimas
+  facturas del ejercicio con su estado, riesgo y excepciones.
+
+Todos los desplegables de la aplicacion usan el mismo componente `app-searchable-select`: el usuario escribe
+y la lista se reduce (filtrado local en listas cerradas, busqueda en servidor para el registro de facturas).
+
+### 2.4 Datos sinteticos
+
+`npm run seed` (en `backend/`) carga el maestro de demostracion y ademas genera un volumen realista
+determinista: 50 proveedores adicionales x 100 facturas (mas de 5.000 facturas), sus pedidos de compra,
+presupuestos de 2024, 2025 y 2026 y una proporcion controlada de anomalias (reenvios duplicados, gasto sin
+pedido, descuadres de totales, importes redondeados atipicos y cambios de IBAN) para que el motor de
+excepciones y el informe tengan casos reales que mostrar.
 
 ---
 

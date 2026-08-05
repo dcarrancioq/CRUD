@@ -12,6 +12,7 @@ import { PriceDisplayComponent } from './components/price-display/price-display.
 import { EmptyStateComponent } from './components/empty-state/empty-state.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
+import { SearchableSelectComponent } from './components/searchable-select/searchable-select.component';
 
 import { CurrencyFormatPipe } from './pipes/currency-format.pipe';
 import { TruncatePipe } from './pipes/truncate.pipe';
@@ -28,6 +29,7 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     EmptyStateComponent,
     ConfirmDialogComponent,
     BreadcrumbComponent,
+    SearchableSelectComponent,
     CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe
@@ -52,6 +54,7 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     EmptyStateComponent,
     ConfirmDialogComponent,
     BreadcrumbComponent,
+    SearchableSelectComponent,
     CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe

@@ -4,6 +4,7 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MasterDataModule } from './modules/master-data/master-data.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { DevinModule } from './modules/devin/devin.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { DevinModule } from './modules/devin/devin.module';
     }),
     MasterDataModule,
     InvoicesModule,
+    ReportsModule,
     DevinModule,
   ],
 })

@@ -1,0 +1,146 @@
+.searchable-select {
+  position: relative;
+}
+
+.ss-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  min-height: 38px;
+  background: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 0;
+  color: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.is-sm .ss-trigger {
+  min-height: 31px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
+
+.ss-trigger:focus {
+  outline: none;
+  border-color: #66e4ee;
+  box-shadow: 0 0 0 2px rgba(102, 228, 238, 0.35);
+}
+
+.ss-trigger.is-invalid {
+  border-color: #b3132b;
+}
+
+.ss-trigger:disabled {
+  background: #f2f2f2;
+  cursor: not-allowed;
+}
+
+.ss-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ss-placeholder {
+  color: #6a7276;
+}
+
+.ss-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ss-clear {
+  color: #6a7276;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.ss-caret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #004666;
+}
+
+.is-open .ss-caret {
+  transform: rotate(180deg);
+}
+
+.ss-panel {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  z-index: 1030;
+  background: #fff;
+  border: 1px solid #dfdfdf;
+  box-shadow: 0 10px 24px rgba(0, 48, 73, 0.18);
+}
+
+.ss-search {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-bottom: 1px solid #dfdfdf;
+  font-size: 0.9rem;
+}
+
+.ss-search:focus {
+  outline: none;
+  border-bottom-color: #66e4ee;
+}
+
+.ss-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.ss-option {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.ss-option:hover {
+  background: #e6eef2;
+}
+
+.ss-option.is-selected {
+  background: #004666;
+  color: #fff;
+}
+
+.ss-option-hint {
+  font-size: 0.75rem;
+  color: #6a7276;
+}
+
+.ss-option.is-selected .ss-option-hint {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.ss-empty,
+.ss-count {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #6a7276;
+}
+
+.ss-count {
+  border-top: 1px solid #f2f2f2;
+  background: #f8f9fa;
+}

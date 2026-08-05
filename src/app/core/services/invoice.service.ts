@@ -10,6 +10,24 @@ import {
   InvoiceException
 } from '../models/invoice.model';
 
+export interface InvoiceSummary {
+  invoiceCount: number;
+  totalSpend: number;
+  blockedCount: number;
+  openExceptions: number;
+  autoApprovedPercent: number;
+}
+
+/** Opcion ligera de factura para los desplegables con busqueda. */
+export interface InvoiceOption {
+  id: string;
+  invoiceNumber: string;
+  supplierName: string;
+  totalAmount: number;
+  currency: string;
+  issueDate: string;
+}
+
 /**
  * Cliente del API de facturas. Toda la logica de clasificacion, tolerancias,
  * duplicados y riesgo vive en el backend (NestJS + PostgreSQL): el navegador
@@ -41,11 +59,31 @@ export class InvoiceService {
       .filter(exception => exception.status === 'open' || exception.status === 'in_review');
   }
 
-  /** Carga (o recarga) el listado y lo publica en `invoices$`. */
-  refresh(): Observable<Invoice[]> {
+  /** Carga (o recarga) una ventana del listado y la publica en `invoices$`. */
+  refresh(filter: { supplierId?: string; limit?: number } = {}): Observable<Invoice[]> {
+    let params = new HttpParams();
+    if (filter.supplierId) {
+      params = params.set('supplierId', filter.supplierId);
+    }
+    if (filter.limit) {
+      params = params.set('limit', filter.limit);
+    }
     return this.http
-      .get<Invoice[]>(this.baseUrl)
+      .get<Invoice[]>(this.baseUrl, { params })
       .pipe(tap(invoices => this.invoicesSubject.next(invoices)));
+  }
+
+  /** Totales calculados en base de datos, independientes de la ventana cargada. */
+  getSummary(): Observable<InvoiceSummary> {
+    return this.http.get<InvoiceSummary>(`${this.baseUrl}/summary`);
+  }
+
+  getOptions(search?: string, limit = 50): Observable<InvoiceOption[]> {
+    let params = new HttpParams().set('limit', limit);
+    if (search) {
+      params = params.set('search', search);
+    }
+    return this.http.get<InvoiceOption[]>(`${this.baseUrl}/options`, { params });
   }
 
   getConsolidationOpportunities(): Observable<ConsolidationOpportunity[]> {

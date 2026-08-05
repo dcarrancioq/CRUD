@@ -7,6 +7,7 @@ import { SupplierBankAccount } from './entities/supplier-bank-account.entity';
 import { BankAccountChange } from './entities/bank-account-change.entity';
 import { Contract } from './entities/contract.entity';
 import { PurchaseOrder } from './entities/purchase-order.entity';
+import { SupplierBudget } from './entities/supplier-budget.entity';
 import { ToleranceProfile } from './entities/tolerance-profile.entity';
 
 export const DEFAULT_TOLERANCE_PROFILE_ID = 'tol-default';
@@ -20,6 +21,7 @@ export class MasterDataService {
     @InjectRepository(BankAccountChange) private bankAccountChanges: Repository<BankAccountChange>,
     @InjectRepository(Contract) private contracts: Repository<Contract>,
     @InjectRepository(PurchaseOrder) private purchaseOrders: Repository<PurchaseOrder>,
+    @InjectRepository(SupplierBudget) private budgets: Repository<SupplierBudget>,
     @InjectRepository(ToleranceProfile) private toleranceProfiles: Repository<ToleranceProfile>,
   ) {}
 
@@ -45,6 +47,26 @@ export class MasterDataService {
       throw new NotFoundException(`Proveedor ${id} no encontrado en el maestro`);
     }
     return supplier;
+  }
+
+  findBudgets(supplierId?: string): Promise<SupplierBudget[]> {
+    return this.budgets.find({
+      where: supplierId ? { supplierId } : {},
+      order: { fiscalYear: 'DESC' },
+    });
+  }
+
+  findBudget(supplierId: string, fiscalYear: number): Promise<SupplierBudget | null> {
+    return this.budgets.findOne({ where: { supplierId, fiscalYear } });
+  }
+
+  async findBudgetYears(): Promise<number[]> {
+    const rows = await this.budgets
+      .createQueryBuilder('budget')
+      .select('DISTINCT budget.fiscal_year', 'year')
+      .orderBy('year', 'DESC')
+      .getRawMany<{ year: number }>();
+    return rows.map((row) => Number(row.year));
   }
 
   findContracts(): Promise<Contract[]> {

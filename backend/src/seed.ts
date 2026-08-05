@@ -7,8 +7,14 @@ import { BankAccountChange } from './modules/master-data/entities/bank-account-c
 import { Contract } from './modules/master-data/entities/contract.entity';
 import { PurchaseOrder } from './modules/master-data/entities/purchase-order.entity';
 import { ToleranceProfile } from './modules/master-data/entities/tolerance-profile.entity';
+import { SupplierBudget } from './modules/master-data/entities/supplier-budget.entity';
 import { CreateInvoiceDto } from './modules/invoices/dto/create-invoice.dto';
 import { InvoicesService } from './modules/invoices/services/invoices.service';
+import {
+  SYNTHETIC_INVOICES_PER_SUPPLIER,
+  SYNTHETIC_SUPPLIER_COUNT,
+  buildSyntheticDataset,
+} from './synthetic-data';
 
 const categories: DeepPartial<SpendCategory>[] = [
   {
@@ -570,7 +576,8 @@ async function seed() {
   await dataSource.query(
     'TRUNCATE TABLE audit_events, duplicate_candidates, invoice_exceptions, invoice_lines, invoices, ' +
       'tolerance_rules, tolerance_profiles, purchase_order_lines, purchase_orders, contract_prices, ' +
-      'contracts, bank_account_changes, supplier_bank_accounts, suppliers, spend_categories CASCADE',
+      'contracts, bank_account_changes, supplier_bank_accounts, supplier_budgets, suppliers, ' +
+      'spend_categories CASCADE',
   );
 
   await dataSource.getRepository(SpendCategory).save(categories);
@@ -589,8 +596,61 @@ async function seed() {
     );
   }
 
+  const budgets: DeepPartial<SupplierBudget>[] = suppliers.flatMap((supplier, index) =>
+    [2024, 2025, 2026].map((year) => ({
+      id: `bud-${supplier.id}-${year}`,
+      supplierId: supplier.id,
+      fiscalYear: year,
+      budgetAmount: [180000, 420000, 260000, 320000][index % 4],
+      currency: 'EUR',
+      categoryCode: supplier.defaultCategoryCode,
+      alertThresholdPercent: 85,
+      ownerEmail: 'categoria.it@empresa.example',
+      notes: `Presupuesto ${year} de la categoria ${supplier.defaultCategoryCode}`,
+    })),
+  );
+  await dataSource.getRepository(SupplierBudget).save(budgets);
+
+  await seedSyntheticVolume(dataSource, invoicesService, suppliers.length);
+
   await app.close();
   console.log('Seed completado');
+}
+
+/**
+ * Volumen sintetico para trabajar con datos realistas: 50 proveedores adicionales,
+ * presupuesto por ejercicio y 100 facturas por proveedor evaluadas con el mismo motor
+ * de tolerancias que el alta manual (persistidas por lotes para que sea viable).
+ */
+async function seedSyntheticVolume(
+  dataSource: DataSource,
+  invoicesService: InvoicesService,
+  existingSupplierCount: number,
+): Promise<void> {
+  const dataset = buildSyntheticDataset(existingSupplierCount);
+
+  await dataSource.getRepository(Supplier).save(dataset.suppliers, { chunk: 25 });
+  await dataSource.getRepository(BankAccountChange).save(dataset.bankAccountChanges, { chunk: 25 });
+  await dataSource.getRepository(SupplierBudget).save(dataset.budgets, { chunk: 50 });
+  await dataSource.getRepository(PurchaseOrder).save(dataset.purchaseOrders, { chunk: 50 });
+
+  console.log(
+    `Generando ${SYNTHETIC_SUPPLIER_COUNT} proveedores x ${SYNTHETIC_INVOICES_PER_SUPPLIER} facturas...`,
+  );
+
+  let processed = 0;
+  for (const group of dataset.invoicesBySupplier) {
+    for (let index = 0; index < group.invoices.length; index += 20) {
+      const batch = group.invoices.slice(index, index + 20);
+      const prepared = [];
+      for (const dto of batch) {
+        prepared.push(await invoicesService.prepare(dto));
+      }
+      await invoicesService.saveMany(prepared);
+      processed += prepared.length;
+    }
+    console.log(`${group.supplierId}: ${processed} facturas generadas en total`);
+  }
 }
 
 seed().catch((error) => {

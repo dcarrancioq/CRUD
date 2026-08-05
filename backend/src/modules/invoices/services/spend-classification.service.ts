@@ -6,6 +6,9 @@ import { Invoice } from '../entities/invoice.entity';
 import { ConsolidationOpportunity, SpendClassificationResult } from '../invoice.types';
 import { normalizeText, round } from '../invoice.utils';
 
+/** Proyeccion minima de factura necesaria para agregar gasto por categoria. */
+export type SpendRow = Pick<Invoice, 'categoryCode' | 'supplierId' | 'supplierName' | 'totalAmount'>;
+
 interface CategoryScore {
   category: SpendCategory;
   score: number;
@@ -102,10 +105,10 @@ export class SpendClassificationService {
   }
 
   findConsolidationOpportunities(
-    invoices: Invoice[],
+    invoices: SpendRow[],
     categories: SpendCategory[],
   ): ConsolidationOpportunity[] {
-    const byCategory = new Map<string, Invoice[]>();
+    const byCategory = new Map<string, SpendRow[]>();
     invoices.forEach((invoice) => {
       byCategory.set(invoice.categoryCode, [...(byCategory.get(invoice.categoryCode) ?? []), invoice]);
     });

@@ -11,9 +11,33 @@ import { ConsolidationOpportunity } from '../invoice.types';
 import { generateId, normalizeIban, round } from '../invoice.utils';
 import { EvaluationContext, InvoiceAnomalyService } from './invoice-anomaly.service';
 import { InvoiceComparison, InvoiceComparisonService } from './invoice-comparison.service';
-import { SpendClassificationService } from './spend-classification.service';
+import { SpendClassificationService, SpendRow } from './spend-classification.service';
 
 const PREVIEW_INVOICE_ID = 'preview';
+const DEFAULT_PAGE_SIZE = 200;
+const MAX_PAGE_SIZE = 1000;
+
+export interface InvoiceListFilter {
+  supplierId?: string;
+  limit?: number;
+}
+
+export interface InvoiceSummary {
+  invoiceCount: number;
+  totalSpend: number;
+  blockedCount: number;
+  openExceptions: number;
+  autoApprovedPercent: number;
+}
+
+export interface InvoiceOption {
+  id: string;
+  invoiceNumber: string;
+  supplierName: string;
+  totalAmount: number;
+  currency: string;
+  issueDate: string;
+}
 
 @Injectable()
 export class InvoicesService {
@@ -27,8 +51,83 @@ export class InvoicesService {
     private readonly comparison: InvoiceComparisonService,
   ) {}
 
-  findAll(): Promise<Invoice[]> {
-    return this.invoices.find({ order: { createdAt: 'ASC' } });
+  /**
+   * Listado paginado: con volumenes reales (miles de facturas) la bandeja trabaja
+   * siempre sobre una ventana acotada y los totales se calculan en base de datos.
+   */
+  findAll(filter: InvoiceListFilter = {}): Promise<Invoice[]> {
+    const limit = Math.min(filter.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
+    return this.invoices.find({
+      where: filter.supplierId ? { supplierId: filter.supplierId } : {},
+      order: { issueDate: 'DESC', createdAt: 'DESC' },
+      take: limit,
+    });
+  }
+
+  /** Historico del proveedor: base de la deteccion de duplicados y de los outliers. */
+  findSupplierHistory(supplierId: string): Promise<Invoice[]> {
+    return this.invoices.find({ where: { supplierId }, order: { issueDate: 'DESC' } });
+  }
+
+  async summary(): Promise<InvoiceSummary> {
+    const totals = await this.invoices
+      .createQueryBuilder('invoice')
+      .select('COUNT(*)::int', 'invoiceCount')
+      .addSelect('COALESCE(SUM(invoice.total_amount), 0)', 'totalSpend')
+      .addSelect("COUNT(*) FILTER (WHERE invoice.status = 'blocked')::int", 'blockedCount')
+      .getRawOne<{ invoiceCount: number; totalSpend: string; blockedCount: number }>();
+
+    const openExceptions = await this.exceptions
+      .createQueryBuilder('exception')
+      .where("exception.status IN ('open', 'in_review')")
+      .getCount();
+
+    const withExceptions = await this.exceptions
+      .createQueryBuilder('exception')
+      .select('COUNT(DISTINCT exception.invoice_id)::int', 'total')
+      .getRawOne<{ total: number }>();
+
+    const invoiceCount = Number(totals?.invoiceCount ?? 0);
+    const clean = invoiceCount - Number(withExceptions?.total ?? 0);
+
+    return {
+      invoiceCount,
+      totalSpend: round(Number(totals?.totalSpend ?? 0)),
+      blockedCount: Number(totals?.blockedCount ?? 0),
+      openExceptions,
+      autoApprovedPercent: invoiceCount ? Math.round((clean / invoiceCount) * 100) : 0,
+    };
+  }
+
+  /** Opciones ligeras para los desplegables con busqueda (comparativa de facturas). */
+  async findOptions(search?: string, limit = 50): Promise<InvoiceOption[]> {
+    const query = this.invoices
+      .createQueryBuilder('invoice')
+      .select([
+        'invoice.id AS id',
+        'invoice.invoice_number AS "invoiceNumber"',
+        'invoice.supplier_name AS "supplierName"',
+        'invoice.total_amount AS "totalAmount"',
+        'invoice.currency AS currency',
+        'invoice.issue_date AS "issueDate"',
+      ])
+      .orderBy('invoice.issue_date', 'DESC')
+      .take(Math.min(limit, 200));
+
+    const term = (search ?? '').trim();
+    if (term) {
+      query.where(
+        '(invoice.invoice_number ILIKE :term OR invoice.supplier_name ILIKE :term OR invoice.supplier_tax_id ILIKE :term)',
+        { term: `%${term}%` },
+      );
+    }
+
+    const rows = await query.getRawMany<InvoiceOption>();
+    return rows.map((row) => ({
+      ...row,
+      totalAmount: Number(row.totalAmount),
+      issueDate: new Date(row.issueDate).toISOString().slice(0, 10),
+    }));
   }
 
   async findOne(id: string): Promise<Invoice> {
@@ -39,11 +138,12 @@ export class InvoicesService {
     return invoice;
   }
 
-  async findOpenExceptions(): Promise<InvoiceException[]> {
-    const invoices = await this.findAll();
-    return invoices
-      .flatMap((invoice) => invoice.exceptions ?? [])
-      .filter((exception) => exception.status === 'open' || exception.status === 'in_review');
+  findOpenExceptions(): Promise<InvoiceException[]> {
+    return this.exceptions.find({
+      where: [{ status: 'open' }, { status: 'in_review' }],
+      order: { detectedAt: 'DESC' },
+      take: MAX_PAGE_SIZE,
+    });
   }
 
   /** Evalua la factura contra las tolerancias sin persistir nada (pantalla de alta). */
@@ -52,7 +152,12 @@ export class InvoicesService {
     return invoice;
   }
 
-  async create(dto: CreateInvoiceDto): Promise<Invoice> {
+  /**
+   * Evalua la factura y devuelve la entidad lista para persistir, sin guardarla.
+   * Permite registrar en lote (carga masiva desde EDI/OCR o generacion de datos)
+   * aplicando exactamente los mismos controles que el alta unitaria.
+   */
+  async prepare(dto: CreateInvoiceDto): Promise<Invoice> {
     const { invoice, blocking } = await this.buildAndEvaluate(dto, generateId('inv'));
 
     invoice.status = blocking ? 'blocked' : invoice.exceptions.length ? 'under_review' : 'approved';
@@ -69,8 +174,17 @@ export class InvoicesService {
         : []),
     ];
 
+    return invoice;
+  }
+
+  async create(dto: CreateInvoiceDto): Promise<Invoice> {
+    const invoice = await this.prepare(dto);
     await this.invoices.save(invoice);
     return this.findOne(invoice.id);
+  }
+
+  saveMany(invoices: Invoice[]): Promise<Invoice[]> {
+    return this.invoices.save(invoices, { chunk: 50 });
   }
 
   async resolveException(
@@ -129,11 +243,20 @@ export class InvoicesService {
   }
 
   async findConsolidationOpportunities(): Promise<ConsolidationOpportunity[]> {
-    const [invoices, categories] = await Promise.all([
-      this.findAll(),
+    const [rows, categories] = await Promise.all([
+      this.invoices
+        .createQueryBuilder('invoice')
+        .select([
+          'invoice.category_code AS "categoryCode"',
+          'invoice.supplier_id AS "supplierId"',
+          'invoice.supplier_name AS "supplierName"',
+          'invoice.total_amount AS "totalAmount"',
+        ])
+        .getRawMany<SpendRow>(),
       this.masterData.findCategories(),
     ]);
-    return this.classification.findConsolidationOpportunities(invoices, categories);
+    const spend = rows.map((row) => ({ ...row, totalAmount: Number(row.totalAmount) }));
+    return this.classification.findConsolidationOpportunities(spend, categories);
   }
 
   private async buildAndEvaluate(
@@ -144,7 +267,7 @@ export class InvoicesService {
       this.masterData.findToleranceProfile(),
       this.masterData.findCategories(),
       this.masterData.findSupplier(dto.supplierId),
-      this.findAll(),
+      this.findSupplierHistory(dto.supplierId),
     ]);
     const [contracts, purchaseOrder] = await Promise.all([
       this.masterData.findContractsBySupplier(dto.supplierId),

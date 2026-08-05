@@ -27,13 +27,12 @@
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Proveedor *</label>
-              <select class="form-control" formControlName="supplierId" (change)="onSupplierChange()"
-                      [class.is-invalid]="isFieldInvalid('supplierId')">
-                <option value="">Selecciona proveedor</option>
-                <option *ngFor="let supplier of suppliers" [value]="supplier.id">
-                  {{ supplier.legalName }} ({{ supplier.taxId }})
-                </option>
-              </select>
+              <app-searchable-select formControlName="supplierId"
+                                     [options]="supplierOptions"
+                                     placeholder="Selecciona proveedor"
+                                     searchPlaceholder="Busca por nombre, NIF o categoria..."
+                                     [invalid]="isFieldInvalid('supplierId')"
+                                     (selectionChange)="onSupplierChange()"></app-searchable-select>
               <div class="invalid-feedback">Selecciona un proveedor del maestro</div>
             </div>
           </div>
@@ -72,11 +71,10 @@
           <div class="row">
             <div class="col-md-3 mb-3">
               <label class="form-label">Divisa *</label>
-              <select class="form-control" formControlName="currency">
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
-              </select>
+              <app-searchable-select formControlName="currency"
+                                     [options]="currencyOptions"
+                                     placeholder="Moneda"
+                                     searchPlaceholder="Busca moneda..."></app-searchable-select>
             </div>
             <div class="col-md-3 mb-3">
               <label class="form-label">Tipo de cambio</label>
@@ -104,12 +102,10 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label">Metodo de pago *</label>
-              <select class="form-control" formControlName="paymentMethod">
-                <option value="transfer">Transferencia</option>
-                <option value="direct_debit">Domiciliacion</option>
-                <option value="card">Tarjeta</option>
-                <option value="check">Cheque</option>
-              </select>
+              <app-searchable-select formControlName="paymentMethod"
+                                     [options]="paymentMethodOptions"
+                                     placeholder="Metodo de pago"
+                                     searchPlaceholder="Busca metodo..."></app-searchable-select>
             </div>
             <div class="col-md-8 mb-3">
               <label class="form-label">IBAN de cobro *</label>
@@ -131,13 +127,10 @@
             </div>
             <div class="col-md-3 mb-3">
               <label class="form-label">Origen de la factura</label>
-              <select class="form-control" formControlName="source">
-                <option value="manual">Manual</option>
-                <option value="ocr">OCR</option>
-                <option value="edi">EDI</option>
-                <option value="email">Correo</option>
-                <option value="supplier_portal">Portal proveedor</option>
-              </select>
+              <app-searchable-select formControlName="source"
+                                     [options]="sourceOptions"
+                                     placeholder="Origen"
+                                     searchPlaceholder="Busca origen..."></app-searchable-select>
             </div>
             <div class="col-md-3 mb-3">
               <label class="form-label">Email solicitante</label>
@@ -185,10 +178,12 @@
             <div class="row">
               <div class="col-md-4 mb-2">
                 <label class="form-label">Categoria de gasto (opcional)</label>
-                <select class="form-control form-control-sm" formControlName="categoryCode">
-                  <option value="">Automatica</option>
-                  <option *ngFor="let category of categories" [value]="category.code">{{ category.name }}</option>
-                </select>
+                <app-searchable-select formControlName="categoryCode"
+                                       size="sm"
+                                       [options]="categoryOptions"
+                                       emptyLabel="Automatica"
+                                       placeholder="Automatica"
+                                       searchPlaceholder="Busca categoria..."></app-searchable-select>
               </div>
               <div class="col-md-3 mb-2">
                 <label class="form-label">Centro de coste linea</label>
@@ -227,10 +222,11 @@
           <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label">Forzar categoria de gasto</label>
-              <select class="form-control" formControlName="manualCategoryCode">
-                <option value="">Clasificacion automatica</option>
-                <option *ngFor="let category of categories" [value]="category.code">{{ category.name }}</option>
-              </select>
+              <app-searchable-select formControlName="manualCategoryCode"
+                                     [options]="categoryOptions"
+                                     emptyLabel="Clasificacion automatica"
+                                     placeholder="Clasificacion automatica"
+                                     searchPlaceholder="Busca categoria..."></app-searchable-select>
             </div>
           </div>
         </div>

@@ -1,0 +1,49 @@
+<div class="searchable-select" [class.is-open]="open" [class.is-sm]="size === 'sm'">
+  <button type="button"
+          class="ss-trigger"
+          [class.is-invalid]="invalid"
+          [disabled]="disabled"
+          (click)="toggle()">
+    <span class="ss-label" [class.ss-placeholder]="!selectedLabel">
+      {{ selectedLabel || placeholder }}
+    </span>
+    <span class="ss-actions">
+      <span class="ss-clear" *ngIf="value && emptyLabel" (click)="clear($event)" title="Limpiar">&times;</span>
+      <span class="ss-caret" aria-hidden="true"></span>
+    </span>
+  </button>
+
+  <div class="ss-panel" *ngIf="open">
+    <input class="ss-search"
+           type="text"
+           autocomplete="off"
+           [placeholder]="searchPlaceholder"
+           [ngModel]="search"
+           (ngModelChange)="onSearchInput($event)"
+           #searchInput
+           autofocus />
+
+    <ul class="ss-options">
+      <li class="ss-option"
+          *ngIf="emptyLabel"
+          [class.is-selected]="!value"
+          (click)="select({ value: '', label: emptyLabel })">
+        {{ emptyLabel }}
+      </li>
+      <li class="ss-option"
+          *ngFor="let option of filteredOptions"
+          [class.is-selected]="option.value === value"
+          (click)="select(option)">
+        <span class="ss-option-label">{{ option.label }}</span>
+        <span class="ss-option-hint" *ngIf="option.hint">{{ option.hint }}</span>
+      </li>
+      <li class="ss-empty" *ngIf="!filteredOptions.length">
+        Sin resultados para "{{ search }}"
+      </li>
+    </ul>
+
+    <p class="ss-count" *ngIf="options.length">
+      {{ filteredOptions.length }} de {{ options.length }} opciones
+    </p>
+  </div>
+</div>

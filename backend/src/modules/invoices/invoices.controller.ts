@@ -17,9 +17,28 @@ export class InvoicesController {
 
   @Get()
   @ApiOperation({ summary: 'Listado de facturas con clasificacion, riesgo y excepciones' })
-  async findAll() {
-    const invoices = await this.invoices.findAll();
+  @ApiQuery({ name: 'supplierId', required: false })
+  @ApiQuery({ name: 'limit', required: false, description: 'Tamano de ventana (200 por defecto)' })
+  async findAll(@Query('supplierId') supplierId?: string, @Query('limit') limit?: string) {
+    const invoices = await this.invoices.findAll({
+      supplierId: supplierId || undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
     return invoices.map(toInvoiceResponse);
+  }
+
+  @Get('summary')
+  @ApiOperation({ summary: 'Totales agregados de la bandeja (gasto, bloqueos, excepciones)' })
+  summary() {
+    return this.invoices.summary();
+  }
+
+  @Get('options')
+  @ApiOperation({ summary: 'Opciones ligeras de factura para desplegables con busqueda' })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  options(@Query('search') search?: string, @Query('limit') limit?: string) {
+    return this.invoices.findOptions(search, limit ? Number(limit) : undefined);
   }
 
   @Get('exceptions')

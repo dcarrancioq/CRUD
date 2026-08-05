@@ -25,6 +25,24 @@ export class MasterDataController {
     return this.masterData.findBankAccountChanges(id);
   }
 
+  @Get('budgets')
+  @ApiOperation({ summary: 'Presupuestos anuales por proveedor' })
+  budgets() {
+    return this.masterData.findBudgets();
+  }
+
+  @Get('budget-years')
+  @ApiOperation({ summary: 'Ejercicios con presupuesto cargado' })
+  budgetYears() {
+    return this.masterData.findBudgetYears();
+  }
+
+  @Get('suppliers/:id/budgets')
+  @ApiOperation({ summary: 'Presupuestos de un proveedor por ejercicio' })
+  supplierBudgets(@Param('id') id: string) {
+    return this.masterData.findBudgets(id);
+  }
+
   @Get('contracts')
   @ApiOperation({ summary: 'Contratos y tarifas de referencia' })
   contracts() {

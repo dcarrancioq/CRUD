@@ -16,18 +16,24 @@
     <div class="row">
       <div class="col-md-5 mb-2">
         <label class="form-label">Factura A</label>
-        <select class="form-control" [(ngModel)]="leftId" (change)="compare()">
-          <option *ngFor="let invoice of invoices" [value]="invoice.id">{{ invoiceLabel(invoice) }}</option>
-        </select>
+        <app-searchable-select [options]="invoiceOptions"
+                              placeholder="Selecciona factura"
+                              searchPlaceholder="Busca por numero, proveedor o NIF..."
+                              [(ngModel)]="leftId"
+                              (searchChange)="onInvoiceSearch($event)"
+                              (selectionChange)="compare()"></app-searchable-select>
       </div>
       <div class="col-md-2 mb-2 d-flex align-items-end justify-content-center">
         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="swap()">Intercambiar</button>
       </div>
       <div class="col-md-5 mb-2">
         <label class="form-label">Factura B</label>
-        <select class="form-control" [(ngModel)]="rightId" (change)="compare()">
-          <option *ngFor="let invoice of invoices" [value]="invoice.id">{{ invoiceLabel(invoice) }}</option>
-        </select>
+        <app-searchable-select [options]="invoiceOptions"
+                              placeholder="Selecciona factura"
+                              searchPlaceholder="Busca por numero, proveedor o NIF..."
+                              [(ngModel)]="rightId"
+                              (searchChange)="onInvoiceSearch($event)"
+                              (selectionChange)="compare()"></app-searchable-select>
       </div>
     </div>
     <div class="form-check mt-2">

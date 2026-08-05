@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ConsolidationOpportunity, Invoice, InvoiceException } from '../../../../core/models/invoice.model';
+import { ConsolidationOpportunity, Invoice, InvoiceException, Supplier } from '../../../../core/models/invoice.model';
+import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { DevinApiService, DevinSessionRequest } from '../../../../core/services/devin-api.service';
-import { InvoiceService } from '../../../../core/services/invoice.service';
+import { InvoiceService, InvoiceSummary } from '../../../../core/services/invoice.service';
+import { ProcurementMasterDataService } from '../../../../core/services/procurement-master-data.service';
 
 @Component({
   selector: 'app-invoice-list',
@@ -11,13 +13,27 @@ import { InvoiceService } from '../../../../core/services/invoice.service';
 export class InvoiceListComponent implements OnInit {
   invoices: Invoice[] = [];
   opportunities: ConsolidationOpportunity[] = [];
+  supplierOptions: SearchableOption[] = [];
+  supplierFilter = '';
   onlyExceptions = false;
+  summary?: InvoiceSummary;
   devinRequest?: DevinSessionRequest;
 
-  constructor(private invoiceService: InvoiceService, private devinApi: DevinApiService) {}
+  constructor(
+    private invoiceService: InvoiceService,
+    private masterData: ProcurementMasterDataService,
+    private devinApi: DevinApiService
+  ) {}
 
   ngOnInit(): void {
     this.invoiceService.invoices$.subscribe(invoices => (this.invoices = invoices));
+    this.masterData.getSuppliers().subscribe(suppliers => {
+      this.supplierOptions = suppliers.map(supplier => this.toSupplierOption(supplier));
+    });
+    this.reload();
+  }
+
+  onSupplierFilterChange(): void {
     this.reload();
   }
 
@@ -25,24 +41,25 @@ export class InvoiceListComponent implements OnInit {
     return this.onlyExceptions ? this.invoices.filter(invoice => this.openExceptions(invoice).length > 0) : this.invoices;
   }
 
+  /** Los indicadores vienen agregados del backend: la tabla solo muestra una ventana. */
+  get invoiceCount(): number {
+    return this.summary?.invoiceCount ?? this.invoices.length;
+  }
+
   get totalSpend(): number {
-    return this.invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0);
+    return this.summary?.totalSpend ?? 0;
   }
 
   get blockedCount(): number {
-    return this.invoices.filter(invoice => invoice.status === 'blocked').length;
+    return this.summary?.blockedCount ?? 0;
   }
 
   get exceptionCount(): number {
-    return this.invoiceService.getOpenExceptions().length;
+    return this.summary?.openExceptions ?? 0;
   }
 
   get autoApprovedPercent(): number {
-    if (!this.invoices.length) {
-      return 0;
-    }
-    const auto = this.invoices.filter(invoice => invoice.exceptions.length === 0).length;
-    return Math.round((auto / this.invoices.length) * 100);
+    return this.summary?.autoApprovedPercent ?? 0;
   }
 
   openExceptions(invoice: Invoice): InvoiceException[] {
@@ -69,8 +86,17 @@ export class InvoiceListComponent implements OnInit {
     return this.devinRequest ? JSON.stringify(this.devinRequest, null, 2) : '';
   }
 
+  private toSupplierOption(supplier: Supplier): SearchableOption {
+    return {
+      value: supplier.id,
+      label: supplier.legalName,
+      hint: `${supplier.taxId} | ${supplier.defaultCategoryCode ?? 'sin categoria'}`
+    };
+  }
+
   private reload(): void {
-    this.invoiceService.refresh().subscribe();
+    this.invoiceService.refresh({ supplierId: this.supplierFilter || undefined }).subscribe();
+    this.invoiceService.getSummary().subscribe(summary => (this.summary = summary));
     this.invoiceService
       .getConsolidationOpportunities()
       .subscribe(opportunities => (this.opportunities = opportunities));

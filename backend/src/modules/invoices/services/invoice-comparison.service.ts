@@ -39,7 +39,15 @@ export class InvoiceComparisonService {
       this.text('supplierTaxId', 'NIF proveedor', left.supplierTaxId, right.supplierTaxId, 20, 'duplicate_signal'),
       this.text('issueDate', 'Fecha de emision', formatDate(left.issueDate), formatDate(right.issueDate), 10, 'duplicate_signal'),
       this.text('dueDate', 'Fecha de vencimiento', formatDate(left.dueDate), formatDate(right.dueDate), 5, 'informative'),
-      this.text('purchaseOrder', 'Pedido de compra', left.purchaseOrderNumber ?? '', right.purchaseOrderNumber ?? '', 5, 'duplicate_signal'),
+      // Dos facturas sin pedido no son evidencia de duplicado: solo informan.
+      this.text(
+        'purchaseOrder',
+        'Pedido de compra',
+        left.purchaseOrderNumber ?? '',
+        right.purchaseOrderNumber ?? '',
+        5,
+        left.purchaseOrderNumber && right.purchaseOrderNumber ? 'duplicate_signal' : 'informative',
+      ),
       {
         key: 'bankAccount',
         label: 'IBAN de cobro',

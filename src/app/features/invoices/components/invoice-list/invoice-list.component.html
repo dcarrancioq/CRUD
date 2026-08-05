@@ -7,20 +7,38 @@
     <div class="header-actions">
       <a class="btn btn-primary" routerLink="/invoices/new">Nueva factura</a>
       <a class="btn btn-outline-primary" routerLink="/invoices/compare">Comparar facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/report">Informe de proveedor</a>
     </div>
   </div>
 
   <div class="kpi-row">
-    <div class="kpi"><span class="kpi-value">{{ invoices.length }}</span><span class="kpi-label">Facturas registradas</span></div>
+    <div class="kpi"><span class="kpi-value">{{ invoiceCount }}</span><span class="kpi-label">Facturas registradas</span></div>
     <div class="kpi"><span class="kpi-value">{{ totalSpend | number:'1.2-2' }}</span><span class="kpi-label">Gasto total (EUR)</span></div>
     <div class="kpi"><span class="kpi-value">{{ exceptionCount }}</span><span class="kpi-label">Excepciones abiertas</span></div>
     <div class="kpi"><span class="kpi-value">{{ blockedCount }}</span><span class="kpi-label">Pagos bloqueados</span></div>
     <div class="kpi"><span class="kpi-value">{{ autoApprovedPercent }}%</span><span class="kpi-label">Aprobacion sin toque</span></div>
   </div>
 
-  <div class="form-check mb-3">
-    <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions">
-    <label class="form-check-label" for="onlyExc">Mostrar solo facturas con excepciones</label>
+  <div class="row align-items-end mb-3">
+    <div class="col-md-5 mb-2">
+      <label class="form-label">Filtrar por proveedor</label>
+      <app-searchable-select [options]="supplierOptions"
+                             emptyLabel="Todos los proveedores"
+                             placeholder="Todos los proveedores"
+                             searchPlaceholder="Busca por nombre, NIF o categoria..."
+                             [(ngModel)]="supplierFilter"
+                             (selectionChange)="onSupplierFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-7 mb-2">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions">
+        <label class="form-check-label" for="onlyExc">Mostrar solo facturas con excepciones</label>
+      </div>
+      <p class="text-muted small mb-0">
+        La tabla muestra las {{ invoices.length }} facturas mas recientes del filtro aplicado; los indicadores
+        superiores estan calculados sobre el total registrado.
+      </p>
+    </div>
   </div>
 
   <div class="table-responsive card-surface">

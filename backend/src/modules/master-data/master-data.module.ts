@@ -10,6 +10,7 @@ import { Contract } from './entities/contract.entity';
 import { ContractPrice } from './entities/contract-price.entity';
 import { PurchaseOrder } from './entities/purchase-order.entity';
 import { PurchaseOrderLine } from './entities/purchase-order-line.entity';
+import { SupplierBudget } from './entities/supplier-budget.entity';
 import { ToleranceProfile } from './entities/tolerance-profile.entity';
 import { ToleranceRule } from './entities/tolerance-rule.entity';
 
@@ -24,6 +25,7 @@ import { ToleranceRule } from './entities/tolerance-rule.entity';
       ContractPrice,
       PurchaseOrder,
       PurchaseOrderLine,
+      SupplierBudget,
       ToleranceProfile,
       ToleranceRule,
     ]),
