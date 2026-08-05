@@ -59,6 +59,16 @@
   color: var(--vwfs-primary);
 }
 
+.badge.evidence-duplicate {
+  background: var(--vwfs-accent);
+  color: var(--vwfs-primary);
+}
+
+.badge.evidence-fraud {
+  background: var(--vwfs-danger);
+  color: #fff;
+}
+
 .comparison-table {
   background: #fff;
   border: 1px solid var(--vwfs-border);

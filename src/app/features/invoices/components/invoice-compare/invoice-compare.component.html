@@ -51,7 +51,7 @@
       </div>
       <div class="verdict-actions">
         <button type="button" class="btn btn-dark btn-sm" (click)="prepareDevinInvestigation()">
-          Investigar con Devin
+          Investigar con IA
         </button>
       </div>
     </div>
@@ -80,8 +80,16 @@
               [class.row-fraud]="!field.equal && field.relevance === 'fraud_signal'">
             <td>
               {{ field.label }}
-              <span class="badge badge-light" *ngIf="field.relevance === 'fraud_signal'">antifraude</span>
-              <span class="badge badge-light" *ngIf="field.relevance === 'duplicate_signal'">duplicado</span>
+              <span class="badge evidence-duplicate"
+                    *ngIf="field.relevance === 'duplicate_signal' && field.equal"
+                    title="Coincide en un campo usado para detectar duplicados">
+                coincide
+              </span>
+              <span class="badge evidence-fraud"
+                    *ngIf="field.relevance === 'fraud_signal' && !field.equal"
+                    title="Diferencia en un dato sensible a fraude de cobro">
+                antifraude
+              </span>
             </td>
             <td>{{ field.leftValue }}</td>
             <td>{{ field.rightValue }}</td>
