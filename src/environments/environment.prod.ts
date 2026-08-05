@@ -3,5 +3,12 @@ export const environment = {
   apiUrl: 'https://api.example.com/api',
   stripePublicKey: '',
   googleAnalyticsId: '',
-  recaptchaSiteKey: ''
+  recaptchaSiteKey: '',
+  devin: {
+    useProxy: true,
+    proxyPath: '/integrations/devin/sessions',
+    apiBaseUrl: 'https://api.devin.ai',
+    orgId: '',
+    serviceTokenHeaderPlaceholder: ''
+  }
 };

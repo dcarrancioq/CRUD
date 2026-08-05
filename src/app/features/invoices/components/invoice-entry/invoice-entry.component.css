@@ -1,0 +1,116 @@
+.invoice-entry {
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.line-row {
+  border-top: 1px solid #f1f3f5;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+}
+
+.totals-row.total {
+  border-top: 1px solid #e5e7eb;
+  font-size: 1.1rem;
+  padding-top: 0.6rem;
+}
+
+.risk-score {
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.risk-low {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.risk-medium {
+  background: #fff8e1;
+  color: #7f5d00;
+}
+
+.risk-high {
+  background: #fdecea;
+  color: #8a1c12;
+}
+
+.risk-critical {
+  background: #8a1c12;
+  color: #fff;
+}
+
+.exception {
+  border-left: 4px solid #adb5bd;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+}
+
+.exception.sev-medium {
+  border-left-color: #f0ad4e;
+}
+
+.exception.sev-high {
+  border-left-color: #d9534f;
+}
+
+.exception.sev-critical {
+  border-left-color: #8a1c12;
+}
+
+.exception-title {
+  font-weight: 600;
+}
+
+.devin-payload {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  max-height: 320px;
+  overflow: auto;
+}

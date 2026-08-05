@@ -1,0 +1,101 @@
+<div class="invoice-list">
+  <div class="page-header">
+    <div>
+      <h1>Facturas de proveedores</h1>
+      <p class="text-muted mb-0">Solo se revisan las excepciones que superan la tolerancia configurada.</p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-primary" routerLink="/invoices/new">Nueva factura</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/compare">Comparar facturas</a>
+      <button type="button" class="btn btn-outline-secondary" (click)="resetDemoData()">Restaurar datos demo</button>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><span class="kpi-value">{{ invoices.length }}</span><span class="kpi-label">Facturas registradas</span></div>
+    <div class="kpi"><span class="kpi-value">{{ totalSpend | number:'1.2-2' }}</span><span class="kpi-label">Gasto total (EUR)</span></div>
+    <div class="kpi"><span class="kpi-value">{{ exceptionCount }}</span><span class="kpi-label">Excepciones abiertas</span></div>
+    <div class="kpi"><span class="kpi-value">{{ blockedCount }}</span><span class="kpi-label">Pagos bloqueados</span></div>
+    <div class="kpi"><span class="kpi-value">{{ autoApprovedPercent }}%</span><span class="kpi-label">Aprobacion sin toque</span></div>
+  </div>
+
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions">
+    <label class="form-check-label" for="onlyExc">Mostrar solo facturas con excepciones</label>
+  </div>
+
+  <div class="table-responsive card-surface">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Proveedor</th>
+          <th>Categoria</th>
+          <th class="text-right">Total</th>
+          <th>Vencimiento</th>
+          <th>Estado</th>
+          <th>Riesgo</th>
+          <th>Excepciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invoice of visibleInvoices">
+          <td>{{ invoice.invoiceNumber }}<div class="small text-muted">{{ invoice.source }}</div></td>
+          <td>{{ invoice.supplierName }}</td>
+          <td>
+            {{ invoice.classification.categoryName }}
+            <div class="small text-muted">{{ invoice.classification.confidence }}% | {{ invoice.classification.glAccount }}</div>
+          </td>
+          <td class="text-right">{{ invoice.totalAmount | number:'1.2-2' }} {{ invoice.currency }}</td>
+          <td>{{ invoice.dueDate | date:'yyyy-MM-dd' }}</td>
+          <td><span class="badge" [ngClass]="'status-' + invoice.status">{{ invoice.status }}</span></td>
+          <td><span class="badge" [ngClass]="'risk-' + invoice.riskAssessment.band">{{ invoice.riskAssessment.score }}</span></td>
+          <td class="exceptions-cell">
+            <span class="text-muted small" *ngIf="!openExceptions(invoice).length">-</span>
+            <div class="exception-item" *ngFor="let exception of openExceptions(invoice)">
+              <div>
+                <strong>{{ exception.title }}</strong>
+                <span class="badge badge-danger ml-1" *ngIf="exception.blocksPayment">bloquea pago</span>
+                <div class="small text-muted">{{ exception.message }}</div>
+              </div>
+              <div class="exception-actions">
+                <button type="button" class="btn btn-sm btn-outline-success" (click)="resolve(invoice, exception)">Aceptar</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="markFalsePositive(invoice, exception)">
+                  Falso positivo
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-surface mt-4 p-3" *ngIf="opportunities.length">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Oportunidades de consolidacion</h5>
+      <button type="button" class="btn btn-sm btn-dark" (click)="requestConsolidationAnalysis()">
+        Analizar con Devin
+      </button>
+    </div>
+    <table class="table table-sm mt-3 mb-0">
+      <thead>
+        <tr><th>Categoria</th><th>Proveedores</th><th class="text-right">Gasto</th><th class="text-right">Ahorro estimado</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let opportunity of opportunities">
+          <td>{{ opportunity.categoryName }}</td>
+          <td class="small">{{ opportunity.supplierNames.join(', ') }}</td>
+          <td class="text-right">{{ opportunity.annualSpend | number:'1.2-2' }}</td>
+          <td class="text-right">{{ opportunity.estimatedSavings | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-surface mt-4 p-3" *ngIf="devinRequest">
+    <h5>Llamada a la API de Devin</h5>
+    <p class="small text-muted mb-1">POST /v3/organizations/&#123;org_id&#125;/sessions</p>
+    <pre class="devin-payload">{{ devinRequestJson }}</pre>
+  </div>
+</div>

@@ -1,0 +1,92 @@
+.invoice-compare {
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.selector-card,
+.detail-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+  background: #f1f3f5;
+}
+
+.verdict-actions {
+  margin-left: auto;
+}
+
+.verdict-score {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.verdict-label {
+  font-weight: 600;
+}
+
+.verdict-likely_duplicate {
+  background: #fdecea;
+  color: #8a1c12;
+}
+
+.verdict-needs_review {
+  background: #fff8e1;
+  color: #7f5d00;
+}
+
+.verdict-different {
+  background: #e6f4ea;
+  color: #1b5e20;
+}
+
+.comparison-table {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+}
+
+.comparison-table table {
+  margin-bottom: 0;
+}
+
+.row-diff {
+  background: #fff8e1;
+}
+
+.row-fraud {
+  background: #fdecea;
+}
+
+.devin-payload {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  max-height: 360px;
+  overflow: auto;
+}

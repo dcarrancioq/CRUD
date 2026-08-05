@@ -1,0 +1,140 @@
+<div class="invoice-compare">
+  <div class="page-header">
+    <div>
+      <h1>Comparativa de facturas</h1>
+      <p class="text-muted mb-0">
+        Compara dos facturas del registro para resolver excepciones de duplicado, refacturacion y cambios de datos de cobro.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/invoices">Ver facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/new">Nueva factura</a>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="row">
+      <div class="col-md-5 mb-2">
+        <label class="form-label">Factura A</label>
+        <select class="form-control" [(ngModel)]="leftId" (change)="compare()">
+          <option *ngFor="let invoice of invoices" [value]="invoice.id">{{ invoiceLabel(invoice) }}</option>
+        </select>
+      </div>
+      <div class="col-md-2 mb-2 d-flex align-items-end justify-content-center">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="swap()">Intercambiar</button>
+      </div>
+      <div class="col-md-5 mb-2">
+        <label class="form-label">Factura B</label>
+        <select class="form-control" [(ngModel)]="rightId" (change)="compare()">
+          <option *ngFor="let invoice of invoices" [value]="invoice.id">{{ invoiceLabel(invoice) }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="checkbox" id="onlyDiff" [(ngModel)]="onlyDifferences">
+      <label class="form-check-label" for="onlyDiff">Mostrar solo diferencias</label>
+    </div>
+  </div>
+
+  <app-empty-state *ngIf="!comparison" title="Selecciona dos facturas distintas"
+                   message="Elige la factura A y la factura B para ver la comparativa campo a campo.">
+  </app-empty-state>
+
+  <ng-container *ngIf="comparison">
+    <div class="verdict" [ngClass]="'verdict-' + comparison.duplicateVerdict">
+      <div class="verdict-score">{{ comparison.duplicateScore }}%</div>
+      <div>
+        <div class="verdict-label">{{ verdictLabel }}</div>
+        <div class="small">
+          Coincidencias: {{ comparison.matchedFields.length }} | Diferencias: {{ comparison.differingFields.length }}
+        </div>
+      </div>
+      <div class="verdict-actions">
+        <button type="button" class="btn btn-dark btn-sm" (click)="prepareDevinInvestigation()">
+          Investigar con Devin
+        </button>
+      </div>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="fraudSignals.length">
+      <strong>Senales de riesgo de pago:</strong>
+      <ul class="mb-0">
+        <li *ngFor="let signal of fraudSignals">
+          {{ signal.label }}: {{ signal.leftValue }} vs {{ signal.rightValue }}
+        </li>
+      </ul>
+    </div>
+
+    <div class="table-responsive comparison-table">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Campo</th>
+            <th>{{ comparison.left.invoiceNumber }}</th>
+            <th>{{ comparison.right.invoiceNumber }}</th>
+            <th class="text-right">Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let field of visibleFields" [class.row-diff]="!field.equal"
+              [class.row-fraud]="!field.equal && field.relevance === 'fraud_signal'">
+            <td>
+              {{ field.label }}
+              <span class="badge badge-light" *ngIf="field.relevance === 'fraud_signal'">antifraude</span>
+              <span class="badge badge-light" *ngIf="field.relevance === 'duplicate_signal'">duplicado</span>
+            </td>
+            <td>{{ field.leftValue }}</td>
+            <td>{{ field.rightValue }}</td>
+            <td class="text-right">
+              <span *ngIf="field.equal">=</span>
+              <span *ngIf="!field.equal && field.deltaAbsolute !== undefined">
+                {{ field.deltaAbsolute | number:'1.2-2' }}
+                <span class="text-muted" *ngIf="field.deltaPercent !== undefined">({{ field.deltaPercent }}%)</span>
+              </span>
+              <span *ngIf="!field.equal && field.deltaAbsolute === undefined">distinto</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6" *ngFor="let invoice of [comparison.left, comparison.right]">
+        <div class="detail-card">
+          <h5>{{ invoice.invoiceNumber }}</h5>
+          <p class="small text-muted mb-2">
+            {{ invoice.supplierName }} | {{ invoice.classification.categoryName }} |
+            riesgo {{ invoice.riskAssessment.score }}/100 ({{ invoice.riskAssessment.band }})
+          </p>
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Linea</th><th>Cant.</th><th>Precio</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of invoice.lines">
+                <td>{{ line.description }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ line.unitPrice | number:'1.2-2' }}</td>
+                <td class="text-right">{{ line.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="invoice.exceptions.length">
+            <h6 class="mt-3">Excepciones</h6>
+            <ul class="small mb-0">
+              <li *ngFor="let exception of invoice.exceptions">
+                <strong>{{ exception.ruleCode }}</strong>: {{ exception.message }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card" *ngIf="devinRequest">
+      <h5>Llamada a la API de Devin</h5>
+      <p class="small text-muted mb-1">POST /v3/organizations/&#123;org_id&#125;/sessions</p>
+      <pre class="devin-payload">{{ devinRequestJson }}</pre>
+    </div>
+  </ng-container>
+</div>

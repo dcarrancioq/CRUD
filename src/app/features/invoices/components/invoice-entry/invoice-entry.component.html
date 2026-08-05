@@ -1,0 +1,320 @@
+<div class="invoice-entry">
+  <div class="page-header">
+    <div>
+      <h1>Alta de factura de proveedor</h1>
+      <p class="text-muted mb-0">
+        Los controles de clasificacion, desviaciones y antifraude se evaluan en tiempo real contra el perfil de tolerancias
+        <strong>{{ toleranceProfile.name }}</strong>.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/invoices">Ver facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/compare">Comparar facturas</a>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="form-card">
+          <h5>Datos de cabecera</h5>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Numero de factura *</label>
+              <input type="text" class="form-control" formControlName="invoiceNumber"
+                     [class.is-invalid]="isFieldInvalid('invoiceNumber')" placeholder="NIM-2026-0812">
+              <div class="invalid-feedback">El numero de factura es obligatorio</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Proveedor *</label>
+              <select class="form-control" formControlName="supplierId" (change)="onSupplierChange()"
+                      [class.is-invalid]="isFieldInvalid('supplierId')">
+                <option value="">Selecciona proveedor</option>
+                <option *ngFor="let supplier of suppliers" [value]="supplier.id">
+                  {{ supplier.legalName }} ({{ supplier.taxId }})
+                </option>
+              </select>
+              <div class="invalid-feedback">Selecciona un proveedor del maestro</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Pedido de compra</label>
+              <input type="text" class="form-control" formControlName="purchaseOrderNumber" placeholder="PO-2026-0453">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Contrato</label>
+              <input type="text" class="form-control" formControlName="contractReference" placeholder="CTR-CLOUD-2026">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Centro de coste *</label>
+              <input type="text" class="form-control" formControlName="costCenter"
+                     [class.is-invalid]="isFieldInvalid('costCenter')">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Fecha de emision *</label>
+              <input type="date" class="form-control" formControlName="issueDate">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Fecha de recepcion *</label>
+              <input type="date" class="form-control" formControlName="receivedDate">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Vencimiento *</label>
+              <input type="date" class="form-control" formControlName="dueDate">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Divisa *</label>
+              <select class="form-control" formControlName="currency">
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Tipo de cambio</label>
+              <input type="number" step="0.0001" class="form-control" formControlName="exchangeRate">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">% impuesto</label>
+              <input type="number" step="0.01" class="form-control" formControlName="taxRate">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Dias de pago</label>
+              <input type="number" class="form-control" formControlName="paymentTermsDays">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Descripcion del gasto</label>
+            <textarea class="form-control" rows="2" formControlName="description"
+                      placeholder="Servicios cloud julio 2026"></textarea>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h5>Datos de pago</h5>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Metodo de pago *</label>
+              <select class="form-control" formControlName="paymentMethod">
+                <option value="transfer">Transferencia</option>
+                <option value="direct_debit">Domiciliacion</option>
+                <option value="card">Tarjeta</option>
+                <option value="check">Cheque</option>
+              </select>
+            </div>
+            <div class="col-md-8 mb-3">
+              <label class="form-label">IBAN de cobro *</label>
+              <input type="text" class="form-control" formControlName="bankAccountIban"
+                     [class.is-invalid]="isFieldInvalid('bankAccountIban')" placeholder="ES9121000418450200051332">
+              <div class="invalid-feedback">Introduce un IBAN valido</div>
+              <small class="text-muted" *ngIf="supplierAccounts.length">
+                Cuentas registradas:
+                <span *ngFor="let account of supplierAccounts; let last = last">
+                  {{ account.iban }} ({{ account.status }}){{ last ? '' : ' | ' }}
+                </span>
+              </small>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Titular de la cuenta</label>
+              <input type="text" class="form-control" formControlName="bankAccountHolder">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Origen de la factura</label>
+              <select class="form-control" formControlName="source">
+                <option value="manual">Manual</option>
+                <option value="ocr">OCR</option>
+                <option value="edi">EDI</option>
+                <option value="email">Correo</option>
+                <option value="supplier_portal">Portal proveedor</option>
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Email solicitante</label>
+              <input type="email" class="form-control" formControlName="requesterEmail">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header-row">
+            <h5>Lineas de factura</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLine()">Anadir linea</button>
+          </div>
+
+          <div class="line-row" *ngFor="let line of lineGroups; let i = index" [formGroup]="line">
+            <div class="row">
+              <div class="col-md-2 mb-2">
+                <label class="form-label">Codigo</label>
+                <input type="text" class="form-control form-control-sm" formControlName="itemCode">
+              </div>
+              <div class="col-md-4 mb-2">
+                <label class="form-label">Descripcion *</label>
+                <input type="text" class="form-control form-control-sm" formControlName="description">
+              </div>
+              <div class="col-md-1 mb-2">
+                <label class="form-label">Cant.</label>
+                <input type="number" step="0.01" class="form-control form-control-sm" formControlName="quantity">
+              </div>
+              <div class="col-md-1 mb-2">
+                <label class="form-label">UdM</label>
+                <input type="text" class="form-control form-control-sm" formControlName="uom">
+              </div>
+              <div class="col-md-2 mb-2">
+                <label class="form-label">Precio unit.</label>
+                <input type="number" step="0.01" class="form-control form-control-sm" formControlName="unitPrice">
+              </div>
+              <div class="col-md-1 mb-2">
+                <label class="form-label">Total</label>
+                <input type="text" class="form-control form-control-sm" [value]="lineTotal(i)" readonly>
+              </div>
+              <div class="col-md-1 mb-2 d-flex align-items-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeLine(i)">X</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-2">
+                <label class="form-label">Categoria de gasto (opcional)</label>
+                <select class="form-control form-control-sm" formControlName="categoryCode">
+                  <option value="">Automatica</option>
+                  <option *ngFor="let category of categories" [value]="category.code">{{ category.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Centro de coste linea</label>
+                <input type="text" class="form-control form-control-sm" formControlName="costCenter">
+              </div>
+              <div class="col-md-2 mb-2">
+                <label class="form-label">% impuesto</label>
+                <input type="number" step="0.01" class="form-control form-control-sm" formControlName="taxRate">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <h5>Importes declarados en el documento</h5>
+          <p class="text-muted small">
+            Se comparan contra el calculo de lineas para detectar descuadres, impuestos incoherentes y manipulacion de totales.
+          </p>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Base imponible declarada</label>
+              <input type="number" step="0.01" class="form-control" formControlName="declaredSubtotal"
+                     [placeholder]="computedSubtotal">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Impuesto declarado</label>
+              <input type="number" step="0.01" class="form-control" formControlName="declaredTaxAmount"
+                     [placeholder]="computedTax">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Total declarado</label>
+              <input type="number" step="0.01" class="form-control" formControlName="declaredTotalAmount"
+                     [placeholder]="computedTotal">
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Forzar categoria de gasto</label>
+              <select class="form-control" formControlName="manualCategoryCode">
+                <option value="">Clasificacion automatica</option>
+                <option *ngFor="let category of categories" [value]="category.code">{{ category.name }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="saving">
+            {{ saving ? 'Guardando...' : 'Registrar factura' }}
+          </button>
+          <a class="btn btn-link" routerLink="/invoices">Cancelar</a>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="form-card totals-card">
+          <h5>Totales calculados</h5>
+          <div class="totals-row"><span>Suma de lineas</span><strong>{{ computedSubtotal | number:'1.2-2' }}</strong></div>
+          <div class="totals-row"><span>Impuesto</span><strong>{{ computedTax | number:'1.2-2' }}</strong></div>
+          <div class="totals-row total"><span>Total</span><strong>{{ computedTotal | number:'1.2-2' }}</strong></div>
+        </div>
+
+        <div class="form-card" *ngIf="preview">
+          <h5>Clasificacion automatica del gasto</h5>
+          <p class="mb-1">
+            <strong>{{ preview.classification.categoryName }}</strong>
+            <span class="badge badge-secondary ml-2">{{ preview.classification.glAccount }}</span>
+          </p>
+          <p class="small text-muted mb-1">
+            Metodo: {{ preview.classification.method }} | Confianza: {{ preview.classification.confidence }}%
+          </p>
+          <p class="small text-muted mb-0" *ngIf="preview.classification.matchedKeywords.length">
+            Terminos detectados: {{ preview.classification.matchedKeywords.join(', ') }}
+          </p>
+        </div>
+
+        <div class="form-card" *ngIf="preview">
+          <h5>Riesgo de pago</h5>
+          <div class="risk-score" [ngClass]="'risk-' + preview.riskAssessment.band">
+            {{ preview.riskAssessment.score }}/100 - {{ preview.riskAssessment.band }}
+          </div>
+          <p class="small mb-2">Recomendacion: <strong>{{ preview.riskAssessment.releaseRecommendation }}</strong></p>
+          <div *ngIf="preview.matchResult" class="small text-muted">
+            Conciliacion con {{ preview.matchResult.purchaseOrderNumber }}:
+            desviacion {{ preview.matchResult.amountVariancePercent }}% |
+            precio {{ preview.matchResult.priceVariancePercent }}%
+          </div>
+        </div>
+
+        <div class="form-card" *ngIf="preview">
+          <h5>Excepciones sobre tolerancia</h5>
+          <p class="small text-muted" *ngIf="!preview.exceptions.length">
+            Sin excepciones: la factura se aprobaria automaticamente sin revision manual.
+          </p>
+
+          <div class="exception" *ngFor="let exception of blockingExceptions" [ngClass]="'sev-' + exception.severity">
+            <div class="exception-title">
+              {{ exception.title }}
+              <span class="badge badge-danger">bloquea pago</span>
+            </div>
+            <p class="small mb-1">{{ exception.message }}</p>
+            <p class="small text-muted mb-1">
+              {{ exception.ruleCode }} | observado {{ exception.observedValue }} / tolerancia {{ exception.toleranceValue }}
+              {{ exception.toleranceUnit }}
+            </p>
+            <button type="button" class="btn btn-sm btn-outline-dark" (click)="requestDevinInvestigation(exception)">
+              Preparar investigacion con Devin
+            </button>
+          </div>
+
+          <div class="exception" *ngFor="let exception of toleratedExceptions" [ngClass]="'sev-' + exception.severity">
+            <div class="exception-title">{{ exception.title }}</div>
+            <p class="small mb-1">{{ exception.message }}</p>
+            <p class="small text-muted mb-0">
+              {{ exception.ruleCode }} | observado {{ exception.observedValue }} / tolerancia {{ exception.toleranceValue }}
+              {{ exception.toleranceUnit }}
+            </p>
+          </div>
+        </div>
+
+        <div class="form-card" *ngIf="devinRequestPreview">
+          <h5>Llamada a la API de Devin</h5>
+          <p class="small text-muted mb-1">POST /v3/organizations/&#123;org_id&#125;/sessions</p>
+          <pre class="devin-payload">{{ devinRequestPreviewJson }}</pre>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
