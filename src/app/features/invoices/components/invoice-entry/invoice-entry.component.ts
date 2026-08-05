@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, catchError, debounceTime, of, switchMap, takeUntil } from 'rxjs';
 import {
   CreateInvoiceRequest,
   Invoice,
@@ -20,14 +21,17 @@ import { ProcurementMasterDataService } from '../../../../core/services/procurem
   templateUrl: './invoice-entry.component.html',
   styleUrls: ['./invoice-entry.component.css']
 })
-export class InvoiceEntryComponent implements OnInit {
+export class InvoiceEntryComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   suppliers: Supplier[] = [];
   categories: SpendCategory[] = [];
-  toleranceProfile!: ToleranceProfile;
+  toleranceProfile?: ToleranceProfile;
   preview?: Invoice;
   saving = false;
   devinRequestPreview?: DevinSessionRequest;
+
+  private readonly evaluateTrigger = new Subject<void>();
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -39,13 +43,36 @@ export class InvoiceEntryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.suppliers = this.masterData.getSuppliers();
-    this.categories = this.masterData.getCategories();
-    this.toleranceProfile = this.masterData.getToleranceProfile();
     this.initForm();
     this.addLine();
-    this.form.valueChanges.subscribe(() => this.evaluate());
+
+    this.masterData.load()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(data => {
+        this.suppliers = data.suppliers;
+        this.categories = data.categories;
+        this.toleranceProfile = data.toleranceProfile;
+      });
+
+    // La evaluacion de tolerancias la hace el backend: se agrupan los cambios del
+    // formulario para no lanzar una peticion por tecla.
+    this.evaluateTrigger
+      .pipe(
+        debounceTime(400),
+        switchMap(() =>
+          this.invoiceService.previewInvoice(this.buildRequest()).pipe(catchError(() => of(undefined)))
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(preview => (this.preview = preview));
+
+    this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.evaluate());
     this.evaluate();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   get lines(): FormArray {
@@ -57,7 +84,8 @@ export class InvoiceEntryComponent implements OnInit {
   }
 
   get selectedSupplier(): Supplier | undefined {
-    return this.masterData.getSupplier(this.form.get('supplierId')?.value);
+    const supplierId = this.form.get('supplierId')?.value;
+    return this.suppliers.find(supplier => supplier.id === supplierId);
   }
 
   get supplierAccounts(): SupplierBankAccount[] {
@@ -150,7 +178,8 @@ export class InvoiceEntryComponent implements OnInit {
       return;
     }
     this.saving = true;
-    this.invoiceService.createInvoice(this.buildRequest()).subscribe(invoice => {
+    this.invoiceService.createInvoice(this.buildRequest()).subscribe({
+      next: invoice => {
       this.saving = false;
       if (invoice.status === 'blocked') {
         this.notificationService.warning(
@@ -164,6 +193,11 @@ export class InvoiceEntryComponent implements OnInit {
         this.notificationService.success(`Factura ${invoice.invoiceNumber} registrada y aprobada automaticamente.`);
       }
       this.router.navigate(['/invoices']);
+      },
+      error: () => {
+        this.saving = false;
+        this.notificationService.error('No se pudo registrar la factura en el backend.');
+      }
     });
   }
 
@@ -171,6 +205,9 @@ export class InvoiceEntryComponent implements OnInit {
     if (!this.preview) {
       return;
     }
+    // En el alta la factura aun no existe en BBDD: se muestra la llamada que el
+    // backend enviara a Devin al resolver la excepcion desde el listado.
+
     if (exception.ruleCode === 'BANK_ACCOUNT_UNKNOWN' || exception.ruleCode === 'BANK_ACCOUNT_RECENT_CHANGE') {
       this.devinRequestPreview = this.devinApi.buildBankAccountVerificationRequest(this.preview, exception);
       return;
@@ -190,8 +227,8 @@ export class InvoiceEntryComponent implements OnInit {
     return {
       invoiceNumber: value.invoiceNumber,
       supplierId: value.supplierId,
-      purchaseOrderNumber: value.purchaseOrderNumber,
-      contractReference: value.contractReference,
+      purchaseOrderNumber: this.optional(value.purchaseOrderNumber),
+      contractReference: this.optional(value.contractReference),
       issueDate: value.issueDate,
       receivedDate: value.receivedDate,
       dueDate: value.dueDate,
@@ -201,36 +238,42 @@ export class InvoiceEntryComponent implements OnInit {
       paymentTermsDays: Number(value.paymentTermsDays) || 0,
       paymentMethod: value.paymentMethod,
       bankAccountIban: value.bankAccountIban,
-      bankAccountHolder: value.bankAccountHolder,
+      bankAccountHolder: this.optional(value.bankAccountHolder),
       costCenter: value.costCenter,
-      requesterEmail: value.requesterEmail,
-      description: value.description,
+      requesterEmail: this.optional(value.requesterEmail),
+      description: this.optional(value.description),
       source: value.source,
       manualCategoryCode: value.manualCategoryCode || undefined,
       declaredSubtotal: Number(value.declaredSubtotal) > 0 ? Number(value.declaredSubtotal) : undefined,
       declaredTaxAmount: Number(value.declaredTaxAmount) > 0 ? Number(value.declaredTaxAmount) : undefined,
       declaredTotalAmount: Number(value.declaredTotalAmount) > 0 ? Number(value.declaredTotalAmount) : undefined,
       lines: (value.lines ?? []).map((line: Record<string, string | number>) => ({
-        itemCode: (line['itemCode'] as string) || undefined,
+        itemCode: this.optional(line['itemCode'] as string),
         description: line['description'] as string,
         quantity: Number(line['quantity']) || 0,
         uom: line['uom'] as string,
         unitPrice: Number(line['unitPrice']) || 0,
         taxRate: Number(line['taxRate']) || 0,
-        categoryCode: (line['categoryCode'] as string) || undefined,
-        costCenter: (line['costCenter'] as string) || undefined
+        categoryCode: this.optional(line['categoryCode'] as string),
+        costCenter: this.optional(line['costCenter'] as string)
       }))
     };
+  }
+
+  /** El backend valida los opcionales: una cadena vacia no es un email ni un PO valido. */
+  private optional(value: string | null | undefined): string | undefined {
+    const trimmed = (value ?? '').trim();
+    return trimmed.length ? trimmed : undefined;
   }
 
   private evaluate(): void {
     const supplierId = this.form.get('supplierId')?.value;
     const hasLines = this.lines.controls.some(control => !!control.get('description')?.value);
-    if (!supplierId || !hasLines) {
+    if (!supplierId || !hasLines || this.form.get('invoiceNumber')?.invalid) {
       this.preview = undefined;
       return;
     }
-    this.preview = this.invoiceService.previewInvoice(this.buildRequest());
+    this.evaluateTrigger.next();
   }
 
   private initForm(): void {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -39,11 +39,10 @@ export interface DevinSessionStatus {
 /**
  * Cliente de la API de Devin (v3, ambito organizacion).
  *
- * Las llamadas se enrutan por defecto contra el backend propio
- * (`${environment.apiUrl}${environment.devin.proxyPath}`), que anade la cabecera
- * `Authorization: Bearer <service user token>` en servidor. El token de servicio
- * nunca debe viajar al navegador; `useProxy: false` solo es admisible en
- * ejecuciones de backoffice o scripts.
+ * Todas las llamadas salen contra el proxy del backend propio
+ * (`${environment.apiUrl}${environment.devin.proxyPath}`), que es quien anade la
+ * cabecera `Authorization: Bearer <service user token>` contra api.devin.ai.
+ * El token de servicio nunca viaja al navegador.
  */
 @Injectable({
   providedIn: 'root'
@@ -52,15 +51,36 @@ export class DevinApiService {
   constructor(private http: HttpClient) {}
 
   createSession(request: DevinSessionRequest): Observable<DevinSessionResponse> {
-    return this.http.post<DevinSessionResponse>(this.sessionsUrl(), request, { headers: this.headers() });
+    return this.http.post<DevinSessionResponse>(this.sessionsUrl(), request);
   }
 
   getSession(sessionId: string): Observable<DevinSessionStatus> {
-    return this.http.get<DevinSessionStatus>(`${this.sessionsUrl()}/${sessionId}`, { headers: this.headers() });
+    return this.http.get<DevinSessionStatus>(`${this.sessionsUrl()}/${sessionId}`);
   }
 
   sendMessage(sessionId: string, message: string): Observable<unknown> {
-    return this.http.post(`${this.sessionsUrl()}/${sessionId}/messages`, { message }, { headers: this.headers() });
+    return this.http.post(`${this.sessionsUrl()}/${sessionId}/messages`, { message });
+  }
+
+  isConfigured(): Observable<{ configured: boolean }> {
+    return this.http.get<{ configured: boolean }>(
+      `${environment.apiUrl}${environment.devin.proxyPath}/status`
+    );
+  }
+
+  /**
+   * Crea la sesion desde el backend y la deja vinculada a la excepcion, para que
+   * la investigacion quede trazada en la factura y no solo en Devin.
+   */
+  createSessionForException(
+    invoiceId: string,
+    exceptionId: string,
+    request: DevinSessionRequest
+  ): Observable<{ session: DevinSessionResponse; invoice: Invoice }> {
+    return this.http.post<{ session: DevinSessionResponse; invoice: Invoice }>(
+      `${environment.apiUrl}/invoices/${invoiceId}/exceptions/${exceptionId}/devin-session`,
+      request
+    );
   }
 
   /**
@@ -220,8 +240,8 @@ export class DevinApiService {
       `Peticion: ${ruleDescription}`,
       '',
       'Tarea:',
-      '1. Implementa la regla en InvoiceAnomalyService respetando el patron de ToleranceRule (umbral, unidad, severidad, blocksPayment).',
-      '2. Anade la regla al perfil de tolerancias y al catalogo documentado.',
+      '1. Implementa la regla en backend/src/modules/invoices/services/invoice-anomaly.service.ts respetando el patron de ToleranceRule (umbral, unidad, severidad, blocksPayment).',
+      '2. Anade la regla al perfil de tolerancias del seed (backend/src/seed.ts) y al catalogo documentado.',
       '3. Escribe tests unitarios con casos positivos, negativos y de frontera del umbral.',
       '4. Ejecuta un backtesting sobre el historico de facturas de ejemplo y reporta falsos positivos.',
       '5. Abre un PR con el resumen del impacto en volumen de excepciones.'
@@ -237,19 +257,7 @@ export class DevinApiService {
   }
 
   private sessionsUrl(): string {
-    const config = environment.devin;
-    if (config.useProxy) {
-      return `${environment.apiUrl}${config.proxyPath}`;
-    }
-    return `${config.apiBaseUrl}/v3/organizations/${config.orgId}/sessions`;
-  }
-
-  private headers(): HttpHeaders {
-    let headers = new HttpHeaders({ 'Content-Type': 'application/json' });
-    if (!environment.devin.useProxy && environment.devin.serviceTokenHeaderPlaceholder) {
-      headers = headers.set('Authorization', environment.devin.serviceTokenHeaderPlaceholder);
-    }
-    return headers;
+    return `${environment.apiUrl}${environment.devin.proxyPath}/sessions`;
   }
 
   private isoDate(value: Date | string): string {

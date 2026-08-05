@@ -17,10 +17,8 @@ export class InvoiceListComponent implements OnInit {
   constructor(private invoiceService: InvoiceService, private devinApi: DevinApiService) {}
 
   ngOnInit(): void {
-    this.invoiceService.invoices$.subscribe(invoices => {
-      this.invoices = invoices;
-      this.opportunities = this.invoiceService.getConsolidationOpportunities();
-    });
+    this.invoiceService.invoices$.subscribe(invoices => (this.invoices = invoices));
+    this.reload();
   }
 
   get visibleInvoices(): Invoice[] {
@@ -52,22 +50,29 @@ export class InvoiceListComponent implements OnInit {
   }
 
   markFalsePositive(invoice: Invoice, exception: InvoiceException): void {
-    this.invoiceService.resolveException(invoice.id, exception.id, 'false_positive', 'Descartada por el analista de compras');
+    this.invoiceService
+      .resolveException(invoice.id, exception.id, 'false_positive', 'Descartada por el analista de compras')
+      .subscribe(() => this.reload());
   }
 
   resolve(invoice: Invoice, exception: InvoiceException): void {
-    this.invoiceService.resolveException(invoice.id, exception.id, 'resolved', 'Excepcion verificada y aceptada');
+    this.invoiceService
+      .resolveException(invoice.id, exception.id, 'resolved', 'Excepcion verificada y aceptada')
+      .subscribe(() => this.reload());
   }
 
   requestConsolidationAnalysis(): void {
     this.devinRequest = this.devinApi.buildConsolidationAnalysisRequest(this.opportunities);
   }
 
-  resetDemoData(): void {
-    this.invoiceService.resetToSeedData();
-  }
-
   get devinRequestJson(): string {
     return this.devinRequest ? JSON.stringify(this.devinRequest, null, 2) : '';
+  }
+
+  private reload(): void {
+    this.invoiceService.refresh().subscribe();
+    this.invoiceService
+      .getConsolidationOpportunities()
+      .subscribe(opportunities => (this.opportunities = opportunities));
   }
 }

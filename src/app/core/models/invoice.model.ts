@@ -9,7 +9,7 @@ export interface Supplier {
   status: SupplierStatus;
   defaultCategoryCode?: string;
   paymentTermsDays: number;
-  onboardedAt: Date;
+  onboardedAt: string;
   riskScore: number;
   bankAccounts: SupplierBankAccount[];
   contactEmail?: string;
@@ -25,8 +25,8 @@ export interface SupplierBankAccount {
   holderName: string;
   status: BankAccountStatus;
   isPrimary: boolean;
-  registeredAt: Date;
-  verifiedAt?: Date;
+  registeredAt: string;
+  verifiedAt?: string;
   verifiedBy?: string;
   verificationChannel?: 'callback' | 'portal' | 'certificate' | 'none';
 }
@@ -38,11 +38,11 @@ export interface BankAccountChange {
   newAccountId: string;
   previousIbanMasked?: string;
   newIbanMasked: string;
-  changedAt: Date;
+  changedAt: string;
   changedBy: string;
   requestChannel: 'email' | 'portal' | 'phone' | 'erp' | 'invoice_document';
   verified: boolean;
-  verifiedAt?: Date;
+  verifiedAt?: string;
 }
 
 export interface SpendCategory {
@@ -65,7 +65,7 @@ export interface SpendClassification {
   method: ClassificationMethod;
   matchedKeywords: string[];
   reviewedBy?: string;
-  reviewedAt?: Date;
+  reviewedAt?: string;
 }
 
 export interface Contract {
@@ -73,8 +73,8 @@ export interface Contract {
   supplierId: string;
   reference: string;
   categoryCode: string;
-  validFrom: Date;
-  validUntil: Date;
+  validFrom: string;
+  validUntil: string;
   committedAnnualSpend: number;
   currency: string;
   paymentTermsDays: number;
@@ -97,7 +97,7 @@ export interface PurchaseOrder {
   supplierId: string;
   contractId?: string;
   currency: string;
-  issuedAt: Date;
+  issuedAt: string;
   costCenter: string;
   approvedAmount: number;
   status: 'open' | 'partially_received' | 'closed' | 'cancelled';
@@ -121,7 +121,7 @@ export interface GoodsReceipt {
   id: string;
   purchaseOrderId: string;
   receiptNumber: string;
-  receivedAt: Date;
+  receivedAt: string;
   lines: GoodsReceiptLine[];
 }
 
@@ -151,9 +151,9 @@ export interface Invoice {
   supplierTaxId: string;
   purchaseOrderNumber?: string;
   contractReference?: string;
-  issueDate: Date;
-  receivedDate: Date;
-  dueDate: Date;
+  issueDate: string;
+  receivedDate: string;
+  dueDate: string;
   currency: string;
   exchangeRate: number;
   subtotal: number;
@@ -176,8 +176,8 @@ export interface Invoice {
   exceptions: InvoiceException[];
   duplicateCandidates: DuplicateCandidate[];
   auditTrail: AuditEvent[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface InvoiceLine {
@@ -242,10 +242,10 @@ export interface InvoiceException {
   toleranceValue: number;
   toleranceUnit: 'amount' | 'percent' | 'days' | 'count';
   blocksPayment: boolean;
-  detectedAt: Date;
+  detectedAt: string;
   assignedTo?: string;
   resolutionNote?: string;
-  resolvedAt?: Date;
+  resolvedAt?: string;
   devinSessionId?: string;
   relatedInvoiceId?: string;
 }
@@ -266,7 +266,7 @@ export interface ToleranceProfile {
   currency: string;
   approvalThreshold: number;
   rules: ToleranceRule[];
-  updatedAt: Date;
+  updatedAt: string;
 }
 
 export type RiskBand = 'low' | 'medium' | 'high' | 'critical';
@@ -276,7 +276,7 @@ export interface RiskAssessment {
   score: number;
   band: RiskBand;
   signals: RiskSignal[];
-  evaluatedAt: Date;
+  evaluatedAt: string;
   releaseRecommendation: 'auto_release' | 'manual_review' | 'block';
 }
 
@@ -311,7 +311,7 @@ export interface AuditEvent {
   invoiceId: string;
   action: string;
   actor: string;
-  at: Date;
+  at: string;
   detail?: string;
   previousValue?: string;
   newValue?: string;

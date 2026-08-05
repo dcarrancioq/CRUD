@@ -24,21 +24,18 @@ export class InvoiceCompareComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const params = this.route.snapshot.queryParams;
+
     this.invoiceService.invoices$.subscribe(invoices => {
       this.invoices = invoices;
       if (!this.leftId && invoices.length) {
-        this.leftId = invoices[0].id;
-        this.rightId = invoices.length > 1 ? invoices[1].id : invoices[0].id;
+        this.leftId = params['left'] ?? invoices[0].id;
+        this.rightId = params['right'] ?? (invoices.length > 1 ? invoices[1].id : invoices[0].id);
+        this.compare();
       }
-      this.compare();
     });
 
-    const params = this.route.snapshot.queryParams;
-    if (params['left'] && params['right']) {
-      this.leftId = params['left'];
-      this.rightId = params['right'];
-      this.compare();
-    }
+    this.invoiceService.refresh().subscribe();
   }
 
   compare(): void {
@@ -47,7 +44,9 @@ export class InvoiceCompareComponent implements OnInit {
       this.comparison = undefined;
       return;
     }
-    this.comparison = this.invoiceService.compare(this.leftId, this.rightId);
+    this.invoiceService
+      .compare(this.leftId, this.rightId)
+      .subscribe(comparison => (this.comparison = comparison));
   }
 
   get visibleFields(): InvoiceComparisonField[] {

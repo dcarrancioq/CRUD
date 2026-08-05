@@ -16,8 +16,6 @@ import { AdminService } from './services/admin.service';
 import { LoadingService } from './services/loading.service';
 import { NotificationService } from './services/notification.service';
 import { InvoiceService } from './services/invoice.service';
-import { InvoiceAnomalyService } from './services/invoice-anomaly.service';
-import { SpendClassificationService } from './services/spend-classification.service';
 import { ProcurementMasterDataService } from './services/procurement-master-data.service';
 import { DevinApiService } from './services/devin-api.service';
 
@@ -42,8 +40,6 @@ import { CheckoutGuard } from './guards/checkout.guard';
     LoadingService,
     NotificationService,
     ProcurementMasterDataService,
-    SpendClassificationService,
-    InvoiceAnomalyService,
     InvoiceService,
     DevinApiService,
     AuthGuard,

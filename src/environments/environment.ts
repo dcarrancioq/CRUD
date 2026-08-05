@@ -5,10 +5,7 @@ export const environment = {
   googleAnalyticsId: '',
   recaptchaSiteKey: '',
   devin: {
-    useProxy: true,
-    proxyPath: '/integrations/devin/sessions',
-    apiBaseUrl: 'https://api.devin.ai',
-    orgId: '',
-    serviceTokenHeaderPlaceholder: ''
+    // El backend (/api/integrations/devin) es quien añade el token de servicio.
+    proxyPath: '/integrations/devin'
   }
 };

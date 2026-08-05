@@ -3,21 +3,66 @@
 Diseño funcional y tecnico de la solucion: modelo de datos, motor de excepciones (clasificacion de gasto,
 desviaciones, duplicados, riesgo de pago y fraude), las dos pantallas construidas y el encaje de Devin via API.
 
-Implementacion en este repositorio:
+## Arquitectura
+
+Backend real (NestJS 11 + TypeORM + PostgreSQL) con el modelo de datos persistido y **todo** el motor
+determinista (clasificacion, tolerancias, duplicados, riesgo, comparativa, consolidacion) en servidor. El
+frontend Angular solo captura datos y presenta el veredicto, de modo que la evaluacion es reproducible y
+auditable fuera de la sesion del usuario y el token de Devin nunca llega al navegador.
+
+```text
+Angular (8081)  ->  NestJS /api (8080)  ->  PostgreSQL
+                          |
+                          +->  api.devin.ai (token solo en servidor)
+```
 
 | Pieza | Fichero |
 | --- | --- |
-| Modelo de datos | `src/app/core/models/invoice.model.ts` |
-| Maestros (proveedores, categorias, contratos, POs, tolerancias) | `src/app/core/services/procurement-master-data.service.ts` |
-| Clasificacion de gasto y consolidacion | `src/app/core/services/spend-classification.service.ts` |
-| Motor de excepciones / antifraude / scoring | `src/app/core/services/invoice-anomaly.service.ts` |
-| Persistencia y comparativa | `src/app/core/services/invoice.service.ts` |
-| Cliente API Devin | `src/app/core/services/devin-api.service.ts` |
+| Entidades del modelo (maestros) | `backend/src/modules/master-data/entities/` |
+| Entidades de factura, excepciones, duplicados, auditoria | `backend/src/modules/invoices/entities/` |
+| Clasificacion de gasto y consolidacion | `backend/src/modules/invoices/services/spend-classification.service.ts` |
+| Motor de excepciones / antifraude / scoring | `backend/src/modules/invoices/services/invoice-anomaly.service.ts` |
+| Comparativa de dos facturas | `backend/src/modules/invoices/services/invoice-comparison.service.ts` |
+| Casos de uso y persistencia | `backend/src/modules/invoices/services/invoices.service.ts` |
+| Proxy de la API de Devin | `backend/src/modules/devin/` |
+| Datos de ejemplo | `backend/src/seed.ts` |
+| Tipos compartidos con el API | `src/app/core/models/invoice.model.ts` |
+| Clientes HTTP | `src/app/core/services/invoice.service.ts`, `procurement-master-data.service.ts`, `devin-api.service.ts` |
 | Pantalla A (alta de factura) | `src/app/features/invoices/components/invoice-entry/` |
 | Pantalla B (comparativa) | `src/app/features/invoices/components/invoice-compare/` |
 | Bandeja de excepciones (entrada) | `src/app/features/invoices/components/invoice-list/` |
 
 Rutas: `/invoices` (bandeja), `/invoices/new` (Pantalla A), `/invoices/compare` (Pantalla B).
+
+### Puesta en marcha
+
+```bash
+docker run -d --name procurement-pg -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=procurement -p 5432:5432 postgres:16-alpine
+
+cd backend
+cp .env.example .env
+npm install
+npm run seed        # maestros, tolerancias y 6 facturas de ejemplo
+npm run start:dev   # http://localhost:8080/api (Swagger en /api/docs)
+
+cd .. && npm start -- --port 8081
+```
+
+### API
+
+| Operacion | Endpoint |
+| --- | --- |
+| Listado / detalle | `GET /api/invoices`, `GET /api/invoices/:id` |
+| Evaluacion sin registrar (panel en vivo del alta) | `POST /api/invoices/preview` |
+| Registro de factura | `POST /api/invoices` |
+| Excepciones abiertas | `GET /api/invoices/exceptions` |
+| Resolucion de excepcion | `PATCH /api/invoices/:invoiceId/exceptions/:exceptionId` |
+| Comparativa | `GET /api/invoices/compare?left=&right=` |
+| Consolidacion | `GET /api/invoices/consolidation-opportunities` |
+| Investigacion con Devin de una excepcion | `POST /api/invoices/:invoiceId/exceptions/:exceptionId/devin-session` |
+| Maestros | `GET /api/master-data/{categories,suppliers,contracts,purchase-orders,tolerance-profile}` |
+| Proxy Devin | `GET/POST /api/integrations/devin/...` |
 
 ---
 
@@ -140,7 +185,7 @@ condiciones.
 - Cabecera, datos de pago, lineas dinamicas e importes declarados en el documento.
 - Al seleccionar proveedor se precargan condiciones de pago y su cuenta principal, y se muestran todas sus
   cuentas registradas con su estado (control visual de cambio de IBAN).
-- Panel lateral en vivo: totales calculados, categoria de gasto asignada con confianza y terminos,
+- Panel lateral en vivo alimentado por `POST /api/invoices/preview` (evaluacion real, sin persistir): totales calculados, categoria de gasto asignada con confianza y terminos,
   score de riesgo con recomendacion, resultado de conciliacion con el pedido y **excepciones sobre
   tolerancia** separando las que bloquean el pago.
 - Al guardar, la factura queda `approved` (sin excepciones), `under_review` (excepciones toleradas) o
@@ -178,7 +223,9 @@ condiciones.
 
 ### 3.3 Llamadas a la API
 
-Cliente: `src/app/core/services/devin-api.service.ts`. Endpoints v3 de ambito organizacion:
+Los payloads se construyen en `src/app/core/services/devin-api.service.ts` y salen por el proxy
+`backend/src/modules/devin/`, que es el unico que conoce `DEVIN_SERVICE_TOKEN` y `DEVIN_ORG_ID`.
+Endpoints v3 de ambito organizacion que invoca el backend:
 
 | Operacion | Endpoint |
 | --- | --- |
@@ -186,9 +233,10 @@ Cliente: `src/app/core/services/devin-api.service.ts`. Endpoints v3 de ambito or
 | Consultar sesion | `GET /v3/organizations/{org_id}/sessions/{devin_id}` |
 | Enviar mensaje | `POST /v3/organizations/{org_id}/sessions/{devin_id}/messages` |
 
-Por defecto las llamadas salen contra el backend propio
-(`environment.devin.proxyPath`), que es quien anade `Authorization: Bearer <service user token>`. **El token de
-servicio no debe viajar al navegador.**
+El navegador solo llama a `/api/integrations/devin/*`; el backend anade
+`Authorization: Bearer <service user token>`. **El token de servicio no viaja al navegador.** Sin credenciales
+configuradas, `GET /api/integrations/devin/status` devuelve `{ "configured": false }` y la creacion de sesion
+responde 503, sin filtrar nada.
 
 Ejemplo (investigacion de duplicado, el payload que construye
 `buildDuplicateInvestigationRequest`):
@@ -228,5 +276,6 @@ Puntos de diseño de la integracion:
 - `tags` incluyen el numero de factura para trazar coste (ACUs) por excepcion investigada.
 - `max_acu_limit` acota el coste por tarea.
 - El `session_id` devuelto se guarda en `InvoiceException.devinSessionId` (via
-  `InvoiceService.linkDevinSession`), la excepcion pasa a `in_review` y queda registrada en la auditoria.
+  `POST /api/invoices/:invoiceId/exceptions/:exceptionId/devin-session`), la excepcion pasa a `in_review` y
+  queda registrada en la auditoria.
 - En los prompts se indica explicitamente que Devin **no** libera pagos ni modifica datos maestros.
