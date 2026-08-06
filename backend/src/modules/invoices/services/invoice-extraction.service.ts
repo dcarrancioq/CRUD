@@ -21,6 +21,9 @@ const LABELS = {
     'numero de factura',
     'num. factura',
     'num factura',
+    'n. de factura',
+    'n de factura',
+    'n. factura',
     'no de factura',
     'no factura',
     'factura numero',
@@ -212,7 +215,7 @@ export class InvoiceExtractionService {
       );
     }
 
-    const supplierMatch = await this.matchSupplier(flatLines, document.text, draft);
+    const supplierMatch = await this.matchSupplier(flatLines, document.text, draft, warnings);
     if (supplierMatch) {
       draft.supplierId = supplierMatch.supplierId;
       this.push(
@@ -223,7 +226,7 @@ export class InvoiceExtractionService {
         supplierMatch.confidence,
         `Coincidencia por ${this.matchLabel(supplierMatch.matchedBy)}`,
       );
-    } else {
+    } else if (!warnings.some((warning) => warning.includes('maestro de proveedores'))) {
       warnings.push('No se ha identificado el proveedor en el maestro: seleccionalo manualmente.');
     }
 
@@ -276,6 +279,7 @@ export class InvoiceExtractionService {
     flatLines: string[],
     text: string,
     draft: ImportedInvoiceDraft,
+    warnings: string[],
   ): Promise<ImportedSupplierMatch | undefined> {
     const suppliers = await this.masterData.findSuppliers();
     if (!suppliers.length) {
@@ -302,13 +306,25 @@ export class InvoiceExtractionService {
       }
     }
 
+    // El documento identifica a su emisor por NIF: si ese NIF no esta dado de alta,
+    // buscar por nombre solo produciria falsos positivos (el nombre de otro proveedor
+    // puede aparecer en el detalle de la factura).
+    if (taxId) {
+      warnings.push(
+        `El NIF/CIF ${taxId.toUpperCase()} del documento no esta en el maestro de proveedores: selecciona el proveedor manualmente o dalo de alta.`,
+      );
+      return undefined;
+    }
+
     const haystack = normalizeText(text);
     const byName = suppliers
       .map((supplier) => ({ supplier, score: this.nameScore(haystack, supplier.legalName) }))
       .filter((candidate) => candidate.score > 0)
       .sort((a, b) => b.score - a.score)[0];
-    if (byName && byName.score >= 0.6) {
-      return this.toMatch(byName.supplier, 'name', round(0.6 + byName.score * 0.3));
+    // Solo se acepta la razon social completa: coincidencias parciales de tokens
+    // ('Nimbus' dentro de una linea de detalle) no identifican al emisor.
+    if (byName && byName.score >= 1) {
+      return this.toMatch(byName.supplier, 'name', 0.85);
     }
     return undefined;
   }
@@ -415,17 +431,63 @@ export class InvoiceExtractionService {
       return [];
     }
     const result: ImportedInvoiceLine[] = [];
+    // En un PDF la descripcion puede ocupar varias lineas antes de la fila con importes.
+    let pending = '';
     for (const raw of lines.slice(headerIndex + 1)) {
       const line = this.flatten(raw);
-      if (/^(total|base imponible|subtotal|iva|impuestos)/i.test(line)) {
+      if (/^(total|base imponible|subtotal|iva|impuestos|condiciones|notas|observaciones|forma de pago)\b/i.test(line)) {
         break;
       }
-      const parsed = this.parseLineRow(line, draft);
+      if (!line) {
+        continue;
+      }
+      const parsed = this.parseAmountRow(line, pending, draft) ?? this.parseLineRow(line, draft);
       if (parsed) {
         result.push(parsed);
+        pending = '';
+      } else {
+        pending = `${pending} ${line}`.trim().slice(-200);
       }
     }
     return result;
+  }
+
+  /**
+   * Fila que termina en `cantidad precio importe`, con o sin divisa intercalada.
+   * Se acepta solo si `cantidad x precio` cuadra con el importe de la fila, que es
+   * la comprobacion que evita confundir codigos o periodos con cifras de la linea.
+   */
+  private parseAmountRow(
+    line: string,
+    pending: string,
+    draft: ImportedInvoiceDraft,
+  ): ImportedInvoiceLine | undefined {
+    const match = line.match(
+      /^(.*?)\s*(\d[\d.,]*)\s+(\d[\d.,]*)\s*(?:EUR|USD|GBP|€|\$|£)?\s+(\d[\d.,]*)\s*(?:EUR|USD|GBP|€|\$|£)?$/i,
+    );
+    if (!match) {
+      return undefined;
+    }
+    const quantity = this.number(match[2]);
+    const unitPrice = this.number(match[3]);
+    const amount = this.number(match[4]);
+    if (quantity === undefined || unitPrice === undefined || amount === undefined || quantity <= 0) {
+      return undefined;
+    }
+    if (Math.abs(quantity * unitPrice - amount) > 0.05) {
+      return undefined;
+    }
+    const description = `${pending} ${match[1]}`.replace(/\s{2,}/g, ' ').trim();
+    if (description.length < 3) {
+      return undefined;
+    }
+    return {
+      description: description.slice(0, 200),
+      quantity,
+      uom: 'unidad',
+      unitPrice,
+      taxRate: draft.taxRate ?? 21,
+    };
   }
 
   private parseLineRow(line: string, draft: ImportedInvoiceDraft): ImportedInvoiceLine | undefined {
@@ -458,7 +520,14 @@ export class InvoiceExtractionService {
     const description = match[1].trim();
     const quantity = this.number(match[2]);
     const unitPrice = this.number(match[4]);
-    if (!description || description.length < 3 || quantity === undefined || unitPrice === undefined) {
+    if (
+      !description ||
+      description.length < 3 ||
+      quantity === undefined ||
+      unitPrice === undefined ||
+      quantity <= 0 ||
+      unitPrice <= 0
+    ) {
       return undefined;
     }
     return {
@@ -474,7 +543,7 @@ export class InvoiceExtractionService {
     const joined = cells.join(' ');
     return (
       /descripcion|concepto|description|detalle/.test(joined) &&
-      /cantidad|uds|unidades|qty|quantity/.test(joined) &&
+      /cantidad|cant\.?\b|uds|unidades|qty|quantity/.test(joined) &&
       /precio|importe|unit price|total/.test(joined)
     );
   }
@@ -483,11 +552,11 @@ export class InvoiceExtractionService {
     for (const label of labels) {
       for (let index = 0; index < flatLines.length; index += 1) {
         const line = flatLines[index];
-        const position = line.toLowerCase().indexOf(label);
-        if (position === -1) {
+        const hit = this.labelPosition(line, label);
+        if (!hit) {
           continue;
         }
-        let rest = line.slice(position + label.length).replace(/^[\s:.\-|#º°>]+/, '').trim();
+        let rest = line.slice(hit.end).replace(/^[\s:.\-|#º°>]+/, '').trim();
         if (!rest && flatLines[index + 1]) {
           rest = flatLines[index + 1].replace(/^[\s:.\-|#>]+/, '').trim();
         }
@@ -497,6 +566,21 @@ export class InvoiceExtractionService {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Localiza la etiqueta exigiendo que empiece en palabra (asi "Total" no casa
+   * dentro de "Subtotal") y tolerando los separadores que mete cada maquetacion
+   * entre sus palabras: `N.o de factura`, `Num . factura`, `Fecha  emision`.
+   */
+  private labelPosition(line: string, label: string): { end: number } | undefined {
+    const parts = label.split(/[\s.]+/).filter(Boolean).map((part) => this.escape(part));
+    if (!parts.length) {
+      return undefined;
+    }
+    const pattern = new RegExp(`(?:^|[^a-z0-9])(${parts.join('[\\s.º°]*')})`, 'i');
+    const match = pattern.exec(line);
+    return match ? { end: match.index + match[0].length } : undefined;
   }
 
   private dateFrom(hit: LabelHit | undefined): LabelHit | undefined {
@@ -569,31 +653,46 @@ export class InvoiceExtractionService {
   }
 
   private ibanFrom(flatLines: string[]): { value: string; source: string } | undefined {
-    const hit = this.label(flatLines, LABELS.iban);
-    const fromLabel = hit?.value.match(/[A-Z]{2}\d{2}[\dA-Z ]{10,32}/i);
-    if (hit && fromLabel) {
-      const iban = normalizeIban(fromLabel[0]);
-      if (iban.length >= 15) {
-        return { value: iban, source: hit.source };
+    const pattern = /\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,4})?\b/i;
+    for (let index = 0; index < flatLines.length; index += 1) {
+      const line = flatLines[index];
+      if (!pattern.test(line)) {
+        continue;
       }
-    }
-    for (const line of flatLines) {
-      const match = line.match(/\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,4})?\b/);
-      if (match) {
-        const iban = normalizeIban(match[0]);
-        if (iban.length >= 15) {
-          return { value: iban, source: line };
+      // Al extraer el texto de un PDF el IBAN puede partirse en varias lineas:
+      // se anaden las siguientes y se conserva la lectura mas larga (max 34).
+      let best = '';
+      let candidate = line;
+      for (let offset = 1; offset <= 2; offset += 1) {
+        const match = candidate.match(pattern);
+        const iban = match ? normalizeIban(match[0]) : '';
+        if (iban.length > best.length && iban.length <= 34) {
+          best = iban;
         }
+        const next = flatLines[index + offset];
+        if (!next || !/^[A-Z0-9]{1,4}\b/i.test(next)) {
+          break;
+        }
+        candidate = `${candidate} ${next}`;
+      }
+      if (best.length >= 20) {
+        return { value: best, source: line };
       }
     }
     return undefined;
   }
 
   private taxIdFrom(flatLines: string[], text: string): string | undefined {
-    const hit = this.label(flatLines, LABELS.taxId);
-    const labelled = hit?.value.match(/\b[A-Z]?[-\s]?\d{7,8}[-\s]?[A-Z]?\b/i);
-    if (labelled) {
-      return labelled[0];
+    // La primera linea que menciona el NIF puede ser un texto corrido sin el numero,
+    // asi que se revisan todas las que lo citan antes de recurrir al patron generico.
+    for (const line of flatLines) {
+      if (!/\b(nif|cif|n\.i\.f|c\.i\.f|vat|tax id)\b/i.test(line)) {
+        continue;
+      }
+      const labelled = line.match(/\b[A-Z][-\s]?\d{7,8}[-\s]?[A-Z]?\b|\b\d{8}[-\s]?[A-Z]\b/i);
+      if (labelled) {
+        return labelled[0];
+      }
     }
     const generic = this.flatten(text).match(/\b(?:[A-Z]\d{8}|\d{8}[A-Z]|[A-Z]\d{7}[A-Z])\b/);
     return generic?.[0];
