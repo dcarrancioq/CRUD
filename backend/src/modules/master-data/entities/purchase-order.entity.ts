@@ -24,6 +24,22 @@ export class PurchaseOrder {
   @Column({ name: 'cost_center' })
   costCenter: string;
 
+  @Column({ name: 'company_id', nullable: true })
+  companyId: string;
+
+  @Column({ name: 'org_unit_id', nullable: true })
+  orgUnitId: string;
+
+  @Column({ name: 'category_code', nullable: true })
+  categoryCode: string;
+
+  /** Fecha comprometida de entrega, para medir cumplimiento de plazos. */
+  @Column({ name: 'expected_delivery_date', type: 'date', nullable: true })
+  expectedDeliveryDate: Date;
+
+  @Column({ name: 'delivered_at', type: 'date', nullable: true })
+  deliveredAt: Date;
+
   @Column('decimal', { name: 'approved_amount', precision: 14, scale: 2, transformer: { to: (v: number) => v, from: (v: string) => Number(v) } })
   approvedAmount: number;
 

@@ -3,9 +3,14 @@ import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, catchError, debounceTime, of, switchMap, takeUntil } from 'rxjs';
 import {
+  AllocationMode,
+  Company,
+  CostCenter,
+  CreateInvoiceAllocationRequest,
   CreateInvoiceRequest,
   Invoice,
   InvoiceException,
+  OrgUnit,
   SpendCategory,
   Supplier,
   SupplierBankAccount,
@@ -31,6 +36,9 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   form!: FormGroup;
   suppliers: Supplier[] = [];
   categories: SpendCategory[] = [];
+  costCenters: CostCenter[] = [];
+  companies: Company[] = [];
+  orgUnits: OrgUnit[] = [];
   toleranceProfile?: ToleranceProfile;
   preview?: Invoice;
   saving = false;
@@ -43,6 +51,8 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   supplierCandidate?: ImportedSupplierCandidate;
 
   readonly acceptedImportTypes = '.pdf,.doc,.docx,.xls,.xlsx,.csv';
+  /** Mismo descuadre admitido que el backend al reconciliar el reparto. */
+  private readonly allocationTolerance = 0.02;
 
   private readonly evaluateTrigger = new Subject<void>();
   private readonly destroy$ = new Subject<void>();
@@ -59,6 +69,17 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initForm();
     this.addLine();
+
+    this.masterData.loadOrganization()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(organization => {
+        this.companies = organization.companies;
+        this.orgUnits = organization.orgUnits;
+        this.costCenters = organization.costCenters;
+        if (!this.allocationGroups[0].get('costCenterCode')?.value && this.costCenters.length) {
+          this.allocationGroups[0].get('costCenterCode')?.setValue(this.costCenters[0].code);
+        }
+      });
 
     this.masterData.load()
       .pipe(takeUntil(this.destroy$))
@@ -120,6 +141,129 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
       label: category.name,
       hint: category.code
     }));
+  }
+
+  /** CECOs con su sociedad y area, que es lo que da sentido al reparto analitico. */
+  get costCenterOptions(): SearchableOption[] {
+    return this.costCenters.map(costCenter => ({
+      value: costCenter.code,
+      label: `${costCenter.code} - ${costCenter.name}`,
+      hint: `${this.companyName(costCenter.companyId)} | ${this.orgUnitName(costCenter.orgUnitId)}`
+    }));
+  }
+
+  get allocations(): FormArray {
+    return this.form.get('allocations') as FormArray;
+  }
+
+  get allocationGroups(): FormGroup[] {
+    return this.allocations.controls as FormGroup[];
+  }
+
+  get allocationMode(): AllocationMode {
+    return this.form.get('allocationMode')?.value as AllocationMode;
+  }
+
+  /** Importe ya imputado: en modo porcentaje se traduce sobre el total de la factura. */
+  get allocatedAmount(): number {
+    return this.round(
+      this.allocationGroups.reduce((sum, group) => sum + this.allocationAmount(group), 0)
+    );
+  }
+
+  get allocatedPercent(): number {
+    const total = this.computedTotal;
+    return total ? this.round((this.allocatedAmount / total) * 100) : 0;
+  }
+
+  get unallocatedAmount(): number {
+    return this.round(this.computedTotal - this.allocatedAmount);
+  }
+
+  /** Mensaje unico de validacion del reparto; vacio cuando cuadra. */
+  get allocationError(): string {
+    const groups = this.allocationGroups;
+    if (groups.some(group => !group.get('costCenterCode')?.value)) {
+      return 'Selecciona el CECO de cada linea de reparto.';
+    }
+    if (groups.some(group => Number(group.get('value')?.value) <= 0)) {
+      return 'Cada linea de reparto debe tener un importe o porcentaje mayor que cero.';
+    }
+    const keys = groups.map(
+      group => `${group.get('costCenterCode')?.value}|${group.get('categoryCode')?.value ?? ''}`
+    );
+    if (new Set(keys).size !== keys.length) {
+      return 'Hay CECOs repetidos con la misma categoria: unifica esas lineas.';
+    }
+    const sum = this.round(groups.reduce((total, group) => total + Number(group.get('value')?.value || 0), 0));
+    if (this.allocationMode === 'percent' && Math.abs(sum - 100) > this.allocationTolerance) {
+      return `El reparto suma ${sum}% y debe sumar 100%.`;
+    }
+    if (this.allocationMode === 'amount' && Math.abs(sum - this.computedTotal) > this.allocationTolerance) {
+      return `El reparto suma ${this.formatAmount(sum)} y debe sumar el total de la factura (${this.formatAmount(this.computedTotal)}).`;
+    }
+    return '';
+  }
+
+  allocationAmount(group: FormGroup): number {
+    const value = Number(group.get('value')?.value) || 0;
+    return this.allocationMode === 'percent' ? this.round((this.computedTotal * value) / 100) : this.round(value);
+  }
+
+  allocationScope(group: FormGroup): string {
+    const costCenter = this.costCenters.find(item => item.code === group.get('costCenterCode')?.value);
+    if (!costCenter) {
+      return '';
+    }
+    return `${this.companyName(costCenter.companyId)} | ${this.orgUnitName(costCenter.orgUnitId)}`;
+  }
+
+  addAllocation(): void {
+    const used = new Set(this.allocationGroups.map(group => group.get('costCenterCode')?.value));
+    const next = this.costCenters.find(costCenter => !used.has(costCenter.code));
+    this.allocations.push(this.buildAllocationGroup(next?.code ?? '', 0));
+  }
+
+  removeAllocation(index: number): void {
+    if (this.allocations.length > 1) {
+      this.allocations.removeAt(index);
+    }
+  }
+
+  /** Al cambiar de criterio se convierten los valores para no perder el reparto hecho. */
+  setAllocationMode(mode: AllocationMode): void {
+    if (mode === this.allocationMode) {
+      return;
+    }
+    const total = this.computedTotal;
+    const amounts = this.allocationGroups.map(group => this.allocationAmount(group));
+    this.form.get('allocationMode')?.setValue(mode, { emitEvent: false });
+    this.allocationGroups.forEach((group, index) => {
+      const amount = amounts[index];
+      const value = mode === 'percent' ? (total ? this.round((amount / total) * 100) : 0) : amount;
+      group.get('value')?.setValue(value, { emitEvent: false });
+    });
+    this.form.updateValueAndValidity();
+    this.evaluate();
+  }
+
+  /** Imputa al CECO de la linea el importe o porcentaje que falta por repartir. */
+  assignRemainder(index: number): void {
+    const group = this.allocationGroups[index];
+    const current = Number(group.get('value')?.value) || 0;
+    const missing =
+      this.allocationMode === 'percent'
+        ? this.round(100 - this.allocationGroups.reduce((sum, item) => sum + Number(item.get('value')?.value || 0), 0))
+        : this.unallocatedAmount;
+    group.get('value')?.setValue(this.round(current + missing));
+  }
+
+  companyName(companyId: string): string {
+    return this.companies.find(company => company.id === companyId)?.legalName ?? companyId;
+  }
+
+  orgUnitName(orgUnitId: string): string {
+    return this.orgUnits.find(unit => unit.id === orgUnitId)?.name ?? orgUnitId;
   }
 
   readonly currencyOptions: SearchableOption[] = [
@@ -312,7 +456,9 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
     assign('paymentTermsDays', draft.paymentTermsDays);
     assign('bankAccountIban', draft.bankAccountIban);
     assign('bankAccountHolder', draft.bankAccountHolder);
-    assign('costCenter', draft.costCenter);
+    if (draft.costCenter && this.costCenters.some(costCenter => costCenter.code === draft.costCenter)) {
+      this.allocationGroups[0].get('costCenterCode')?.setValue(draft.costCenter, { emitEvent: false });
+    }
     assign('description', draft.description);
     assign('declaredSubtotal', draft.declaredSubtotal);
     assign('declaredTaxAmount', draft.declaredTaxAmount);
@@ -373,6 +519,10 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.notificationService.error('Revisa los campos obligatorios de la factura.');
+      return;
+    }
+    if (this.allocationError) {
+      this.notificationService.error(this.allocationError);
       return;
     }
     this.saving = true;
@@ -437,7 +587,8 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
       paymentMethod: value.paymentMethod,
       bankAccountIban: value.bankAccountIban,
       bankAccountHolder: this.optional(value.bankAccountHolder),
-      costCenter: value.costCenter,
+      costCenter: this.allocationGroups[0].get('costCenterCode')?.value,
+      allocations: this.buildAllocations(),
       requesterEmail: this.optional(value.requesterEmail),
       description: this.optional(value.description),
       source: value.source,
@@ -458,6 +609,28 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
     };
   }
 
+  private buildAllocations(): CreateInvoiceAllocationRequest[] {
+    const mode = this.allocationMode;
+    return this.allocationGroups.map(group => ({
+      costCenterCode: group.get('costCenterCode')?.value as string,
+      mode,
+      value: Number(group.get('value')?.value) || 0,
+      categoryCode: this.optional(group.get('categoryCode')?.value as string)
+    }));
+  }
+
+  private buildAllocationGroup(costCenterCode: string, value: number): FormGroup {
+    return this.fb.group({
+      costCenterCode: [costCenterCode, Validators.required],
+      value: [value, [Validators.required, Validators.min(0)]],
+      categoryCode: ['']
+    });
+  }
+
+  formatAmount(value: number): string {
+    return `${value.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR`;
+  }
+
   /** El backend valida los opcionales: una cadena vacia no es un email ni un PO valido. */
   private optional(value: string | null | undefined): string | undefined {
     const trimmed = (value ?? '').trim();
@@ -467,7 +640,7 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   private evaluate(): void {
     const supplierId = this.form.get('supplierId')?.value;
     const hasLines = this.lines.controls.some(control => !!control.get('description')?.value);
-    if (!supplierId || !hasLines || this.form.get('invoiceNumber')?.invalid) {
+    if (!supplierId || !hasLines || this.form.get('invoiceNumber')?.invalid || this.allocationError) {
       this.preview = undefined;
       return;
     }
@@ -493,7 +666,8 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
       paymentMethod: ['transfer', Validators.required],
       bankAccountIban: ['', [Validators.required, Validators.minLength(15)]],
       bankAccountHolder: [''],
-      costCenter: ['CC-IT-INFRA', Validators.required],
+      allocationMode: ['percent', Validators.required],
+      allocations: this.fb.array([this.buildAllocationGroup('', 100)]),
       requesterEmail: [''],
       description: [''],
       source: ['manual', Validators.required],

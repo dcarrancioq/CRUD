@@ -85,6 +85,18 @@ cd .. && npm start -- --port 8081
 
 ```mermaid
 erDiagram
+  COMPANY ||--o{ ORG_UNIT : "areas"
+  ORG_UNIT ||--o{ COST_CENTER : "CECOs"
+  COMPANY ||--o{ DIMENSION_BUDGET : "presupuesto por dimension"
+  ORG_UNIT ||--o{ DIMENSION_BUDGET : ""
+  SPEND_CATEGORY ||--o{ DIMENSION_BUDGET : ""
+  COST_CENTER ||--o{ INVOICE_ALLOCATION : "imputacion"
+  INVOICE ||--o{ INVOICE_ALLOCATION : "reparto a 1..n CECOs"
+  CONTRACT ||--o{ CONTRACT_SCOPE : "ambito por sociedad/area"
+  COMPANY ||--o{ CONTRACT_SCOPE : ""
+  ORG_UNIT ||--o{ CONTRACT_SCOPE : ""
+  COMPANY ||--o{ PURCHASE_ORDER : ""
+  ORG_UNIT ||--o{ PURCHASE_ORDER : ""
   SUPPLIER ||--o{ SUPPLIER_BANK_ACCOUNT : "cuentas de cobro"
   SUPPLIER ||--o{ BANK_ACCOUNT_CHANGE : "historico de cambios"
   SUPPLIER ||--o{ CONTRACT : "contratos"
@@ -111,6 +123,31 @@ erDiagram
 
 ### 1.2 Entidades y por que existen
 
+**Estructura organizativa y analitica**
+
+- `Company`: sociedad juridica (codigo, razon social, pais, divisa). Es la primera dimension de analisis.
+- `OrgUnit`: area o departamento de una sociedad. Segunda dimension; una misma area logica (p. ej.
+  "Tecnologia y Sistemas") existe por sociedad, para que el gasto no se mezcle entre sociedades.
+- `CostCenter` (CECO): unidad minima de imputacion, colgada de un area y por tanto de una sociedad. Es el
+  dato que introduce el usuario; sociedad y area se derivan del CECO y no se piden dos veces.
+- `DimensionBudget`: presupuesto asignado por ejercicio a la combinacion sociedad + area + categoria de
+  compra. Es la base del cuadro de mando: convive con `SupplierBudget` (presupuesto por proveedor) porque
+  responden a preguntas distintas (control organizativo vs control de proveedor).
+- `InvoiceAllocation`: reparto de una factura a **uno o varios CECOs**, por importe o por porcentaje. Cada
+  linea guarda CECO, sociedad, area, categoria imputada, el modo del reparto, el porcentaje y el importe
+  resultante (se guardan ambos para que el analitico no tenga que recalcular sobre el total). Todo el gasto
+  del cuadro de mando se agrega desde aqui, no desde la cabecera de factura.
+- `ContractScope`: ambito de un contrato. Un contrato puede alcanzar 1..n sociedades y, dentro de cada una,
+  1..n areas; una fila con sociedad y **sin area** significa "toda la sociedad".
+
+Reglas del reparto (validadas en backend y en el formulario):
+
+- todas las lineas de una factura usan el mismo criterio (todo por importe o todo por porcentaje);
+- los porcentajes suman 100% y los importes suman el total de la factura, con tolerancia de 0,02;
+- no se admiten importes/porcentajes nulos o negativos ni CECO+categoria repetidos;
+- `invoice.costCenter`, `companyId` y `orgUnitId` se mantienen sincronizados con la imputacion principal
+  (la de mayor importe) por compatibilidad con las vistas que trabajan a nivel de cabecera.
+
 **Maestro de proveedor y cobro**
 
 - `Supplier`: identidad fiscal, estado, antiguedad (`onboardedAt`) y `riskScore`. La antiguedad alimenta la
@@ -126,8 +163,9 @@ erDiagram
 
 **Compromisos y referencia de precio**
 
-- `Contract` + `ContractPrice`: tarifa contratada, condiciones de pago, descuento por pronto pago y
-  compromiso anual. Da la referencia para medir desviaciones de precio y condiciones.
+- `Contract` + `ContractPrice` + `ContractScope`: un proveedor puede tener 1..n contratos, cada uno con su
+  vigencia, categoria, compromiso anual, condiciones de pago, descuento por pronto pago y su ambito
+  organizativo. Dan la referencia para medir desviaciones de precio y condiciones.
 - `PurchaseOrder` + `PurchaseOrderLine` (con `receivedQuantity` / `invoicedQuantity`) y
   `GoodsReceipt` + `GoodsReceiptLine`: permiten la conciliacion a tres bandas (factura / pedido / recepcion)
   y evitan sobrefacturacion en pedidos parcialmente facturados.
@@ -202,6 +240,12 @@ condiciones.
 ### 2.1 Pantalla A - Alta de factura (`/invoices/new`)
 
 - Cabecera, datos de pago, lineas dinamicas e importes declarados en el documento.
+- **Reparto por centro de coste**: la factura se imputa a un CECO o a N CECOs, eligiendo un unico criterio
+  (por porcentaje o por importe). El formulario muestra el importe resultante de cada linea, el total
+  imputado y lo que queda sin imputar, permite imputar el resto en una linea con un clic, convierte los
+  valores al cambiar de criterio (60/40 pasa a 726/484 en una factura de 1.210) y bloquea el guardado
+  mientras el reparto no cuadre o haya CECOs repetidos. La sociedad y el area de cada linea se muestran
+  derivadas del CECO elegido.
 - **Importar desde fichero**: se sube la factura en PDF, Word (`doc`/`docx`) o Excel (`xls`/`xlsx`/`csv`) y el
   backend extrae los campos (`POST /api/invoices/import`) para prerellenar el formulario. La extraccion es
   determinista: texto del documento (pdf-parse / mammoth / exceljs) + busqueda por etiquetas y patrones
@@ -233,6 +277,10 @@ condiciones.
 
 ### 2.3 Pantalla C - Informe por proveedor (`/invoices/report`)
 
+- Filtros de sociedad, area/departamento y categoria de compra ademas de proveedor y ejercicio: el informe
+  se calcula sobre las imputaciones que cumplen el filtro, de modo que el mismo proveedor puede analizarse
+  "como lo ve" cada sociedad o area.
+
 - Desplegable de proveedor con busqueda incremental, desplegable de ejercicio y boton "Mostrar informe":
   el informe solo se solicita al pulsarlo.
 - Consumido vs presupuesto: importe asignado, consumido, disponible, porcentaje, desviacion y proyeccion
@@ -246,7 +294,33 @@ condiciones.
 Todos los desplegables de la aplicacion usan el mismo componente `app-searchable-select`: el usuario escribe
 y la lista se reduce (filtrado local en listas cerradas, busqueda en servidor para el registro de facturas).
 
-### 2.4 Alta de proveedor (`/invoices/suppliers/new`)
+### 2.4 Cuadro de mando de compras (`/invoices/analytics`)
+
+- Filtros de sociedad, area, categoria de compra, proveedor, periodo (mensual / trimestral / anual) y
+  ejercicio; el informe se pide al pulsar "Generar informe".
+- KPIs: presupuesto asignado, consumo real, compromisos pendientes de pedidos abiertos, presupuesto
+  disponible, porcentaje de ejecucion, desviacion absoluta y porcentual, y variacion frente al mismo periodo
+  del ejercicio anterior.
+- Agrupacion conmutable por sociedad, area o categoria, con barra de ejecucion y desviacion por fila.
+- Graficos: ejecucion presupuestaria acumulada con proyeccion a cierre, consumo por periodo contra
+  presupuesto y contra el ano anterior, y evolucion del gasto de los principales proveedores.
+- Indicadores de proveedor: importe adjudicado, numero de pedidos, cumplimiento de plazos, incidencias
+  registradas y riesgo medio; y panel de alertas y excepciones.
+
+El compromiso pendiente se netea **pedido a pedido** (aprobado menos facturado contra ese pedido, sin bajar
+de cero), de forma que el resumen y cualquier agrupacion cuadran entre si y el gasto ya facturado no se
+cuenta dos veces.
+
+### 2.5 Listado de proveedores (`/invoices/suppliers`)
+
+- Busqueda incremental por nombre, NIF o categoria.
+- Por proveedor: sociedades y areas a las que esta asociado (derivadas de sus imputaciones reales), numero
+  de contratos, consumo, numero de facturas y aviso de cuentas de cobro pendientes de verificar (sin exponer
+  los IBAN en el listado).
+- Detalle desplegable con el importe imputado por sociedad y area, y cada contrato con su referencia,
+  vigencia, estado, categoria, compromiso anual y su ambito de sociedades y areas.
+
+### 2.6 Alta de proveedor (`/invoices/suppliers/new`)
 
 - Identificacion (NIF/CIF, razon social, nombre comercial, pais, estado, categoria habitual, plazo de pago,
   email de contacto y riesgo de maestro), cuenta de cobro y presupuesto anual del ejercicio.
@@ -257,13 +331,19 @@ y la lista se reduce (filtrado local en listas cerradas, busqueda en servidor pa
 - Se usa como pantalla propia o embebida en un dialogo desde la importacion de facturas; en ese caso, al
   guardar, el proveedor queda seleccionado en la factura en curso sin perder lo ya importado.
 
-### 2.5 Datos sinteticos
+### 2.7 Datos sinteticos
 
 `npm run seed` (en `backend/`) carga el maestro de demostracion y ademas genera un volumen realista
 determinista: 50 proveedores adicionales x 100 facturas (mas de 5.000 facturas), sus pedidos de compra,
 presupuestos de 2024, 2025 y 2026 y una proporcion controlada de anomalias (reenvios duplicados, gasto sin
 pedido, descuadres de totales, importes redondeados atipicos y cambios de IBAN) para que el motor de
 excepciones y el informe tengan casos reales que mostrar.
+
+Para la parte analitica genera ademas: cuatro sociedades (tres espanolas y una portuguesa) con sus areas y
+CECOs, presupuestos por sociedad + area + categoria de los tres ejercicios, de uno a tres contratos por
+proveedor con ambitos multi-sociedad y multi-area (incluidos ambitos de sociedad completa), pedidos cerrados
+y **pedidos abiertos sin factura** para que los compromisos pendientes no sean cero, y facturas imputadas a
+uno, dos o tres CECOs alternando reparto por porcentaje y por importe.
 
 ---
 

@@ -1,6 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { DataSource, DeepPartial } from 'typeorm';
 import { AppModule } from './app.module';
+import { companies, costCenters, orgUnits } from './organization-data';
+import { Company } from './modules/master-data/entities/company.entity';
+import { CostCenter } from './modules/master-data/entities/cost-center.entity';
+import { DimensionBudget } from './modules/master-data/entities/dimension-budget.entity';
+import { OrgUnit } from './modules/master-data/entities/org-unit.entity';
 import { SpendCategory } from './modules/master-data/entities/spend-category.entity';
 import { Supplier } from './modules/master-data/entities/supplier.entity';
 import { BankAccountChange } from './modules/master-data/entities/bank-account-change.entity';
@@ -246,6 +251,12 @@ const contracts: DeepPartial<Contract>[] = [
     paymentTermsDays: 60,
     earlyPaymentDiscountPercent: 1.5,
     autoRenew: true,
+    status: 'active',
+    description: 'Contrato marco de servicios cloud para tecnologia de las dos sociedades espanolas',
+    scopes: [
+      { id: 'cts-001', contractId: 'ctr-001', companyId: 'co-es01', orgUnitId: 'ou-es01-tec' },
+      { id: 'cts-002', contractId: 'ctr-001', companyId: 'co-es03', orgUnitId: 'ou-es03-tec' },
+    ],
     priceList: [
       {
         id: 'ctp-001',
@@ -276,6 +287,9 @@ const contracts: DeepPartial<Contract>[] = [
     currency: 'EUR',
     paymentTermsDays: 30,
     autoRenew: false,
+    status: 'active',
+    description: 'Licencias corporativas con alcance a todas las areas de la sociedad matriz',
+    scopes: [{ id: 'cts-003', contractId: 'ctr-002', companyId: 'co-es01' }],
     priceList: [
       {
         id: 'ctp-003',
@@ -298,6 +312,12 @@ const contracts: DeepPartial<Contract>[] = [
     currency: 'EUR',
     paymentTermsDays: 45,
     autoRenew: false,
+    status: 'active',
+    description: 'Bolsa de servicios profesionales para aplicaciones y operaciones',
+    scopes: [
+      { id: 'cts-004', contractId: 'ctr-003', companyId: 'co-es01', orgUnitId: 'ou-es01-tec' },
+      { id: 'cts-005', contractId: 'ctr-003', companyId: 'co-es01', orgUnitId: 'ou-es01-ops' },
+    ],
     priceList: [
       {
         id: 'ctp-004',
@@ -319,7 +339,7 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     contractId: 'ctr-001',
     currency: 'EUR',
     issuedAt: new Date('2026-06-01'),
-    costCenter: 'CC-IT-INFRA',
+    costCenter: 'CC-ES01-IT-INFRA',
     approvedAmount: 40000,
     status: 'partially_received',
     lines: [
@@ -358,7 +378,7 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     contractId: 'ctr-002',
     currency: 'EUR',
     issuedAt: new Date('2026-06-20'),
-    costCenter: 'CC-IT-APPS',
+    costCenter: 'CC-ES01-IT-APPS',
     approvedAmount: 27000,
     status: 'open',
     lines: [
@@ -384,7 +404,7 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     contractId: 'ctr-003',
     currency: 'EUR',
     issuedAt: new Date('2026-07-01'),
-    costCenter: 'CC-IT-APPS',
+    costCenter: 'CC-ES01-IT-APPS',
     approvedAmount: 52000,
     status: 'open',
     lines: [
@@ -452,10 +472,14 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'ES9121000418450200051332',
     bankAccountHolder: 'Nimbus Cloud Services S.L.',
-    costCenter: 'CC-IT-INFRA',
+    costCenter: 'CC-ES01-IT-INFRA',
     requesterEmail: 'infra.lead@empresa.example',
     description: 'Servicios cloud junio 2026',
     source: 'edi',
+    allocations: [
+      { costCenterCode: 'CC-ES01-IT-INFRA', mode: 'percent', value: 70 },
+      { costCenterCode: 'CC-ES03-IT-INFRA', mode: 'percent', value: 30 },
+    ],
     lines: [
       { itemCode: 'CLOUD-VM-M', description: 'Instancia computo mediana', quantity: 100, uom: 'unidad/mes', unitPrice: 120, taxRate: 21 },
       { itemCode: 'CLOUD-STG-TB', description: 'Almacenamiento objeto', quantity: 250, uom: 'TB/mes', unitPrice: 18, taxRate: 21 },
@@ -476,9 +500,13 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'ES9121000418450200051332',
     bankAccountHolder: 'Nimbus Cloud Services S.L.',
-    costCenter: 'CC-IT-INFRA',
+    costCenter: 'CC-ES01-IT-INFRA',
     description: 'Servicios cloud junio 2026 (reenvio del proveedor)',
     source: 'email',
+    allocations: [
+      { costCenterCode: 'CC-ES01-IT-INFRA', mode: 'percent', value: 70 },
+      { costCenterCode: 'CC-ES03-IT-INFRA', mode: 'percent', value: 30 },
+    ],
     lines: [
       { itemCode: 'CLOUD-VM-M', description: 'Instancia computo mediana', quantity: 100, uom: 'unidad/mes', unitPrice: 120, taxRate: 21 },
       { itemCode: 'CLOUD-STG-TB', description: 'Almacenamiento objeto', quantity: 250, uom: 'TB/mes', unitPrice: 18, taxRate: 21 },
@@ -499,7 +527,7 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'LT601010012345678901',
     bankAccountHolder: 'Delta Soft Ltd',
-    costCenter: 'CC-IT-APPS',
+    costCenter: 'CC-ES01-IT-APPS',
     description: 'Renovacion licencias CRM Q3',
     source: 'email',
     lines: [
@@ -519,7 +547,7 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'ES6000491500051234567892',
     bankAccountHolder: 'Consultoria Orion S.L.',
-    costCenter: 'CC-IT-APPS',
+    costCenter: 'CC-ES01-IT-APPS',
     description: 'Bolsa de horas de desarrollo julio',
     source: 'manual',
     lines: [
@@ -539,7 +567,7 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'ES7920770024003102575766',
     bankAccountHolder: 'Delta Software Licensing S.A.',
-    costCenter: 'CC-IT-APPS',
+    costCenter: 'CC-ES01-IT-APPS',
     description: 'Consultoria de implantacion del modulo de facturacion',
     source: 'manual',
     lines: [
@@ -559,9 +587,14 @@ const invoices: CreateInvoiceDto[] = [
     paymentMethod: 'transfer',
     bankAccountIban: 'ES1000751234560123456789',
     bankAccountHolder: 'Telered Comunicaciones S.L.',
-    costCenter: 'CC-IT-INFRA',
+    costCenter: 'CC-ES01-IT-INFRA',
     description: 'Lineas moviles y fibra corporativa',
     source: 'supplier_portal',
+    allocations: [
+      { costCenterCode: 'CC-ES01-IT-INFRA', mode: 'percent', value: 50 },
+      { costCenterCode: 'CC-ES02-OPS', mode: 'percent', value: 30 },
+      { costCenterCode: 'CC-ES01-FAC', mode: 'percent', value: 20 },
+    ],
     lines: [
       { description: 'Lineas moviles datos corporativos', quantity: 400, uom: 'linea/mes', unitPrice: 29, taxRate: 21 },
       { description: 'Fibra dedicada sede central', quantity: 1, uom: 'mes', unitPrice: 2600, taxRate: 21 },
@@ -574,13 +607,17 @@ async function seed() {
   const dataSource = app.get(DataSource);
 
   await dataSource.query(
-    'TRUNCATE TABLE audit_events, duplicate_candidates, invoice_exceptions, invoice_lines, invoices, ' +
-      'tolerance_rules, tolerance_profiles, purchase_order_lines, purchase_orders, contract_prices, ' +
-      'contracts, bank_account_changes, supplier_bank_accounts, supplier_budgets, suppliers, ' +
-      'spend_categories CASCADE',
+    'TRUNCATE TABLE audit_events, duplicate_candidates, invoice_exceptions, invoice_allocations, ' +
+      'invoice_lines, invoices, tolerance_rules, tolerance_profiles, purchase_order_lines, ' +
+      'purchase_orders, contract_prices, contract_scopes, contracts, bank_account_changes, ' +
+      'supplier_bank_accounts, supplier_budgets, dimension_budgets, suppliers, cost_centers, ' +
+      'org_units, companies, spend_categories CASCADE',
   );
 
   await dataSource.getRepository(SpendCategory).save(categories);
+  await dataSource.getRepository(Company).save(companies);
+  await dataSource.getRepository(OrgUnit).save(orgUnits);
+  await dataSource.getRepository(CostCenter).save(costCenters);
   await dataSource.getRepository(Supplier).save(suppliers);
   await dataSource.getRepository(BankAccountChange).save(bankAccountChanges);
   await dataSource.getRepository(Contract).save(contracts);
@@ -632,6 +669,8 @@ async function seedSyntheticVolume(
   await dataSource.getRepository(Supplier).save(dataset.suppliers, { chunk: 25 });
   await dataSource.getRepository(BankAccountChange).save(dataset.bankAccountChanges, { chunk: 25 });
   await dataSource.getRepository(SupplierBudget).save(dataset.budgets, { chunk: 50 });
+  await dataSource.getRepository(DimensionBudget).save(dataset.dimensionBudgets, { chunk: 50 });
+  await dataSource.getRepository(Contract).save(dataset.contracts, { chunk: 25 });
   await dataSource.getRepository(PurchaseOrder).save(dataset.purchaseOrders, { chunk: 50 });
 
   console.log(

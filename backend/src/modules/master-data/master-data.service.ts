@@ -7,12 +7,25 @@ import { SpendCategory } from './entities/spend-category.entity';
 import { Supplier } from './entities/supplier.entity';
 import { SupplierBankAccount } from './entities/supplier-bank-account.entity';
 import { BankAccountChange } from './entities/bank-account-change.entity';
+import { Company } from './entities/company.entity';
 import { Contract } from './entities/contract.entity';
+import { CostCenter } from './entities/cost-center.entity';
+import { DimensionBudget } from './entities/dimension-budget.entity';
+import { OrgUnit } from './entities/org-unit.entity';
 import { PurchaseOrder } from './entities/purchase-order.entity';
 import { SupplierBudget } from './entities/supplier-budget.entity';
 import { ToleranceProfile } from './entities/tolerance-profile.entity';
 
 export const DEFAULT_TOLERANCE_PROFILE_ID = 'tol-default';
+
+export interface AllocationTarget {
+  costCenterCode: string;
+  costCenterName: string;
+  companyId: string;
+  companyName: string;
+  orgUnitId: string;
+  orgUnitName: string;
+}
 
 @Injectable()
 export class MasterDataService {
@@ -21,6 +34,10 @@ export class MasterDataService {
     @InjectRepository(Supplier) private suppliers: Repository<Supplier>,
     @InjectRepository(SupplierBankAccount) private bankAccounts: Repository<SupplierBankAccount>,
     @InjectRepository(BankAccountChange) private bankAccountChanges: Repository<BankAccountChange>,
+    @InjectRepository(Company) private companies: Repository<Company>,
+    @InjectRepository(OrgUnit) private orgUnits: Repository<OrgUnit>,
+    @InjectRepository(CostCenter) private costCenters: Repository<CostCenter>,
+    @InjectRepository(DimensionBudget) private dimensionBudgets: Repository<DimensionBudget>,
     @InjectRepository(Contract) private contracts: Repository<Contract>,
     @InjectRepository(PurchaseOrder) private purchaseOrders: Repository<PurchaseOrder>,
     @InjectRepository(SupplierBudget) private budgets: Repository<SupplierBudget>,
@@ -113,6 +130,68 @@ export class MasterDataService {
     }
 
     return this.findSupplierOrFail(supplier.id);
+  }
+
+  findCompanies(): Promise<Company[]> {
+    return this.companies.find({ order: { code: 'ASC' } });
+  }
+
+  findOrgUnits(companyId?: string): Promise<OrgUnit[]> {
+    return this.orgUnits.find({
+      where: companyId ? { companyId } : {},
+      order: { companyId: 'ASC', code: 'ASC' },
+    });
+  }
+
+  findCostCenters(filter: { companyId?: string; orgUnitId?: string } = {}): Promise<CostCenter[]> {
+    const where: { companyId?: string; orgUnitId?: string } = {};
+    if (filter.companyId) {
+      where.companyId = filter.companyId;
+    }
+    if (filter.orgUnitId) {
+      where.orgUnitId = filter.orgUnitId;
+    }
+    return this.costCenters.find({ where, order: { code: 'ASC' } });
+  }
+
+  findCostCenterByCode(code: string): Promise<CostCenter | null> {
+    return this.costCenters.findOne({ where: { code } });
+  }
+
+  /**
+   * Dimensiones que quedan determinadas al imputar a un CECO, indexadas por
+   * codigo de CECO: sociedad y area a las que pertenece.
+   */
+  async findAllocationTargets(): Promise<Map<string, AllocationTarget>> {
+    const [costCenters, companies, orgUnits] = await Promise.all([
+      this.costCenters.find(),
+      this.companies.find(),
+      this.orgUnits.find(),
+    ]);
+    const companyNames = new Map(companies.map((company) => [company.id, company.legalName]));
+    const orgUnitNames = new Map(orgUnits.map((unit) => [unit.id, unit.name]));
+
+    return new Map(
+      costCenters.map((costCenter) => [
+        costCenter.code,
+        {
+          costCenterCode: costCenter.code,
+          costCenterName: costCenter.name,
+          companyId: costCenter.companyId,
+          companyName: companyNames.get(costCenter.companyId) ?? costCenter.companyId,
+          orgUnitId: costCenter.orgUnitId,
+          orgUnitName: orgUnitNames.get(costCenter.orgUnitId) ?? costCenter.orgUnitId,
+        },
+      ]),
+    );
+  }
+
+  /** Presupuesto analitico al grano sociedad + area + categoria de un ejercicio. */
+  findDimensionBudgets(fiscalYear?: number): Promise<DimensionBudget[]> {
+    return this.dimensionBudgets.find({
+      where: fiscalYear ? { fiscalYear } : {},
+      order: { fiscalYear: 'DESC', companyId: 'ASC' },
+    });
   }
 
   findBudgets(supplierId?: string): Promise<SupplierBudget[]> {

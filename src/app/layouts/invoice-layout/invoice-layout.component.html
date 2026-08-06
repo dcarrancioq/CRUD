@@ -19,8 +19,10 @@
         </a>
         <a routerLink="/invoices/new" routerLinkActive="active">Alta de factura</a>
         <a routerLink="/invoices/compare" routerLinkActive="active">Comparativa</a>
+        <a routerLink="/invoices/analytics" routerLinkActive="active">Cuadro de mando</a>
         <a routerLink="/invoices/report" routerLinkActive="active">Informe de proveedor</a>
-        <a routerLink="/invoices/suppliers/new" routerLinkActive="active">Alta de proveedor</a>
+        <a routerLink="/invoices/suppliers" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">Proveedores</a>
       </nav>
     </div>
   </header>
@@ -39,7 +41,9 @@
           <a routerLink="/invoices">Bandeja de excepciones</a>
           <a routerLink="/invoices/new">Alta de factura</a>
           <a routerLink="/invoices/compare">Comparativa de facturas</a>
+          <a routerLink="/invoices/analytics">Cuadro de mando de compras</a>
           <a routerLink="/invoices/report">Informe de proveedor</a>
+          <a routerLink="/invoices/suppliers">Listado de proveedores</a>
           <a routerLink="/invoices/suppliers/new">Alta de proveedor</a>
         </div>
         <div>

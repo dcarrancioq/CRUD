@@ -5,6 +5,7 @@ import { MasterDataModule } from '../master-data/master-data.module';
 import { AuditEvent } from './entities/audit-event.entity';
 import { DuplicateCandidate } from './entities/duplicate-candidate.entity';
 import { InvoiceException } from './entities/invoice-exception.entity';
+import { InvoiceAllocation } from './entities/invoice-allocation.entity';
 import { InvoiceLine } from './entities/invoice-line.entity';
 import { Invoice } from './entities/invoice.entity';
 import { InvoicesController } from './invoices.controller';
@@ -17,7 +18,14 @@ import { SpendClassificationService } from './services/spend-classification.serv
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Invoice, InvoiceLine, InvoiceException, DuplicateCandidate, AuditEvent]),
+    TypeOrmModule.forFeature([
+      Invoice,
+      InvoiceLine,
+      InvoiceAllocation,
+      InvoiceException,
+      DuplicateCandidate,
+      AuditEvent,
+    ]),
     MasterDataModule,
     DevinModule,
   ],

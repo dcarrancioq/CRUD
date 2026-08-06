@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { InvoiceAllocation } from './invoice-allocation.entity';
 import { InvoiceLine } from './invoice-line.entity';
 import { InvoiceException } from './invoice-exception.entity';
 import { DuplicateCandidate } from './duplicate-candidate.entity';
@@ -90,8 +91,16 @@ export class Invoice {
   @Column({ name: 'bank_account_holder', nullable: true })
   bankAccountHolder: string;
 
+  /** CECO principal (el de mayor peso del reparto analitico). */
   @Column({ name: 'cost_center' })
   costCenter: string;
+
+  /** Sociedad y area principales del reparto, para filtrar sin recorrer el reparto. */
+  @Column({ name: 'company_id', nullable: true })
+  companyId: string;
+
+  @Column({ name: 'org_unit_id', nullable: true })
+  orgUnitId: string;
 
   @Column({ name: 'requester_email', nullable: true })
   requesterEmail: string;
@@ -143,6 +152,12 @@ export class Invoice {
 
   @OneToMany(() => InvoiceLine, (line) => line.invoice, { cascade: true, eager: true })
   lines: InvoiceLine[];
+
+  @OneToMany(() => InvoiceAllocation, (allocation) => allocation.invoice, {
+    cascade: true,
+    eager: true,
+  })
+  allocations: InvoiceAllocation[];
 
   @OneToMany(() => InvoiceException, (exception) => exception.invoice, { cascade: true, eager: true })
   exceptions: InvoiceException[];

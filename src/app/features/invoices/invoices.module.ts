@@ -7,12 +7,16 @@ import { InvoiceEntryComponent } from './components/invoice-entry/invoice-entry.
 import { InvoiceCompareComponent } from './components/invoice-compare/invoice-compare.component';
 import { SupplierReportComponent } from './components/supplier-report/supplier-report.component';
 import { SupplierEntryComponent } from './components/supplier-entry/supplier-entry.component';
+import { SupplierDirectoryComponent } from './components/supplier-directory/supplier-directory.component';
+import { ProcurementDashboardComponent } from './components/procurement-dashboard/procurement-dashboard.component';
 
 const routes: Routes = [
   { path: '', component: InvoiceListComponent },
   { path: 'new', component: InvoiceEntryComponent },
   { path: 'compare', component: InvoiceCompareComponent },
   { path: 'report', component: SupplierReportComponent },
+  { path: 'analytics', component: ProcurementDashboardComponent },
+  { path: 'suppliers', component: SupplierDirectoryComponent },
   { path: 'suppliers/new', component: SupplierEntryComponent }
 ];
 
@@ -22,7 +26,9 @@ const routes: Routes = [
     InvoiceEntryComponent,
     InvoiceCompareComponent,
     SupplierReportComponent,
-    SupplierEntryComponent
+    SupplierEntryComponent,
+    SupplierDirectoryComponent,
+    ProcurementDashboardComponent
   ],
   imports: [SharedModule, RouterModule.forChild(routes)]
 })

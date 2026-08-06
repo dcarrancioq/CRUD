@@ -1,12 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { MasterDataService } from '../../master-data/master-data.service';
+import { AllocationTarget, MasterDataService } from '../../master-data/master-data.service';
+import { CreateInvoiceAllocationDto } from '../dto/create-invoice-allocation.dto';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import { AuditEvent } from '../entities/audit-event.entity';
+import { InvoiceAllocation } from '../entities/invoice-allocation.entity';
 import { InvoiceException } from '../entities/invoice-exception.entity';
 import { InvoiceLine } from '../entities/invoice-line.entity';
 import { Invoice } from '../entities/invoice.entity';
+import { SpendCategory } from '../../master-data/entities/spend-category.entity';
 import { ConsolidationOpportunity } from '../invoice.types';
 import { generateId, normalizeIban, round } from '../invoice.utils';
 import { EvaluationContext, InvoiceAnomalyService } from './invoice-anomaly.service';
@@ -14,6 +17,8 @@ import { InvoiceComparison, InvoiceComparisonService } from './invoice-compariso
 import { SpendClassificationService, SpendRow } from './spend-classification.service';
 
 const PREVIEW_INVOICE_ID = 'preview';
+/** Descuadre maximo admitido al reconciliar el reparto con el total de la factura. */
+const ALLOCATION_TOLERANCE = 0.02;
 const DEFAULT_PAGE_SIZE = 200;
 const MAX_PAGE_SIZE = 1000;
 
@@ -342,6 +347,19 @@ export class InvoicesService {
       auditTrail: [],
     });
 
+    invoice.allocations = this.buildAllocations(
+      dto,
+      id,
+      invoice.totalAmount,
+      classification,
+      categories,
+      await this.masterData.findAllocationTargets(),
+    );
+    const primary = [...invoice.allocations].sort((a, b) => b.amount - a.amount)[0];
+    invoice.costCenter = primary.costCenterCode;
+    invoice.companyId = primary.companyId;
+    invoice.orgUnitId = primary.orgUnitId;
+
     const context: EvaluationContext = { profile, supplier, contracts, purchaseOrder, history };
     const evaluation = this.anomalies.evaluate(invoice, context);
 
@@ -358,6 +376,106 @@ export class InvoicesService {
       invoice,
       blocking: evaluation.exceptions.some((exception) => exception.blocksPayment),
     };
+  }
+
+  /**
+   * Construye el reparto analitico: una linea por CECO. Sin reparto explicito se
+   * imputa el 100% al CECO principal. En modo porcentaje la suma debe ser 100 y
+   * en modo importe debe cuadrar con el total de la factura; el redondeo residual
+   * se ajusta en la ultima linea para que la suma sea exacta.
+   */
+  private buildAllocations(
+    dto: CreateInvoiceDto,
+    invoiceId: string,
+    totalAmount: number,
+    classification: { categoryCode: string; categoryName: string },
+    categories: SpendCategory[],
+    targets: Map<string, AllocationTarget>,
+  ): InvoiceAllocation[] {
+    const requested: CreateInvoiceAllocationDto[] = dto.allocations?.length
+      ? dto.allocations
+      : [{ costCenterCode: dto.costCenter, mode: 'percent', value: 100 }];
+
+    const modes = new Set(requested.map((allocation) => allocation.mode));
+    if (modes.size > 1) {
+      throw new BadRequestException(
+        'El reparto debe usar un unico criterio: todo por importe o todo por porcentaje.',
+      );
+    }
+    const mode = requested[0].mode;
+
+    const seen = new Set<string>();
+    for (const allocation of requested) {
+      if (allocation.value <= 0) {
+        throw new BadRequestException(
+          `El reparto al CECO ${allocation.costCenterCode} debe ser mayor que cero.`,
+        );
+      }
+      const key = `${allocation.costCenterCode}|${allocation.categoryCode ?? ''}`;
+      if (seen.has(key)) {
+        throw new BadRequestException(
+          `El CECO ${allocation.costCenterCode} aparece repetido en el reparto.`,
+        );
+      }
+      seen.add(key);
+    }
+
+    const total = round(requested.reduce((sum, allocation) => sum + allocation.value, 0));
+    if (mode === 'percent' && Math.abs(total - 100) > ALLOCATION_TOLERANCE) {
+      throw new BadRequestException(
+        `El reparto por porcentaje suma ${total}%; debe sumar exactamente 100%.`,
+      );
+    }
+    if (mode === 'amount' && Math.abs(total - totalAmount) > ALLOCATION_TOLERANCE) {
+      throw new BadRequestException(
+        `El reparto por importe suma ${total}; debe sumar el total de la factura (${totalAmount}).`,
+      );
+    }
+
+    const allocations = requested.map((allocation, index) => {
+      const target = targets.get(allocation.costCenterCode);
+      if (!target && targets.size) {
+        throw new BadRequestException(
+          `El CECO ${allocation.costCenterCode} no existe en el maestro de centros de coste.`,
+        );
+      }
+      const amount =
+        mode === 'amount' ? round(allocation.value) : round((totalAmount * allocation.value) / 100);
+      const percent =
+        mode === 'percent'
+          ? allocation.value
+          : totalAmount
+            ? round((allocation.value / totalAmount) * 100)
+            : 0;
+
+      return {
+        id: `${invoiceId}-a${index + 1}`,
+        invoiceId,
+        companyId: target?.companyId ?? '',
+        companyName: target?.companyName ?? '',
+        orgUnitId: target?.orgUnitId ?? '',
+        orgUnitName: target?.orgUnitName ?? '',
+        costCenterCode: allocation.costCenterCode,
+        costCenterName: target?.costCenterName ?? allocation.costCenterCode,
+        categoryCode: allocation.categoryCode ?? classification.categoryCode,
+        categoryName: allocation.categoryCode
+          ? categories.find((category) => category.code === allocation.categoryCode)?.name ??
+            allocation.categoryCode
+          : classification.categoryName,
+        mode,
+        percent,
+        amount,
+      } as InvoiceAllocation;
+    });
+
+    const allocated = round(allocations.reduce((sum, allocation) => sum + allocation.amount, 0));
+    const residual = round(totalAmount - allocated);
+    if (residual !== 0) {
+      const last = allocations[allocations.length - 1];
+      last.amount = round(last.amount + residual);
+    }
+
+    return allocations;
   }
 
   private auditEvent(invoiceId: string, action: string, detail?: string): AuditEvent {

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Supplier } from '../../../../core/models/invoice.model';
+import { Company, OrgUnit, Supplier } from '../../../../core/models/invoice.model';
 import { SupplierReport, SupplierReportMonth } from '../../../../core/models/supplier-report.model';
 import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { ProcurementMasterDataService } from '../../../../core/services/procurement-master-data.service';
@@ -20,8 +20,16 @@ const STATUS_LABELS: Record<string, string> = {
 export class SupplierReportComponent implements OnInit {
   supplierOptions: SearchableOption[] = [];
   yearOptions: SearchableOption[] = [];
+  companyOptions: SearchableOption[] = [];
+  categoryOptions: SearchableOption[] = [];
   supplierId = '';
   fiscalYear = '';
+  companyId = '';
+  orgUnitId = '';
+  categoryCode = '';
+
+  private companies: Company[] = [];
+  private orgUnits: OrgUnit[] = [];
   report?: SupplierReport;
   loading = false;
   errorMessage = '';
@@ -36,12 +44,48 @@ export class SupplierReportComponent implements OnInit {
       this.supplierOptions = suppliers.map(supplier => this.toSupplierOption(supplier));
     });
 
+    this.masterData.loadOrganization().subscribe(organization => {
+      this.companies = organization.companies;
+      this.orgUnits = organization.orgUnits;
+      this.companyOptions = organization.companies.map(company => ({
+        value: company.id,
+        label: company.legalName,
+        hint: `${company.code} | ${company.country}`
+      }));
+    });
+
+    this.masterData.getCategories().subscribe(categories => {
+      this.categoryOptions = categories.map(category => ({
+        value: category.code,
+        label: category.name,
+        hint: category.code
+      }));
+    });
+
     this.reports.getAvailableYears().subscribe(years => {
       this.yearOptions = years.map(year => ({ value: String(year), label: String(year) }));
       if (!this.fiscalYear && this.yearOptions.length) {
         this.fiscalYear = this.yearOptions[0].value;
       }
     });
+  }
+
+  /** Las areas se limitan a la sociedad elegida: no existen areas transversales. */
+  get orgUnitOptions(): SearchableOption[] {
+    return this.orgUnits
+      .filter(unit => !this.companyId || unit.companyId === this.companyId)
+      .map(unit => ({
+        value: unit.id,
+        label: unit.name,
+        hint: this.companies.find(company => company.id === unit.companyId)?.legalName ?? unit.companyId
+      }));
+  }
+
+  onCompanyChange(): void {
+    const unit = this.orgUnits.find(item => item.id === this.orgUnitId);
+    if (unit && this.companyId && unit.companyId !== this.companyId) {
+      this.orgUnitId = '';
+    }
   }
 
   get canGenerate(): boolean {
@@ -74,17 +118,24 @@ export class SupplierReportComponent implements OnInit {
     }
     this.loading = true;
     this.errorMessage = '';
-    this.reports.getSupplierReport(this.supplierId, Number(this.fiscalYear)).subscribe({
-      next: report => {
-        this.report = report;
-        this.loading = false;
-      },
-      error: () => {
-        this.report = undefined;
-        this.loading = false;
-        this.errorMessage = 'No se ha podido generar el informe. Revisa el proveedor y el ejercicio seleccionados.';
-      }
-    });
+    this.reports
+      .getSupplierReport(this.supplierId, Number(this.fiscalYear), {
+        companyId: this.companyId || undefined,
+        orgUnitId: this.orgUnitId || undefined,
+        categoryCode: this.categoryCode || undefined
+      })
+      .subscribe({
+        next: report => {
+          this.report = report;
+          this.loading = false;
+        },
+        error: () => {
+          this.report = undefined;
+          this.loading = false;
+          this.errorMessage =
+            'No se ha podido generar el informe. Revisa el proveedor y el ejercicio seleccionados.';
+        }
+      });
   }
 
   private toSupplierOption(supplier: Supplier): SearchableOption {

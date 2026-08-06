@@ -14,6 +14,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { CreateInvoiceAllocationDto } from './create-invoice-allocation.dto';
 import { CreateInvoiceLineDto } from './create-invoice-line.dto';
 
 export class CreateInvoiceDto {
@@ -83,9 +84,20 @@ export class CreateInvoiceDto {
   @IsString()
   bankAccountHolder?: string;
 
-  @ApiProperty({ example: 'CC-IT-INFRA' })
+  @ApiProperty({ example: 'CC-IT-INFRA', description: 'CECO principal; se usa si no se envia reparto' })
   @IsString()
   costCenter: string;
+
+  @ApiPropertyOptional({
+    type: [CreateInvoiceAllocationDto],
+    description:
+      'Reparto de la factura entre uno o varios CECOs, por importe o por porcentaje. Si se omite, se imputa el 100% al CECO principal.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateInvoiceAllocationDto)
+  allocations?: CreateInvoiceAllocationDto[];
 
   @ApiPropertyOptional()
   @IsOptional()

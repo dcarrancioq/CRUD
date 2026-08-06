@@ -68,6 +68,62 @@ export interface SpendClassification {
   reviewedAt?: string;
 }
 
+export interface Company {
+  id: string;
+  code: string;
+  legalName: string;
+  taxId: string;
+  country: string;
+  currency: string;
+  status: 'active' | 'inactive';
+}
+
+export interface OrgUnit {
+  id: string;
+  code: string;
+  name: string;
+  companyId: string;
+  type: 'area' | 'department';
+  managerEmail?: string;
+  status: 'active' | 'inactive';
+}
+
+export interface CostCenter {
+  id: string;
+  code: string;
+  name: string;
+  companyId: string;
+  orgUnitId: string;
+  glAccount?: string;
+  ownerEmail?: string;
+  status: 'active' | 'inactive';
+}
+
+export type AllocationMode = 'amount' | 'percent';
+
+/** Imputacion analitica de la factura a un CECO (sociedad, area y categoria). */
+export interface InvoiceAllocation {
+  id: string;
+  companyId: string;
+  companyName: string;
+  orgUnitId: string;
+  orgUnitName: string;
+  costCenterCode: string;
+  costCenterName?: string;
+  categoryCode: string;
+  categoryName?: string;
+  mode: AllocationMode;
+  percent: number;
+  amount: number;
+}
+
+export interface CreateInvoiceAllocationRequest {
+  costCenterCode: string;
+  mode: AllocationMode;
+  value: number;
+  categoryCode?: string;
+}
+
 export interface Contract {
   id: string;
   supplierId: string;
@@ -165,6 +221,9 @@ export interface Invoice {
   bankAccountIban: string;
   bankAccountHolder?: string;
   costCenter: string;
+  companyId?: string;
+  orgUnitId?: string;
+  allocations: InvoiceAllocation[];
   requesterEmail?: string;
   description?: string;
   source: InvoiceSource;
@@ -355,6 +414,7 @@ export interface CreateInvoiceRequest {
   bankAccountIban: string;
   bankAccountHolder?: string;
   costCenter: string;
+  allocations?: CreateInvoiceAllocationRequest[];
   requesterEmail?: string;
   description?: string;
   source: InvoiceSource;

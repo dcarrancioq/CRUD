@@ -34,6 +34,37 @@
         </button>
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Sociedad</label>
+        <app-searchable-select [options]="companyOptions"
+                               emptyLabel="Todas las sociedades"
+                               placeholder="Todas las sociedades"
+                               searchPlaceholder="Busca sociedad..."
+                               [(ngModel)]="companyId"
+                               (selectionChange)="onCompanyChange()"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Area / Departamento</label>
+        <app-searchable-select [options]="orgUnitOptions"
+                               emptyLabel="Todas las areas"
+                               placeholder="Todas las areas"
+                               searchPlaceholder="Busca area..."
+                               [(ngModel)]="orgUnitId"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Categoria de compra</label>
+        <app-searchable-select [options]="categoryOptions"
+                               emptyLabel="Todas las categorias"
+                               placeholder="Todas las categorias"
+                               searchPlaceholder="Busca categoria..."
+                               [(ngModel)]="categoryCode"></app-searchable-select>
+      </div>
+    </div>
+    <p class="text-muted small mb-0">
+      El informe se calcula sobre la imputacion analitica de cada factura, asi que una factura
+      repartida entre varias sociedades solo aporta su parte a cada filtro.
+    </p>
     <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
   </div>
 

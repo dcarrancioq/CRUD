@@ -1,0 +1,306 @@
+<div class="procurement-dashboard">
+  <div class="page-header">
+    <div>
+      <h1>Cuadro de mando de compras</h1>
+      <p class="text-muted mb-0">
+        Presupuesto, consumo real, compromisos y desviaciones por sociedad, area organizativa,
+        categoria de compra, proveedor y periodo.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-primary" routerLink="/invoices/suppliers">Proveedores</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/report">Informe de proveedor</a>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Sociedad</label>
+        <app-searchable-select [options]="companyOptions"
+                               emptyLabel="Todas las sociedades"
+                               placeholder="Todas las sociedades"
+                               searchPlaceholder="Busca sociedad..."
+                               [(ngModel)]="companyId"
+                               (selectionChange)="onCompanyChange()"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Area / Departamento</label>
+        <app-searchable-select [options]="orgUnitOptions"
+                               emptyLabel="Todas las areas"
+                               placeholder="Todas las areas"
+                               searchPlaceholder="Busca area..."
+                               [(ngModel)]="orgUnitId"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Categoria de compra</label>
+        <app-searchable-select [options]="categoryOptions"
+                               emptyLabel="Todas las categorias"
+                               placeholder="Todas las categorias"
+                               searchPlaceholder="Busca categoria..."
+                               [(ngModel)]="categoryCode"></app-searchable-select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Proveedor</label>
+        <app-searchable-select [options]="supplierOptions"
+                               emptyLabel="Todos los proveedores"
+                               placeholder="Todos los proveedores"
+                               searchPlaceholder="Busca por nombre o NIF..."
+                               [(ngModel)]="supplierId"></app-searchable-select>
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="form-label">Periodo</label>
+        <app-searchable-select [options]="periodOptions"
+                               placeholder="Periodo"
+                               searchPlaceholder="Busca periodo..."
+                               [(ngModel)]="period"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Ejercicio</label>
+        <app-searchable-select [options]="yearOptions"
+                               placeholder="Ejercicio"
+                               searchPlaceholder="Busca ano..."
+                               [(ngModel)]="fiscalYear"></app-searchable-select>
+      </div>
+      <div class="col-md-3 mb-2 d-flex align-items-end">
+        <button type="button" class="btn btn-primary flex-fill mr-2" [disabled]="!canGenerate" (click)="generate()">
+          {{ loading ? 'Generando...' : 'Generar informe' }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" (click)="resetFilters()">Limpiar</button>
+      </div>
+    </div>
+    <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+
+  <ng-container *ngIf="report">
+    <div class="report-head">
+      <div>
+        <h2 class="mb-1">{{ report.labels.company }} | {{ report.labels.orgUnit }}</h2>
+        <p class="text-muted mb-0">
+          {{ report.labels.category }} | {{ report.labels.supplier }} |
+          {{ report.labels.period }} {{ report.filters.fiscalYear }} |
+          {{ report.summary.invoiceCount | number }} facturas de
+          {{ report.summary.supplierCount }} proveedores
+        </p>
+      </div>
+      <span class="status-chip" [ngClass]="'status-' + report.summary.status">{{ statusLabel }}</span>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Presupuesto asignado</span>
+        <span class="kpi-value">{{ report.summary.assignedAmount | number:'1.0-0' }}</span>
+        <span class="kpi-hint">{{ report.summary.currency }}</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Consumo real</span>
+        <span class="kpi-value">{{ report.summary.consumedAmount | number:'1.0-0' }}</span>
+        <span class="kpi-hint">{{ report.summary.executionPercent | number:'1.1-1' }}% de ejecucion</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Compromisos pendientes</span>
+        <span class="kpi-value">{{ report.summary.committedAmount | number:'1.0-0' }}</span>
+        <span class="kpi-hint">{{ report.summary.openPurchaseOrders }} PO abiertas</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Presupuesto disponible</span>
+        <span class="kpi-value" [class.negative]="report.summary.availableAmount < 0">
+          {{ report.summary.availableAmount | number:'1.0-0' }}
+        </span>
+        <span class="kpi-hint">tras consumo y compromisos</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Desviacion</span>
+        <span class="kpi-value" [ngClass]="deviationClass(report.summary.deviationAmount)">
+          {{ report.summary.deviationAmount | number:'1.0-0' }}
+        </span>
+        <span class="kpi-hint">{{ report.summary.deviationPercent | number:'1.1-1' }}% sobre presupuesto</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Variacion vs {{ report.filters.fiscalYear - 1 }}</span>
+        <span class="kpi-value" [ngClass]="deviationClass(report.summary.yoyVariationPercent ?? 0)">
+          {{ report.summary.yoyVariationPercent !== undefined
+              ? (report.summary.yoyVariationPercent | number:'1.1-1') + '%'
+              : 'sin base' }}
+        </span>
+        <span class="kpi-hint">
+          {{ report.summary.previousYearAmount | number:'1.0-0' }} el ano anterior
+        </span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header-row">
+        <h5>Ejecucion presupuestaria acumulada</h5>
+        <span class="text-muted small">
+          Proyeccion a cierre {{ report.summary.forecastYearEndAmount | number:'1.0-0' }}
+          ({{ report.summary.forecastDeviationPercent | number:'1.1-1' }}% vs presupuesto)
+        </span>
+      </div>
+      <div class="execution-bar">
+        <div class="execution-consumed" [style.width.%]="executionWidth(report.summary.executionPercent)"></div>
+        <div class="execution-committed"
+             [style.width.%]="executionWidth(report.summary.assignedAmount
+               ? (report.summary.committedAmount / report.summary.assignedAmount) * 100
+               : 0)"></div>
+      </div>
+      <div class="legend">
+        <span><i class="dot dot-consumed"></i> Consumo real</span>
+        <span><i class="dot dot-committed"></i> Compromisos (PO abiertas)</span>
+        <span><i class="dot dot-budget"></i> Presupuesto asignado</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h5>Consumo vs presupuesto vs ano anterior ({{ report.labels.period | lowercase }})</h5>
+      <div class="period-chart">
+        <div class="period-column" *ngFor="let bucket of report.periods">
+          <div class="period-bars">
+            <div class="period-bar bar-budget" [style.height.%]="periodBarHeight(bucket.budgetAmount)"
+                 [title]="'Presupuesto ' + (bucket.budgetAmount | number:'1.0-0')"></div>
+            <div class="period-bar bar-consumed" [style.height.%]="periodBarHeight(bucket.consumedAmount)"
+                 [title]="'Consumo ' + (bucket.consumedAmount | number:'1.0-0')"></div>
+            <div class="period-bar bar-previous" [style.height.%]="periodBarHeight(bucket.previousYearAmount)"
+                 [title]="'Ano anterior ' + (bucket.previousYearAmount | number:'1.0-0')"></div>
+          </div>
+          <span class="period-label">{{ bucket.label }}</span>
+          <span class="period-value">{{ bucket.consumedAmount | number:'1.0-0' }}</span>
+          <span class="period-yoy" [ngClass]="deviationClass(bucket.yoyVariationPercent ?? 0)">
+            {{ yoyLabel(bucket) }}
+          </span>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="dot dot-budget"></i> Presupuesto del periodo</span>
+        <span><i class="dot dot-consumed"></i> Consumo real</span>
+        <span><i class="dot dot-previous"></i> Mismo periodo del ano anterior</span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header-row">
+        <h5>Consumo y desviacion por dimension</h5>
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn"
+                  [class.btn-primary]="dimensionView === 'company'"
+                  [class.btn-outline-primary]="dimensionView !== 'company'"
+                  (click)="dimensionView = 'company'">SOCIEDAD</button>
+          <button type="button" class="btn"
+                  [class.btn-primary]="dimensionView === 'orgUnit'"
+                  [class.btn-outline-primary]="dimensionView !== 'orgUnit'"
+                  (click)="dimensionView = 'orgUnit'">AREA</button>
+          <button type="button" class="btn"
+                  [class.btn-primary]="dimensionView === 'category'"
+                  [class.btn-outline-primary]="dimensionView !== 'category'"
+                  (click)="dimensionView = 'category'">CATEGORIA</button>
+        </div>
+      </div>
+
+      <div class="dimension-row" *ngFor="let row of dimensionRows">
+        <div class="dimension-head">
+          <div>
+            <strong>{{ row.name }}</strong>
+            <small class="text-muted" *ngIf="row.parentName"> | {{ row.parentName }}</small>
+          </div>
+          <span class="status-chip small" [ngClass]="'status-' + row.status">
+            {{ row.executionPercent | number:'1.1-1' }}%
+          </span>
+        </div>
+        <div class="stacked-bar">
+          <div class="segment segment-consumed" [style.width.%]="barWidth(row.consumedAmount)"></div>
+          <div class="segment segment-committed" [style.width.%]="barWidth(row.committedAmount)"></div>
+          <div class="segment-budget-mark" [style.left.%]="barWidth(row.assignedAmount)"></div>
+        </div>
+        <div class="dimension-figures">
+          <span>Presupuesto {{ row.assignedAmount | number:'1.0-0' }}</span>
+          <span>Consumo {{ row.consumedAmount | number:'1.0-0' }}</span>
+          <span>Compromisos {{ row.committedAmount | number:'1.0-0' }}</span>
+          <span [class.negative]="row.availableAmount < 0">Disponible {{ row.availableAmount | number:'1.0-0' }}</span>
+          <span [ngClass]="deviationClass(row.deviationAmount)">
+            Desviacion {{ row.deviationAmount | number:'1.0-0' }} ({{ row.deviationPercent | number:'1.1-1' }}%)
+          </span>
+          <span [ngClass]="deviationClass(row.yoyVariationPercent ?? 0)">vs ano anterior {{ yoyLabel(row) }}</span>
+          <span class="text-muted">{{ row.invoiceCount | number }} facturas | {{ row.supplierCount }} proveedores</span>
+        </div>
+      </div>
+      <p class="text-muted small mb-0" *ngIf="!dimensionRows.length">
+        Sin datos para {{ dimensionTitle | lowercase }} con los filtros aplicados.
+      </p>
+    </div>
+
+    <div class="chart-card" *ngIf="trendSeries.length">
+      <h5>Evolucion del gasto por proveedor</h5>
+      <svg class="trend-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polyline *ngFor="let series of trendSeries" [attr.points]="series.points"
+                  [attr.stroke]="series.color" fill="none" stroke-width="1.2"
+                  vector-effect="non-scaling-stroke"></polyline>
+      </svg>
+      <div class="trend-axis">
+        <span *ngFor="let label of periodLabels">{{ label }}</span>
+      </div>
+      <div class="legend">
+        <span *ngFor="let series of trendSeries">
+          <i class="dot" [style.background]="series.color"></i> {{ series.legalName }}
+        </span>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h5>Indicadores de proveedor</h5>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th class="text-right">Adjudicado</th>
+              <th class="text-right">Consumo</th>
+              <th class="text-right">Pedidos</th>
+              <th class="text-right">Contratos</th>
+              <th class="text-right">Plazos</th>
+              <th class="text-right">Incidencias</th>
+              <th class="text-right">Riesgo</th>
+              <th class="text-right">vs ano ant.</th>
+              <th class="text-right">% gasto</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let supplier of report.suppliers">
+              <td>
+                <strong>{{ supplier.legalName }}</strong>
+                <small class="text-muted d-block">{{ supplier.taxId }}</small>
+              </td>
+              <td class="text-right">{{ supplier.awardedAmount | number:'1.0-0' }}</td>
+              <td class="text-right">{{ supplier.consumedAmount | number:'1.0-0' }}</td>
+              <td class="text-right">{{ supplier.orderCount }}</td>
+              <td class="text-right">{{ supplier.contractCount }}</td>
+              <td class="text-right"
+                  [class.negative]="(supplier.onTimeDeliveryPercent ?? 100) < 80">
+                {{ supplier.onTimeDeliveryPercent !== undefined
+                    ? (supplier.onTimeDeliveryPercent | number:'1.0-0') + '%'
+                    : 'sin pedidos' }}
+              </td>
+              <td class="text-right" [class.negative]="supplier.incidents > 0">{{ supplier.incidents }}</td>
+              <td class="text-right">{{ supplier.avgRiskScore | number:'1.0-0' }}</td>
+              <td class="text-right" [ngClass]="deviationClass(supplier.yoyVariationPercent ?? 0)">
+                {{ supplier.yoyVariationPercent !== undefined
+                    ? (supplier.yoyVariationPercent | number:'1.1-1') + '%'
+                    : 'sin base' }}
+              </td>
+              <td class="text-right">{{ supplier.sharePercent | number:'1.1-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="chart-card" *ngIf="report.alerts.length">
+      <h5>Alertas y desviaciones detectadas</h5>
+      <div class="alert-row" *ngFor="let alert of report.alerts" [ngClass]="'alert-' + alert.severity">
+        <strong>{{ alert.title }}</strong>
+        <span>{{ alert.message }}</span>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -31,6 +31,13 @@ const MONTH_LABELS = [
   'Dic',
 ];
 
+/** Filtros analiticos opcionales del informe de proveedor. */
+export interface SupplierReportFilters {
+  companyId?: string;
+  orgUnitId?: string;
+  categoryCode?: string;
+}
+
 interface InvoiceRow {
   id: string;
   invoiceNumber: string;
@@ -73,11 +80,15 @@ export class ReportsService {
     return [...years].sort((a, b) => b - a);
   }
 
-  async supplierReport(supplierId: string, fiscalYear: number): Promise<SupplierReport> {
+  async supplierReport(
+    supplierId: string,
+    fiscalYear: number,
+    filters: SupplierReportFilters = {},
+  ): Promise<SupplierReport> {
     const supplier = await this.masterData.findSupplierOrFail(supplierId);
     const budgetRecord = await this.masterData.findBudget(supplierId, fiscalYear);
     const contracts = await this.masterData.findContractsBySupplier(supplierId);
-    const rows = await this.invoiceRows(supplierId, fiscalYear);
+    const rows = await this.invoiceRows(supplierId, fiscalYear, filters);
 
     const consumedAmount = round(rows.reduce((total, row) => total + row.totalAmount, 0));
     const blockedAmount = round(
@@ -193,14 +204,50 @@ export class ReportsService {
     };
   }
 
-  private async invoiceRows(supplierId: string, fiscalYear: number): Promise<InvoiceRow[]> {
-    const rows = await this.invoices
+  /**
+   * Predicado sobre el reparto analitico de la factura. Con filtros activos el
+   * informe usa el importe imputado a esa sociedad/area/categoria, no el total
+   * de la factura, para que la suma cuadre con el cuadro de mando.
+   */
+  private allocationPredicate(filters: SupplierReportFilters): {
+    clause: string;
+    params: Record<string, string>;
+  } {
+    const conditions: string[] = ['alloc.invoice_id = invoice.id'];
+    const params: Record<string, string> = {};
+    if (filters.companyId) {
+      conditions.push('alloc.company_id = :filterCompanyId');
+      params.filterCompanyId = filters.companyId;
+    }
+    if (filters.orgUnitId) {
+      conditions.push('alloc.org_unit_id = :filterOrgUnitId');
+      params.filterOrgUnitId = filters.orgUnitId;
+    }
+    if (filters.categoryCode) {
+      conditions.push('alloc.category_code = :filterCategoryCode');
+      params.filterCategoryCode = filters.categoryCode;
+    }
+    return { clause: conditions.join(' AND '), params };
+  }
+
+  private async invoiceRows(
+    supplierId: string,
+    fiscalYear: number,
+    filters: SupplierReportFilters = {},
+  ): Promise<InvoiceRow[]> {
+    const filtered = Boolean(filters.companyId || filters.orgUnitId || filters.categoryCode);
+    const predicate = this.allocationPredicate(filters);
+    const amountExpression = filtered
+      ? `(SELECT COALESCE(SUM(alloc.amount), 0) FROM invoice_allocations alloc WHERE ${predicate.clause})`
+      : 'invoice.total_amount';
+
+    const query = this.invoices
       .createQueryBuilder('invoice')
       .select([
         'invoice.id AS id',
         'invoice.invoice_number AS "invoiceNumber"',
         'invoice.issue_date AS "issueDate"',
-        'invoice.total_amount AS "totalAmount"',
+        `${amountExpression} AS "totalAmount"`,
         'invoice.status AS status',
         'invoice.risk_score AS "riskScore"',
         'invoice.category_code AS "categoryCode"',
@@ -210,8 +257,16 @@ export class ReportsService {
       ])
       .where('invoice.supplier_id = :supplierId', { supplierId })
       .andWhere('EXTRACT(YEAR FROM invoice.issue_date) = :fiscalYear', { fiscalYear })
-      .orderBy('invoice.issue_date', 'DESC')
-      .getRawMany<InvoiceRow>();
+      .orderBy('invoice.issue_date', 'DESC');
+
+    if (filtered) {
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM invoice_allocations alloc WHERE ${predicate.clause})`,
+        predicate.params,
+      );
+    }
+
+    const rows = await query.getRawMany<InvoiceRow>();
 
     return rows.map((row) => ({
       ...row,

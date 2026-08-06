@@ -1,5 +1,6 @@
 import { Entity, PrimaryColumn, Column, OneToMany } from 'typeorm';
 import { ContractPrice } from './contract-price.entity';
+import { ContractScope } from './contract-scope.entity';
 
 @Entity('contracts')
 export class Contract {
@@ -36,6 +37,16 @@ export class Contract {
   @Column({ name: 'auto_renew', default: false })
   autoRenew: boolean;
 
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ type: 'varchar', default: 'active' })
+  status: 'active' | 'expired' | 'terminated';
+
   @OneToMany(() => ContractPrice, (price) => price.contract, { cascade: true, eager: true })
   priceList: ContractPrice[];
+
+  /** Sociedades y areas que pueden consumir el contrato. */
+  @OneToMany(() => ContractScope, (scope) => scope.contract, { cascade: true, eager: true })
+  scopes: ContractScope[];
 }

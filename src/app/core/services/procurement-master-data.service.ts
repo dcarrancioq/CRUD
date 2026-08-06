@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, forkJoin, map, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  Company,
   Contract,
+  CostCenter,
+  OrgUnit,
   PurchaseOrder,
   SpendCategory,
   Supplier,
@@ -19,6 +22,13 @@ export interface ProcurementMasterData {
   toleranceProfile: ToleranceProfile;
 }
 
+/** Estructura organizativa: sociedades, areas y centros de coste. */
+export interface OrganizationMasterData {
+  companies: Company[];
+  orgUnits: OrgUnit[];
+  costCenters: CostCenter[];
+}
+
 /**
  * Maestros de compras (categorias de gasto, proveedores con sus cuentas bancarias,
  * contratos, pedidos y perfil de tolerancias) servidos por el backend.
@@ -30,6 +40,7 @@ export interface ProcurementMasterData {
 export class ProcurementMasterDataService {
   private readonly baseUrl = `${environment.apiUrl}/master-data`;
   private masterData$?: Observable<ProcurementMasterData>;
+  private organization$?: Observable<OrganizationMasterData>;
 
   constructor(private http: HttpClient) {}
 
@@ -54,6 +65,18 @@ export class ProcurementMasterDataService {
     return this.http
       .post<Supplier>(`${this.baseUrl}/suppliers`, payload)
       .pipe(tap(() => (this.masterData$ = undefined)));
+  }
+
+  /** Sociedades, areas y CECOs; se cachean porque son maestros estables. */
+  loadOrganization(): Observable<OrganizationMasterData> {
+    if (!this.organization$) {
+      this.organization$ = forkJoin({
+        companies: this.http.get<Company[]>(`${this.baseUrl}/companies`),
+        orgUnits: this.http.get<OrgUnit[]>(`${this.baseUrl}/org-units`),
+        costCenters: this.http.get<CostCenter[]>(`${this.baseUrl}/cost-centers`)
+      }).pipe(shareReplay(1));
+    }
+    return this.organization$;
   }
 
   getSuppliers(): Observable<Supplier[]> {

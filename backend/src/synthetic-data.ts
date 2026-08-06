@@ -1,5 +1,13 @@
 import { DeepPartial } from 'typeorm';
+import {
+  CostCenterRef,
+  companyCodes,
+  costCenterSuffixForCategory,
+  resolveCostCenter,
+} from './organization-data';
 import { BankAccountChange } from './modules/master-data/entities/bank-account-change.entity';
+import { Contract } from './modules/master-data/entities/contract.entity';
+import { DimensionBudget } from './modules/master-data/entities/dimension-budget.entity';
 import { Supplier } from './modules/master-data/entities/supplier.entity';
 import { SupplierBudget } from './modules/master-data/entities/supplier-budget.entity';
 import { PurchaseOrder } from './modules/master-data/entities/purchase-order.entity';
@@ -139,6 +147,9 @@ export interface SyntheticDataset {
   suppliers: DeepPartial<Supplier>[];
   bankAccountChanges: DeepPartial<BankAccountChange>[];
   budgets: DeepPartial<SupplierBudget>[];
+  /** Presupuesto analitico al grano sociedad + area + categoria. */
+  dimensionBudgets: DeepPartial<DimensionBudget>[];
+  contracts: DeepPartial<Contract>[];
   purchaseOrders: DeepPartial<PurchaseOrder>[];
   /** Facturas agrupadas por proveedor: permite persistir por lotes. */
   invoicesBySupplier: { supplierId: string; invoices: CreateInvoiceDto[] }[];
@@ -178,8 +189,11 @@ export function buildSyntheticDataset(existingSupplierCount = 0): SyntheticDatas
   const suppliers: DeepPartial<Supplier>[] = [];
   const bankAccountChanges: DeepPartial<BankAccountChange>[] = [];
   const budgets: DeepPartial<SupplierBudget>[] = [];
+  const contracts: DeepPartial<Contract>[] = [];
   const purchaseOrders: DeepPartial<PurchaseOrder>[] = [];
   const invoicesBySupplier: { supplierId: string; invoices: CreateInvoiceDto[] }[] = [];
+  /** Consumo imputado por ejercicio + sociedad + area + categoria, base del presupuesto. */
+  const consumptionByDimension = new Map<string, number>();
 
   for (let index = 0; index < SYNTHETIC_SUPPLIER_COUNT; index += 1) {
     const profile = CATEGORY_PROFILES[index % CATEGORY_PROFILES.length];
@@ -252,6 +266,12 @@ export function buildSyntheticDataset(existingSupplierCount = 0): SyntheticDatas
       });
     }
 
+    /**
+     * Cada proveedor factura principalmente a una sociedad y ademas a una segunda,
+     * de modo que existen proveedores y contratos compartidos entre sociedades.
+     */
+    const primaryCompany = companyCodes[index % companyCodes.length];
+    const secondaryCompany = companyCodes[(index + 1 + (index % 2)) % companyCodes.length];
     const supplierData = buildSupplierInvoices({
       random,
       supplierId,
@@ -262,9 +282,30 @@ export function buildSyntheticDataset(existingSupplierCount = 0): SyntheticDatas
       primaryIban,
       secondaryIban,
       hasBankChange,
+      primaryCompany,
+      secondaryCompany,
     });
     const invoices = supplierData.invoices;
     purchaseOrders.push(...supplierData.purchaseOrders);
+    supplierData.consumption.forEach((amount, key) => {
+      consumptionByDimension.set(key, (consumptionByDimension.get(key) ?? 0) + amount);
+    });
+    contracts.push(
+      ...buildSupplierContracts({
+        random,
+        supplierId,
+        supplierIndex: index,
+        legalName,
+        profile,
+        paymentTermsDays,
+        primaryCompany,
+        secondaryCompany,
+        annualSpend: supplierData.consumption.size
+          ? [...supplierData.consumption.values()].reduce((total, value) => total + value, 0) /
+            SYNTHETIC_YEARS.length
+          : 60000,
+      }),
+    );
 
     /**
      * El presupuesto se calibra sobre el gasto realmente generado en cada ejercicio
@@ -292,7 +333,132 @@ export function buildSyntheticDataset(existingSupplierCount = 0): SyntheticDatas
     invoicesBySupplier.push({ supplierId, invoices });
   }
 
-  return { suppliers, bankAccountChanges, budgets, purchaseOrders, invoicesBySupplier };
+  /**
+   * El presupuesto por dimension se calibra sobre el consumo real imputado a cada
+   * sociedad/area/categoria (85%-118%), de forma que el cuadro de mando muestre
+   * dimensiones holgadas, en aviso y con desviacion.
+   */
+  const dimensionBudgets: DeepPartial<DimensionBudget>[] = [...consumptionByDimension.entries()].map(
+    ([key, amount], position) => {
+      const [fiscalYear, companyId, orgUnitId, categoryCode] = key.split('|');
+      const annualized = fiscalYear === '2026' ? (amount / 8) * 12 : amount;
+      const factor = 0.85 + random() * 0.33;
+      return {
+        id: `dbud-${fiscalYear}-${companyId}-${orgUnitId}-${categoryCode}`.toLowerCase(),
+        fiscalYear: Number(fiscalYear),
+        companyId,
+        orgUnitId,
+        categoryCode,
+        budgetAmount: Math.max(5000, Math.round((annualized * factor) / 500) * 500),
+        currency: 'EUR',
+        alertThresholdPercent: [80, 85, 90][position % 3],
+        ownerEmail: `presupuesto.${categoryCode.toLowerCase()}@empresa.example`,
+      };
+    },
+  );
+
+  return {
+    suppliers,
+    bankAccountChanges,
+    budgets,
+    dimensionBudgets,
+    contracts,
+    purchaseOrders,
+    invoicesBySupplier,
+  };
+}
+
+/**
+ * Contratos del proveedor (1 a 3), cada uno con su ambito de consumo: una o varias
+ * sociedades y, opcionalmente, un area concreta. Un ambito sin area habilita el
+ * contrato para toda la sociedad.
+ */
+function buildSupplierContracts(input: {
+  random: () => number;
+  supplierId: string;
+  supplierIndex: number;
+  legalName: string;
+  profile: CategoryProfile;
+  paymentTermsDays: number;
+  primaryCompany: string;
+  secondaryCompany: string;
+  annualSpend: number;
+}): DeepPartial<Contract>[] {
+  const {
+    random,
+    supplierId,
+    supplierIndex,
+    profile,
+    paymentTermsDays,
+    primaryCompany,
+    secondaryCompany,
+    annualSpend,
+  } = input;
+
+  const suffix = costCenterSuffixForCategory(profile.categoryCode);
+  const contractCount = 1 + (supplierIndex % 3);
+  const contracts: DeepPartial<Contract>[] = [];
+
+  for (let position = 0; position < contractCount; position += 1) {
+    const startYear = SYNTHETIC_YEARS[position % SYNTHETIC_YEARS.length];
+    const expired = startYear < 2026;
+    const contractId = `ctr-${supplierId}-${position + 1}`;
+    const primaryRef = resolveCostCenter(primaryCompany, suffix);
+    const secondaryRef = resolveCostCenter(secondaryCompany, suffix);
+    /** Contrato marco de grupo: alcanza a la sociedad completa, sin area concreta. */
+    const groupWide = position === 1;
+
+    contracts.push({
+      id: contractId,
+      supplierId,
+      reference: `CTR-${supplierId.toUpperCase()}-${startYear}-${position + 1}`,
+      description: `Contrato ${profile.categoryCode} ${startYear} (${
+        groupWide ? 'marco de grupo' : 'ambito por area'
+      })`,
+      categoryCode: profile.categoryCode,
+      validFrom: new Date(isoDate(startYear, 1, 1)),
+      validUntil: new Date(isoDate(startYear, 12, 31)),
+      committedAnnualSpend: Math.max(20000, Math.round((annualSpend * (0.6 + random() * 0.7)) / 1000) * 1000),
+      currency: 'EUR',
+      paymentTermsDays,
+      earlyPaymentDiscountPercent: random() < 0.4 ? Math.round(random() * 20) / 10 : undefined,
+      autoRenew: random() < 0.5,
+      status: expired ? 'expired' : 'active',
+      scopes: groupWide
+        ? [
+            { id: `cts-${contractId}-1`, contractId, companyId: primaryRef.companyId },
+            { id: `cts-${contractId}-2`, contractId, companyId: secondaryRef.companyId },
+          ]
+        : [
+            {
+              id: `cts-${contractId}-1`,
+              contractId,
+              companyId: primaryRef.companyId,
+              orgUnitId: primaryRef.orgUnitId,
+            },
+            ...(primaryRef.companyId === secondaryRef.companyId
+              ? []
+              : [
+                  {
+                    id: `cts-${contractId}-2`,
+                    contractId,
+                    companyId: secondaryRef.companyId,
+                    orgUnitId: secondaryRef.orgUnitId,
+                  },
+                ]),
+          ],
+      priceList: profile.items.slice(0, 2).map((item, itemIndex) => ({
+        id: `ctp-${contractId}-${itemIndex + 1}`,
+        contractId,
+        itemCode: item.itemCode,
+        description: item.description,
+        unitPrice: item.unitPrice,
+        uom: item.uom,
+      })),
+    });
+  }
+
+  return contracts;
 }
 
 function buildSupplierInvoices(input: {
@@ -305,7 +471,13 @@ function buildSupplierInvoices(input: {
   primaryIban: string;
   secondaryIban: string;
   hasBankChange: boolean;
-}): { invoices: CreateInvoiceDto[]; purchaseOrders: DeepPartial<PurchaseOrder>[] } {
+  primaryCompany: string;
+  secondaryCompany: string;
+}): {
+  invoices: CreateInvoiceDto[];
+  purchaseOrders: DeepPartial<PurchaseOrder>[];
+  consumption: Map<string, number>;
+} {
   const {
     random,
     supplierId,
@@ -316,15 +488,26 @@ function buildSupplierInvoices(input: {
     primaryIban,
     secondaryIban,
     hasBankChange,
+    primaryCompany,
+    secondaryCompany,
   } = input;
 
   const invoices: CreateInvoiceDto[] = [];
   /** Reenvios del proveedor: se anaden al final para que el original ya este registrado. */
   const reissues: CreateInvoiceDto[] = [];
+  const consumption = new Map<string, number>();
   const purchaseOrders: DeepPartial<PurchaseOrder>[] = [];
   const perYear = Math.floor(SYNTHETIC_INVOICES_PER_SUPPLIER / SYNTHETIC_YEARS.length);
   const documentPrefix = legalName.slice(0, 3).toUpperCase();
   let sequence = 1;
+
+  const suffix = costCenterSuffixForCategory(profile.categoryCode);
+  /** CECOs candidatos del reparto: el afin a la categoria y alternativos de otra sociedad/area. */
+  const targets: CostCenterRef[] = dedupeRefs([
+    resolveCostCenter(primaryCompany, suffix),
+    resolveCostCenter(secondaryCompany, suffix),
+    resolveCostCenter(primaryCompany, 'OPS'),
+  ]);
 
   SYNTHETIC_YEARS.forEach((year, yearIndex) => {
     const count = yearIndex === SYNTHETIC_YEARS.length - 1
@@ -408,6 +591,10 @@ function buildSupplierInvoices(input: {
           : undefined,
       };
 
+      invoice.allocations = buildInvoiceAllocations(random, exactInvoiceTotal(invoice), targets);
+      invoice.costCenter = invoice.allocations[0].costCenterCode;
+      registerConsumption(consumption, year, invoice, profile.categoryCode, targets);
+
       invoices.push(invoice);
 
       if (purchaseOrderNumber) {
@@ -419,6 +606,11 @@ function buildSupplierInvoices(input: {
             categoryCode: profile.categoryCode,
             linesTotal,
             underApproved: poUnderApproved,
+            costCenter: targets[0],
+            /** Un 22% de pedidos siguen abiertos: son el compromiso pendiente del cuadro de mando. */
+            open: random() < 0.22,
+            lateDelivery: random() < 0.18,
+            random,
           }),
         );
       }
@@ -438,10 +630,142 @@ function buildSupplierInvoices(input: {
 
   const trimmed = [...invoices, ...reissues].slice(0, SYNTHETIC_INVOICES_PER_SUPPLIER);
   const keptNumbers = new Set(trimmed.map((invoice) => invoice.purchaseOrderNumber));
-  return {
-    invoices: trimmed,
-    purchaseOrders: purchaseOrders.filter((order) => keptNumbers.has(order.number as string)),
-  };
+  const kept = purchaseOrders.filter((order) => keptNumbers.has(order.number as string));
+
+  /**
+   * Pedidos aprobados pendientes de facturar: son el compromiso vivo que resta
+   * presupuesto disponible aunque todavia no haya llegado ninguna factura.
+   */
+  const commitmentCount = 1 + (supplierIndex % 3);
+  for (let position = 0; position < commitmentCount; position += 1) {
+    const target = targets[position % targets.length];
+    const item = profile.items[position % profile.items.length];
+    const quantity = Math.max(1, Math.round(item.quantity * (0.5 + random() * 0.8)));
+    const number = `PO-${supplierId}-2026-C${position + 1}`;
+    const issuedAt = isoDate(2026, 5 + (position % 4), 3 + Math.floor(random() * 20));
+
+    kept.push({
+      id: `po-${number.toLowerCase()}`,
+      number,
+      supplierId,
+      currency: 'EUR',
+      issuedAt: new Date(issuedAt),
+      costCenter: target.code,
+      companyId: target.companyId,
+      orgUnitId: target.orgUnitId,
+      categoryCode: profile.categoryCode,
+      expectedDeliveryDate: new Date(addDays(issuedAt, 30)),
+      approvedAmount: round2(quantity * item.unitPrice * 1.21),
+      status: random() < 0.2 ? 'partially_received' : 'open',
+      lines: [
+        {
+          id: `pol-${number.toLowerCase()}-1`,
+          purchaseOrderId: `po-${number.toLowerCase()}`,
+          lineNumber: 1,
+          itemCode: item.itemCode,
+          description: item.description,
+          quantity,
+          uom: item.uom,
+          unitPrice: item.unitPrice,
+          categoryCode: profile.categoryCode,
+          receivedQuantity: 0,
+          invoicedQuantity: 0,
+        },
+      ],
+    });
+  }
+
+  return { invoices: trimmed, purchaseOrders: kept, consumption };
+}
+
+function dedupeRefs(refs: CostCenterRef[]): CostCenterRef[] {
+  const seen = new Set<string>();
+  return refs.filter((ref) => {
+    if (seen.has(ref.code)) {
+      return false;
+    }
+    seen.add(ref.code);
+    return true;
+  });
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/** Replica el calculo del total que hara el backend, para cuadrar repartos por importe. */
+function exactInvoiceTotal(invoice: CreateInvoiceDto): number {
+  const linesSum = round2(
+    invoice.lines.reduce((total, line) => total + round2(line.quantity * line.unitPrice), 0),
+  );
+  const subtotal = invoice.declaredSubtotal ?? linesSum;
+  const taxAmount = invoice.declaredTaxAmount ?? round2((subtotal * invoice.taxRate) / 100);
+  return invoice.declaredTotalAmount ?? round2(subtotal + taxAmount);
+}
+
+/**
+ * Reparto analitico: la mayoria de facturas van a un unico CECO y el resto se
+ * reparten entre dos o tres, la mitad por porcentaje y la mitad por importe, para
+ * cubrir los dos criterios admitidos.
+ */
+function buildInvoiceAllocations(
+  random: () => number,
+  totalAmount: number,
+  targets: CostCenterRef[],
+): NonNullable<CreateInvoiceDto['allocations']> {
+  const draw = random();
+  if (draw < 0.7 || targets.length < 2 || totalAmount <= 0) {
+    return [{ costCenterCode: targets[0].code, mode: 'percent', value: 100 }];
+  }
+
+  const threeWay = targets.length > 2 && random() < 0.4;
+  if (draw < 0.85) {
+    return threeWay
+      ? [
+          { costCenterCode: targets[0].code, mode: 'percent', value: 50 },
+          { costCenterCode: targets[1].code, mode: 'percent', value: 30 },
+          { costCenterCode: targets[2].code, mode: 'percent', value: 20 },
+        ]
+      : [
+          { costCenterCode: targets[0].code, mode: 'percent', value: 65 },
+          { costCenterCode: targets[1].code, mode: 'percent', value: 35 },
+        ];
+  }
+
+  const first = round2(totalAmount * (threeWay ? 0.5 : 0.6));
+  if (!threeWay) {
+    return [
+      { costCenterCode: targets[0].code, mode: 'amount', value: first },
+      { costCenterCode: targets[1].code, mode: 'amount', value: round2(totalAmount - first) },
+    ];
+  }
+  const second = round2(totalAmount * 0.3);
+  return [
+    { costCenterCode: targets[0].code, mode: 'amount', value: first },
+    { costCenterCode: targets[1].code, mode: 'amount', value: second },
+    { costCenterCode: targets[2].code, mode: 'amount', value: round2(totalAmount - first - second) },
+  ];
+}
+
+/** Acumula el importe imputado a cada sociedad/area/categoria del ejercicio. */
+function registerConsumption(
+  consumption: Map<string, number>,
+  year: number,
+  invoice: CreateInvoiceDto,
+  categoryCode: string,
+  targets: CostCenterRef[],
+): void {
+  const total = exactInvoiceTotal(invoice);
+  (invoice.allocations ?? []).forEach((allocation) => {
+    const ref = targets.find((candidate) => candidate.code === allocation.costCenterCode);
+    if (!ref) {
+      return;
+    }
+    const amount =
+      allocation.mode === 'amount' ? allocation.value : round2((total * allocation.value) / 100);
+    const key = `${year}|${ref.companyId}|${ref.orgUnitId}|${categoryCode}`;
+    consumption.set(key, round2((consumption.get(key) ?? 0) + amount));
+  });
 }
 
 /**
@@ -455,9 +779,28 @@ function buildPurchaseOrder(input: {
   categoryCode: string;
   linesTotal: number;
   underApproved: boolean;
+  costCenter: CostCenterRef;
+  open: boolean;
+  lateDelivery: boolean;
+  random: () => number;
 }): DeepPartial<PurchaseOrder> {
-  const { purchaseOrderNumber, supplierId, invoice, categoryCode, linesTotal, underApproved } = input;
+  const {
+    purchaseOrderNumber,
+    supplierId,
+    invoice,
+    categoryCode,
+    linesTotal,
+    underApproved,
+    costCenter,
+    open,
+    lateDelivery,
+    random,
+  } = input;
   const priceFactor = underApproved ? 0.86 : 1;
+  const expectedDeliveryDate = addDays(invoice.issueDate, -2);
+  const deliveredAt = open
+    ? undefined
+    : addDays(expectedDeliveryDate, lateDelivery ? 3 + Math.floor(random() * 12) : -Math.floor(random() * 4));
 
   return {
     id: `po-${purchaseOrderNumber.toLowerCase()}`,
@@ -465,9 +808,14 @@ function buildPurchaseOrder(input: {
     supplierId,
     currency: invoice.currency,
     issuedAt: new Date(addDays(invoice.issueDate, -12)),
-    costCenter: invoice.costCenter,
+    costCenter: costCenter.code,
+    companyId: costCenter.companyId,
+    orgUnitId: costCenter.orgUnitId,
+    categoryCode,
+    expectedDeliveryDate: new Date(expectedDeliveryDate),
+    deliveredAt: deliveredAt ? new Date(deliveredAt) : undefined,
     approvedAmount: Math.round(linesTotal * priceFactor * 100) / 100,
-    status: 'open',
+    status: open ? 'open' : 'closed',
     lines: invoice.lines.map((line, lineIndex) => ({
       id: `pol-${purchaseOrderNumber.toLowerCase()}-${lineIndex + 1}`,
       purchaseOrderId: `po-${purchaseOrderNumber.toLowerCase()}`,

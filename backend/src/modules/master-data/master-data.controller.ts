@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { MasterDataService } from './master-data.service';
 
@@ -34,6 +34,40 @@ export class MasterDataController {
   @ApiOperation({ summary: 'Historico de cambios de cuenta bancaria de un proveedor' })
   bankAccountChanges(@Param('id') id: string) {
     return this.masterData.findBankAccountChanges(id);
+  }
+
+  @Get('companies')
+  @ApiOperation({ summary: 'Sociedades del grupo a las que se puede imputar gasto' })
+  companies() {
+    return this.masterData.findCompanies();
+  }
+
+  @Get('org-units')
+  @ApiOperation({ summary: 'Areas / departamentos, opcionalmente de una sociedad' })
+  @ApiQuery({ name: 'companyId', required: false })
+  orgUnits(@Query('companyId') companyId?: string) {
+    return this.masterData.findOrgUnits(companyId || undefined);
+  }
+
+  @Get('cost-centers')
+  @ApiOperation({ summary: 'Centros de coste (CECOs) con su sociedad y area' })
+  @ApiQuery({ name: 'companyId', required: false })
+  @ApiQuery({ name: 'orgUnitId', required: false })
+  costCenters(@Query('companyId') companyId?: string, @Query('orgUnitId') orgUnitId?: string) {
+    return this.masterData.findCostCenters({
+      companyId: companyId || undefined,
+      orgUnitId: orgUnitId || undefined,
+    });
+  }
+
+  @Get('dimension-budgets')
+  @ApiOperation({ summary: 'Presupuestos de compras por sociedad, area y categoria' })
+  @ApiQuery({ name: 'year', required: false })
+  dimensionBudgets(@Query('year') year?: string) {
+    const fiscalYear = year ? Number(year) : undefined;
+    return this.masterData.findDimensionBudgets(
+      Number.isInteger(fiscalYear) ? fiscalYear : undefined,
+    );
   }
 
   @Get('budgets')

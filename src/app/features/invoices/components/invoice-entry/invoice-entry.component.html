@@ -143,9 +143,10 @@
               <input type="text" class="form-control" formControlName="contractReference" placeholder="CTR-CLOUD-2026">
             </div>
             <div class="col-md-4 mb-3">
-              <label class="form-label">Centro de coste *</label>
-              <input type="text" class="form-control" formControlName="costCenter"
-                     [class.is-invalid]="isFieldInvalid('costCenter')">
+              <label class="form-label">Imputacion analitica</label>
+              <p class="form-control-plaintext small mb-0">
+                {{ allocationGroups.length }} CECO(s) &middot; ver bloque de reparto
+              </p>
             </div>
           </div>
 
@@ -233,6 +234,79 @@
               <input type="email" class="form-control" formControlName="requesterEmail">
             </div>
           </div>
+        </div>
+
+        <div class="form-card">
+          <div class="card-header-row">
+            <h5>Reparto por centro de coste</h5>
+            <div class="allocation-mode">
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn"
+                        [class.btn-primary]="allocationMode === 'percent'"
+                        [class.btn-outline-primary]="allocationMode !== 'percent'"
+                        (click)="setAllocationMode('percent')">POR PORCENTAJE</button>
+                <button type="button" class="btn"
+                        [class.btn-primary]="allocationMode === 'amount'"
+                        [class.btn-outline-primary]="allocationMode !== 'amount'"
+                        (click)="setAllocationMode('amount')">POR IMPORTE</button>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary ml-2" (click)="addAllocation()">
+                Anadir CECO
+              </button>
+            </div>
+          </div>
+          <p class="text-muted small">
+            La factura se imputa a uno o varios CECOs. Cada CECO determina la sociedad y el area a
+            las que se lleva el gasto, base del cuadro de mando de compras.
+          </p>
+
+          <div class="allocation-row" *ngFor="let allocation of allocationGroups; let i = index"
+               [formGroup]="allocation">
+            <div class="row align-items-end">
+              <div class="col-md-4 mb-2">
+                <label class="form-label">Centro de coste *</label>
+                <app-searchable-select formControlName="costCenterCode"
+                                       size="sm"
+                                       [options]="costCenterOptions"
+                                       placeholder="Selecciona CECO"
+                                       searchPlaceholder="Busca CECO, sociedad o area..."></app-searchable-select>
+                <small class="text-muted">{{ allocationScope(allocation) }}</small>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Categoria (opcional)</label>
+                <app-searchable-select formControlName="categoryCode"
+                                       size="sm"
+                                       [options]="categoryOptions"
+                                       emptyLabel="La de la factura"
+                                       placeholder="La de la factura"
+                                       searchPlaceholder="Busca categoria..."></app-searchable-select>
+              </div>
+              <div class="col-md-2 mb-2">
+                <label class="form-label">{{ allocationMode === 'percent' ? '% del total' : 'Importe' }}</label>
+                <input type="number" step="0.01" class="form-control form-control-sm" formControlName="value">
+              </div>
+              <div class="col-md-2 mb-2">
+                <label class="form-label">Imputado</label>
+                <input type="text" class="form-control form-control-sm" readonly
+                       [value]="allocationAmount(allocation) | number:'1.2-2'">
+              </div>
+              <div class="col-md-1 mb-2 d-flex">
+                <button type="button" class="btn btn-sm btn-outline-secondary mr-1" title="Imputar el resto"
+                        (click)="assignRemainder(i)">=</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeAllocation(i)"
+                        [disabled]="allocationGroups.length === 1">X</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="allocation-summary">
+            <span><strong>Total factura:</strong> {{ computedTotal | number:'1.2-2' }}</span>
+            <span><strong>Imputado:</strong> {{ allocatedAmount | number:'1.2-2' }} ({{ allocatedPercent | number:'1.0-2' }}%)</span>
+            <span [class.text-danger]="unallocatedAmount !== 0">
+              <strong>Sin imputar:</strong> {{ unallocatedAmount | number:'1.2-2' }}
+            </span>
+          </div>
+          <div class="alert alert-danger py-2 mb-0 small" *ngIf="allocationError">{{ allocationError }}</div>
         </div>
 
         <div class="form-card">
