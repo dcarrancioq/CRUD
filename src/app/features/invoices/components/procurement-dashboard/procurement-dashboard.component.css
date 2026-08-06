@@ -281,7 +281,13 @@
 .alert-row.alert-warning { border-left-color: #d98c00; }
 .alert-row.alert-info { border-left-color: #004666; }
 
-.table th {
+.table thead th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.table tbody th {
   font-size: 0.72rem;
   text-transform: uppercase;
   color: #6a7276;

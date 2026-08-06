@@ -17,7 +17,7 @@
 
 .sort-arrow {
   font-size: 0.7em;
-  opacity: 0.45;
+  opacity: 0.75;
 }
 
 .sort-header.active .sort-arrow {

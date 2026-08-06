@@ -28,10 +28,10 @@
   font-size: 0.85rem;
 }
 
-.directory-table th {
+.directory-table thead th {
   font-size: 0.72rem;
   text-transform: uppercase;
-  color: #6a7276;
+  color: #fff;
 }
 
 .wrap-cell {
