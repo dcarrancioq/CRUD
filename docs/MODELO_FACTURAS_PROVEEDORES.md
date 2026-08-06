@@ -65,6 +65,7 @@ cd .. && npm start -- --port 8081
 | Opciones ligeras para desplegables con busqueda | `GET /api/invoices/options?search=&limit=` |
 | Evaluacion sin registrar (panel en vivo del alta) | `POST /api/invoices/preview` |
 | Registro de factura | `POST /api/invoices` |
+| Importacion de documento (PDF, Word, Excel) | `POST /api/invoices/import` (multipart, campo `file`) |
 | Excepciones abiertas | `GET /api/invoices/exceptions` |
 | Resolucion de excepcion | `PATCH /api/invoices/:invoiceId/exceptions/:exceptionId` |
 | Comparativa | `GET /api/invoices/compare?left=&right=` |
@@ -200,6 +201,13 @@ condiciones.
 ### 2.1 Pantalla A - Alta de factura (`/invoices/new`)
 
 - Cabecera, datos de pago, lineas dinamicas e importes declarados en el documento.
+- **Importar desde fichero**: se sube la factura en PDF, Word (`doc`/`docx`) o Excel (`xls`/`xlsx`/`csv`) y el
+  backend extrae los campos (`POST /api/invoices/import`) para prerellenar el formulario. La extraccion es
+  determinista: texto del documento (pdf-parse / mammoth / exceljs) + busqueda por etiquetas y patrones
+  (numero, fechas, NIF, pedido, contrato, IBAN, titular, centro de coste, divisa, IVA, base/cuota/total y
+  tabla de lineas), con identificacion del proveedor en el maestro por NIF, IBAN o razon social. La pantalla
+  muestra cada campo detectado con su fiabilidad y el texto de origen, ademas de avisos de descuadre y de
+  campos no encontrados; **la factura no se registra hasta que una persona valida la propuesta**.
 - Al seleccionar proveedor se precargan condiciones de pago y su cuenta principal, y se muestran todas sus
   cuentas registradas con su estado (control visual de cambio de IBAN).
 - Panel lateral en vivo alimentado por `POST /api/invoices/preview` (evaluacion real, sin persistir): totales calculados, categoria de gasto asignada con confianza y terminos,

@@ -9,6 +9,7 @@ import {
   InvoiceComparison,
   InvoiceException
 } from '../models/invoice.model';
+import { InvoiceImportResult } from '../models/invoice-import.model';
 
 export interface InvoiceSummary {
   invoiceCount: number;
@@ -93,6 +94,13 @@ export class InvoiceService {
   /** Evalua la factura contra las tolerancias sin registrarla (panel en vivo del alta). */
   previewInvoice(request: CreateInvoiceRequest): Observable<Invoice> {
     return this.http.post<Invoice>(`${this.baseUrl}/preview`, request);
+  }
+
+  /** Sube el documento (PDF, Word o Excel) y devuelve los campos detectados para revisar. */
+  importInvoiceFile(file: File): Observable<InvoiceImportResult> {
+    const payload = new FormData();
+    payload.append('file', file, file.name);
+    return this.http.post<InvoiceImportResult>(`${this.baseUrl}/import`, payload);
   }
 
   createInvoice(request: CreateInvoiceRequest): Observable<Invoice> {

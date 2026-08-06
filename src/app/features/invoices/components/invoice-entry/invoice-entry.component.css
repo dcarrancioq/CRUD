@@ -110,3 +110,47 @@
   max-height: 320px;
   overflow: auto;
 }
+
+.import-card {
+  border-left: 4px solid var(--vwfs-cyan);
+}
+
+.import-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.import-result .source-text {
+  color: var(--vwfs-text);
+  font-size: 0.8rem;
+  max-width: 22rem;
+  overflow-wrap: anywhere;
+}
+
+.import-result .badge {
+  border-radius: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-format {
+  background: var(--vwfs-blue);
+  color: #fff;
+}
+
+.badge-high {
+  background: #d7f0d5;
+  color: #1f6b23;
+}
+
+.badge-medium {
+  background: #fdf0cf;
+  color: #8a6100;
+}
+
+.badge-low {
+  background: #fadada;
+  color: #a11b1b;
+}

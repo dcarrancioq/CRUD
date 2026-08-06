@@ -1,11 +1,27 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseFilePipeBuilder,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { CreateDevinSessionDto } from '../devin/dto/create-devin-session.dto';
 import { DevinService } from '../devin/devin.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { ResolveExceptionDto } from './dto/resolve-exception.dto';
 import { toInvoiceResponse } from './invoice.mapper';
+import { InvoiceExtractionService } from './services/invoice-extraction.service';
 import { InvoicesService } from './services/invoices.service';
+
+const MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024;
 
 @ApiTags('invoices')
 @Controller('invoices')
@@ -13,6 +29,7 @@ export class InvoicesController {
   constructor(
     private readonly invoices: InvoicesService,
     private readonly devin: DevinService,
+    private readonly extraction: InvoiceExtractionService,
   ) {}
 
   @Get()
@@ -73,6 +90,31 @@ export class InvoicesController {
   })
   async preview(@Body() dto: CreateInvoiceDto) {
     return toInvoiceResponse(await this.invoices.preview(dto));
+  }
+
+  @Post('import')
+  @ApiOperation({
+    summary: 'Extrae los campos de factura de un PDF, Word o Excel',
+    description:
+      'Devuelve una propuesta para prerellenar el alta; la factura no se registra hasta que una persona la valida.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+  })
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_IMPORT_SIZE_BYTES } }))
+  async import(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: MAX_IMPORT_SIZE_BYTES })
+        .build({ fileIsRequired: true }),
+    )
+    file: Express.Multer.File,
+  ) {
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('El fichero esta vacio.');
+    }
+    return this.extraction.extract(file.originalname, file.buffer);
   }
 
   @Post()

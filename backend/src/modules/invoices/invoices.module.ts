@@ -10,6 +10,8 @@ import { Invoice } from './entities/invoice.entity';
 import { InvoicesController } from './invoices.controller';
 import { InvoiceAnomalyService } from './services/invoice-anomaly.service';
 import { InvoiceComparisonService } from './services/invoice-comparison.service';
+import { InvoiceDocumentService } from './services/invoice-document.service';
+import { InvoiceExtractionService } from './services/invoice-extraction.service';
 import { InvoicesService } from './services/invoices.service';
 import { SpendClassificationService } from './services/spend-classification.service';
 
@@ -24,6 +26,8 @@ import { SpendClassificationService } from './services/spend-classification.serv
     InvoicesService,
     InvoiceAnomalyService,
     InvoiceComparisonService,
+    InvoiceDocumentService,
+    InvoiceExtractionService,
     SpendClassificationService,
   ],
   exports: [InvoicesService],

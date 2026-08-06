@@ -13,6 +13,73 @@
     </div>
   </div>
 
+  <div class="form-card import-card">
+    <div class="card-header-row">
+      <div>
+        <h5 class="mb-1">Importar desde fichero</h5>
+        <p class="text-muted mb-0">
+          Sube la factura en PDF, Word o Excel: el sistema localiza los campos y rellena el formulario para que los revises.
+        </p>
+      </div>
+      <div class="import-actions">
+        <input #importInput type="file" class="d-none" [accept]="acceptedImportTypes"
+               (change)="onFileSelected($event)">
+        <button type="button" class="btn btn-primary" [disabled]="importing" (click)="importInput.click()">
+          {{ importing ? 'Leyendo fichero...' : 'Importar desde fichero' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="alert alert-danger mt-3 mb-0" *ngIf="importError">{{ importError }}</div>
+
+    <div class="import-result mt-3" *ngIf="importResult">
+      <div class="card-header-row">
+        <h6 class="mb-0">
+          {{ importResult.fileName }}
+          <span class="badge badge-format">{{ importResult.format | uppercase }}</span>
+        </h6>
+        <button type="button" class="btn btn-link btn-sm" (click)="dismissImport()">Ocultar</button>
+      </div>
+
+      <p class="text-muted mt-2 mb-2" *ngIf="importResult.supplierMatch">
+        Proveedor identificado: <strong>{{ importResult.supplierMatch.legalName }}</strong>
+        ({{ importResult.supplierMatch.taxId }}).
+      </p>
+
+      <div class="alert alert-warning py-2 mb-2" *ngFor="let warning of importResult.warnings">{{ warning }}</div>
+      <div class="alert alert-info py-2 mb-2" *ngIf="importResult.missingFields.length">
+        No se han encontrado en el documento: {{ importResult.missingFields.join(', ') }}. Completalos a mano.
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Campo</th>
+              <th>Valor detectado</th>
+              <th>Fiabilidad</th>
+              <th>Texto de origen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let field of importResult.fields">
+              <td>{{ field.label }}</td>
+              <td><strong>{{ field.value }}</strong></td>
+              <td>
+                <span class="badge" [class.badge-high]="field.confidence >= 0.85"
+                      [class.badge-medium]="field.confidence >= 0.65 && field.confidence < 0.85"
+                      [class.badge-low]="field.confidence < 0.65">
+                  {{ confidenceLabel(field.confidence) }}
+                </span>
+              </td>
+              <td class="source-text">{{ field.source }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="row">
       <div class="col-lg-8">

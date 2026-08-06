@@ -4,3 +4,4 @@ export * from './order.model';
 export * from './user.model';
 export * from './coupon.model';
 export * from './invoice.model';
+export * from './invoice-import.model';

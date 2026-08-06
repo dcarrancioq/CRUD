@@ -11,6 +11,7 @@ import {
   SupplierBankAccount,
   ToleranceProfile
 } from '../../../../core/models/invoice.model';
+import { ImportedInvoiceDraft, InvoiceImportResult } from '../../../../core/models/invoice-import.model';
 import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { DevinApiService, DevinSessionRequest } from '../../../../core/services/devin-api.service';
 import { InvoiceService } from '../../../../core/services/invoice.service';
@@ -30,6 +31,11 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   preview?: Invoice;
   saving = false;
   devinRequestPreview?: DevinSessionRequest;
+  importing = false;
+  importResult?: InvoiceImportResult;
+  importError = '';
+
+  readonly acceptedImportTypes = '.pdf,.doc,.docx,.xls,.xlsx,.csv';
 
   private readonly evaluateTrigger = new Subject<void>();
   private readonly destroy$ = new Subject<void>();
@@ -181,6 +187,94 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
     if (this.lines.length > 1) {
       this.lines.removeAt(index);
     }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+    this.importing = true;
+    this.importError = '';
+    this.invoiceService.importInvoiceFile(file).subscribe({
+      next: result => {
+        this.importing = false;
+        this.importResult = result;
+        this.applyImportedDraft(result.draft);
+        input.value = '';
+        this.notificationService.info(
+          `${result.fields.length} campos detectados en ${result.fileName}. Revisa la propuesta antes de registrar.`
+        );
+      },
+      error: error => {
+        this.importing = false;
+        input.value = '';
+        this.importError =
+          error?.error?.message ?? 'No se ha podido leer el fichero. Admitimos PDF, Word y Excel.';
+      }
+    });
+  }
+
+  dismissImport(): void {
+    this.importResult = undefined;
+    this.importError = '';
+  }
+
+  confidenceLabel(confidence: number): string {
+    return confidence >= 0.85 ? 'alta' : confidence >= 0.65 ? 'media' : 'baja';
+  }
+
+  /** Vuelca la propuesta del documento en el formulario; la persona valida y corrige. */
+  private applyImportedDraft(draft: ImportedInvoiceDraft): void {
+    const header: Record<string, string | number> = {};
+    const assign = (key: string, value: string | number | undefined): void => {
+      if (value !== undefined && value !== null && value !== '') {
+        header[key] = value;
+      }
+    };
+
+    assign('invoiceNumber', draft.invoiceNumber);
+    assign('supplierId', draft.supplierId);
+    assign('purchaseOrderNumber', draft.purchaseOrderNumber);
+    assign('contractReference', draft.contractReference);
+    assign('issueDate', draft.issueDate);
+    assign('receivedDate', draft.receivedDate);
+    assign('dueDate', draft.dueDate);
+    assign('currency', draft.currency);
+    assign('taxRate', draft.taxRate);
+    assign('paymentTermsDays', draft.paymentTermsDays);
+    assign('bankAccountIban', draft.bankAccountIban);
+    assign('bankAccountHolder', draft.bankAccountHolder);
+    assign('costCenter', draft.costCenter);
+    assign('description', draft.description);
+    assign('declaredSubtotal', draft.declaredSubtotal);
+    assign('declaredTaxAmount', draft.declaredTaxAmount);
+    assign('declaredTotalAmount', draft.declaredTotalAmount);
+
+    this.form.patchValue(header, { emitEvent: false });
+
+    if (draft.lines.length) {
+      this.lines.clear();
+      draft.lines.forEach(line => {
+        this.addLine();
+        this.lines.at(this.lines.length - 1).patchValue(
+          {
+            description: line.description,
+            quantity: line.quantity,
+            uom: line.uom,
+            unitPrice: line.unitPrice,
+            taxRate: line.taxRate
+          },
+          { emitEvent: false }
+        );
+      });
+    }
+
+    this.form.markAsDirty();
+    this.form.updateValueAndValidity();
+    // El origen deja de ser manual: la factura entra por lectura del documento.
+    this.form.get('source')?.setValue('ocr');
   }
 
   onSupplierChange(): void {
