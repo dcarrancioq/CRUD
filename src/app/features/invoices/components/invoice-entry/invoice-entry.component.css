@@ -154,3 +154,33 @@
   background: #fadada;
   color: #a11b1b;
 }
+
+.import-actions {
+  position: relative;
+}
+
+.import-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.import-actions label {
+  cursor: pointer;
+}
+
+.import-dropzone {
+  border: 1px dashed var(--vwfs-border);
+  background: var(--vwfs-surface);
+  color: var(--vwfs-muted);
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.import-dropzone.is-active {
+  border-color: var(--vwfs-primary);
+  color: var(--vwfs-text-strong);
+}

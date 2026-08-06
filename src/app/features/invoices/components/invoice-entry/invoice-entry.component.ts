@@ -32,6 +32,7 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   saving = false;
   devinRequestPreview?: DevinSessionRequest;
   importing = false;
+  dragActive = false;
   importResult?: InvoiceImportResult;
   importError = '';
 
@@ -192,9 +193,32 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) {
-      return;
+    input.value = '';
+    if (file) {
+      this.importFile(file);
     }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragActive = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.dragActive = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragActive = false;
+    const file = event.dataTransfer?.files?.[0];
+    if (file && !this.importing) {
+      this.importFile(file);
+    }
+  }
+
+  private importFile(file: File): void {
     this.importing = true;
     this.importError = '';
     this.invoiceService.importInvoiceFile(file).subscribe({
@@ -202,14 +226,12 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
         this.importing = false;
         this.importResult = result;
         this.applyImportedDraft(result.draft);
-        input.value = '';
         this.notificationService.info(
           `${result.fields.length} campos detectados en ${result.fileName}. Revisa la propuesta antes de registrar.`
         );
       },
       error: error => {
         this.importing = false;
-        input.value = '';
         this.importError =
           error?.error?.message ?? 'No se ha podido leer el fichero. Admitimos PDF, Word y Excel.';
       }

@@ -22,12 +22,17 @@
         </p>
       </div>
       <div class="import-actions">
-        <input #importInput type="file" class="d-none" [accept]="acceptedImportTypes"
-               (change)="onFileSelected($event)">
-        <button type="button" class="btn btn-primary" [disabled]="importing" (click)="importInput.click()">
+        <label class="btn btn-primary mb-0" [class.disabled]="importing" for="invoiceImportInput">
           {{ importing ? 'Leyendo fichero...' : 'Importar desde fichero' }}
-        </button>
+        </label>
+        <input id="invoiceImportInput" type="file" class="import-input" [accept]="acceptedImportTypes"
+               [disabled]="importing" (change)="onFileSelected($event)">
       </div>
+    </div>
+
+    <div class="import-dropzone mt-3" [class.is-active]="dragActive"
+         (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+      Arrastra aqui el fichero de la factura, o usa el boton para buscarlo (PDF, Word, Excel; maximo 10 MB).
     </div>
 
     <div class="alert alert-danger mt-3 mb-0" *ngIf="importError">{{ importError }}</div>
