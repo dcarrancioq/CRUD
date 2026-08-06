@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { DataSource, DeepPartial } from 'typeorm';
 import { AppModule } from './app.module';
-import { companies, costCenters, orgUnits } from './organization-data';
+import { companies, costCenters, orgUnits, resolveCostCenter } from './organization-data';
 import { Company } from './modules/master-data/entities/company.entity';
 import { CostCenter } from './modules/master-data/entities/cost-center.entity';
 import { DimensionBudget } from './modules/master-data/entities/dimension-budget.entity';
@@ -340,6 +340,9 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     currency: 'EUR',
     issuedAt: new Date('2026-06-01'),
     costCenter: 'CC-ES01-IT-INFRA',
+    companyId: resolveCostCenter('ES01', 'IT-INFRA').companyId,
+    orgUnitId: resolveCostCenter('ES01', 'IT-INFRA').orgUnitId,
+    categoryCode: 'IT-CLOUD',
     approvedAmount: 40000,
     status: 'partially_received',
     lines: [
@@ -379,6 +382,9 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     currency: 'EUR',
     issuedAt: new Date('2026-06-20'),
     costCenter: 'CC-ES01-IT-APPS',
+    companyId: resolveCostCenter('ES01', 'IT-APPS').companyId,
+    orgUnitId: resolveCostCenter('ES01', 'IT-APPS').orgUnitId,
+    categoryCode: 'IT-SAAS',
     approvedAmount: 27000,
     status: 'open',
     lines: [
@@ -405,6 +411,9 @@ const purchaseOrders: DeepPartial<PurchaseOrder>[] = [
     currency: 'EUR',
     issuedAt: new Date('2026-07-01'),
     costCenter: 'CC-ES01-IT-APPS',
+    companyId: resolveCostCenter('ES01', 'IT-APPS').companyId,
+    orgUnitId: resolveCostCenter('ES01', 'IT-APPS').orgUnitId,
+    categoryCode: 'IT-SERVICES',
     approvedAmount: 52000,
     status: 'open',
     lines: [
