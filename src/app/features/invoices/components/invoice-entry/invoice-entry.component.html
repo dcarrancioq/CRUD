@@ -52,6 +52,17 @@
       </p>
 
       <div class="alert alert-warning py-2 mb-2" *ngFor="let warning of importResult.warnings">{{ warning }}</div>
+
+      <div class="alert alert-warning unknown-supplier mb-2" *ngIf="unknownSupplierCandidate as candidate">
+        <div>
+          <strong>{{ candidate.legalName || 'El emisor del documento' }}</strong>
+          <span *ngIf="candidate.taxId"> ({{ candidate.taxId }})</span>
+          no esta en el maestro de proveedores. Quieres darlo de alta ahora?
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" (click)="openSupplierRegistration()">
+          Dar de alta proveedor
+        </button>
+      </div>
       <div class="alert alert-info py-2 mb-2" *ngIf="importResult.missingFields.length">
         No se han encontrado en el documento: {{ importResult.missingFields.join(', ') }}. Completalos a mano.
       </div>
@@ -82,6 +93,19 @@
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="supplier-backdrop" *ngIf="supplierRegistrationOpen" (click)="closeSupplierRegistration()"></div>
+  <div class="supplier-dialog" *ngIf="supplierRegistrationOpen" role="dialog" aria-modal="true">
+    <div class="supplier-dialog-head">
+      <h5 class="mb-0">Alta de proveedor</h5>
+      <button type="button" class="close-dialog" aria-label="Cerrar" (click)="closeSupplierRegistration()">&times;</button>
+    </div>
+    <div class="supplier-dialog-body">
+      <app-supplier-entry [candidate]="supplierCandidate" [embedded]="true"
+                          (saved)="onSupplierRegistered($event)"
+                          (cancelled)="closeSupplierRegistration()"></app-supplier-entry>
     </div>
   </div>
 

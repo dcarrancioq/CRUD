@@ -5,6 +5,7 @@ import {
   ExtractedFieldInfo,
   ImportedInvoiceDraft,
   ImportedInvoiceLine,
+  ImportedSupplierCandidate,
   ImportedSupplierMatch,
   InvoiceImportResult,
 } from '../invoice-import.types';
@@ -230,6 +231,10 @@ export class InvoiceExtractionService {
       warnings.push('No se ha identificado el proveedor en el maestro: seleccionalo manualmente.');
     }
 
+    const supplierCandidate = supplierMatch
+      ? undefined
+      : this.supplierCandidate(flatLines, document.text, draft);
+
     this.crossCheck(draft, warnings);
 
     const missingFields = REQUIRED_FIELDS.filter(({ field }) => draft[field] === undefined).map(
@@ -245,6 +250,7 @@ export class InvoiceExtractionService {
       draft,
       fields,
       supplierMatch,
+      supplierCandidate,
       warnings,
       missingFields,
       textPreview: lines.slice(0, 40).join('\n'),
@@ -327,6 +333,30 @@ export class InvoiceExtractionService {
       return this.toMatch(byName.supplier, 'name', 0.85);
     }
     return undefined;
+  }
+
+  /** Datos del emisor para prerellenar el alta cuando no esta en el maestro. */
+  private supplierCandidate(
+    flatLines: string[],
+    text: string,
+    draft: ImportedInvoiceDraft,
+  ): ImportedSupplierCandidate | undefined {
+    const taxId = this.taxIdFrom(flatLines, text);
+    const name = this.label(flatLines, LABELS.supplierName);
+    const legalName = name && name.value.length > 2 ? this.cleanName(name.value) : undefined;
+    if (!taxId && !legalName) {
+      return undefined;
+    }
+    const email = this.flatten(text).match(/[\w.+-]+@[\w-]+\.[\w.-]{2,}/);
+    return {
+      taxId: taxId ? this.compactTaxId(taxId) : undefined,
+      legalName,
+      country: draft.bankAccountIban?.slice(0, 2) ?? 'ES',
+      contactEmail: email?.[0],
+      iban: draft.bankAccountIban,
+      holderName: draft.bankAccountHolder ?? legalName,
+      paymentTermsDays: draft.paymentTermsDays,
+    };
   }
 
   private nameScore(haystack: string, legalName: string): number {

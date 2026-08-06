@@ -1,0 +1,149 @@
+<div class="supplier-entry" [class.is-embedded]="embedded">
+  <div class="page-header" *ngIf="!embedded">
+    <div>
+      <h1>Alta de proveedor</h1>
+      <p class="text-muted mb-0">
+        Registra el proveedor en el maestro para poder facturarle. La cuenta de cobro nace pendiente de
+        verificacion: el control antifraude la seguira exigiendo antes de liberar un pago.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/invoices/new">Volver al alta de factura</a>
+    </div>
+  </div>
+
+  <p class="text-muted prefill-note" *ngIf="embedded && candidate">
+    Datos leidos del fichero importado. Revisalos y completa lo que falte antes de dar de alta al proveedor.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-card">
+      <h5>Identificacion</h5>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">NIF / CIF *</label>
+          <input type="text" class="form-control" formControlName="taxId"
+                 [class.is-invalid]="isFieldInvalid('taxId')" placeholder="B00000000">
+          <div class="invalid-feedback">Indica el identificador fiscal del proveedor</div>
+        </div>
+        <div class="col-md-8 mb-3">
+          <label class="form-label">Razon social *</label>
+          <input type="text" class="form-control" formControlName="legalName"
+                 [class.is-invalid]="isFieldInvalid('legalName')" placeholder="Nexora Software Labs, S.L.">
+          <div class="invalid-feedback">La razon social es obligatoria</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Nombre comercial</label>
+          <input type="text" class="form-control" formControlName="tradeName" placeholder="Nexora">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Pais *</label>
+          <app-searchable-select formControlName="country" [options]="countryOptions"
+                                 placeholder="Selecciona pais"
+                                 searchPlaceholder="Busca pais..."></app-searchable-select>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Estado *</label>
+          <app-searchable-select formControlName="status" [options]="statusOptions"
+                                 placeholder="Selecciona estado"
+                                 searchPlaceholder="Busca estado..."></app-searchable-select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Email de contacto</label>
+          <input type="email" class="form-control" formControlName="contactEmail"
+                 [class.is-invalid]="isFieldInvalid('contactEmail')" placeholder="facturacion@proveedor.com">
+          <div class="invalid-feedback">Introduce un email valido</div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Categoria de gasto habitual</label>
+          <app-searchable-select formControlName="defaultCategoryCode" [options]="categoryOptions"
+                                 placeholder="Sin categoria por defecto" emptyLabel="Sin categoria por defecto"
+                                 searchPlaceholder="Busca categoria..."></app-searchable-select>
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Plazo de pago (dias) *</label>
+          <input type="number" class="form-control" formControlName="paymentTermsDays" min="0" max="365">
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Riesgo de maestro</label>
+          <input type="number" class="form-control" formControlName="riskScore" min="0" max="100">
+          <small class="form-text text-muted">0-100, lo aporta compliance</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h5>Cuenta de cobro</h5>
+      <p class="text-muted">
+        Opcional en el alta. Se registra como <strong>pendiente de verificacion</strong> y quedara trazada en el
+        historico de cuentas del proveedor.
+      </p>
+      <div class="row">
+        <div class="col-md-5 mb-3">
+          <label class="form-label">IBAN</label>
+          <input type="text" class="form-control" formControlName="iban" placeholder="ES91 2100 0418 4502 0005 1332">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">BIC / SWIFT</label>
+          <input type="text" class="form-control" formControlName="bic" placeholder="CAIXESBBXXX">
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Titular de la cuenta</label>
+          <input type="text" class="form-control" formControlName="holderName" placeholder="Razon social del proveedor">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-5 mb-3">
+          <label class="form-label">Verificacion realizada</label>
+          <app-searchable-select formControlName="verificationChannel" [options]="verificationOptions"
+                                 placeholder="Sin verificar"
+                                 searchPlaceholder="Busca canal..."></app-searchable-select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h5>Presupuesto anual</h5>
+      <p class="text-muted">
+        Opcional. Si lo informas, el informe de proveedor podra comparar consumido vs budget desde la primera factura.
+      </p>
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Ejercicio</label>
+          <input type="number" class="form-control" formControlName="fiscalYear" min="2000" max="2100">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label class="form-label">Importe del budget</label>
+          <input type="number" class="form-control" formControlName="budgetAmount" min="0" step="0.01" placeholder="120000">
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Divisa</label>
+          <input type="text" class="form-control" formControlName="budgetCurrency" maxlength="3">
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Alerta al %</label>
+          <input type="number" class="form-control" formControlName="alertThresholdPercent" min="1" max="100">
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Responsable</label>
+          <input type="email" class="form-control" formControlName="ownerEmail"
+                 [class.is-invalid]="isFieldInvalid('ownerEmail')" placeholder="compras@empresa.com">
+          <div class="invalid-feedback">Introduce un email valido</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="saving">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving">
+        {{ saving ? 'Dando de alta...' : 'Dar de alta proveedor' }}
+      </button>
+    </div>
+  </form>
+</div>

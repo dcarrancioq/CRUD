@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, map, shareReplay } from 'rxjs';
+import { Observable, forkJoin, map, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   Contract,
@@ -9,6 +9,7 @@ import {
   Supplier,
   ToleranceProfile
 } from '../models/invoice.model';
+import { CreateSupplierRequest } from '../models/supplier-registration.model';
 
 export interface ProcurementMasterData {
   categories: SpendCategory[];
@@ -43,6 +44,16 @@ export class ProcurementMasterDataService {
       }).pipe(shareReplay(1));
     }
     return this.masterData$;
+  }
+
+  /**
+   * Da de alta un proveedor y refresca la cache para que aparezca de inmediato
+   * en los desplegables de la aplicacion.
+   */
+  createSupplier(payload: CreateSupplierRequest): Observable<Supplier> {
+    return this.http
+      .post<Supplier>(`${this.baseUrl}/suppliers`, payload)
+      .pipe(tap(() => (this.masterData$ = undefined)));
   }
 
   getSuppliers(): Observable<Supplier[]> {

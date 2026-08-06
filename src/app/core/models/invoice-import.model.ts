@@ -45,12 +45,23 @@ export interface ImportedSupplierMatch {
   confidence: number;
 }
 
+export interface ImportedSupplierCandidate {
+  taxId?: string;
+  legalName?: string;
+  country?: string;
+  contactEmail?: string;
+  iban?: string;
+  holderName?: string;
+  paymentTermsDays?: number;
+}
+
 export interface InvoiceImportResult {
   fileName: string;
   format: ImportedFileFormat;
   draft: ImportedInvoiceDraft;
   fields: ExtractedFieldInfo[];
   supplierMatch?: ImportedSupplierMatch;
+  supplierCandidate?: ImportedSupplierCandidate;
   warnings: string[];
   missingFields: string[];
   textPreview: string;

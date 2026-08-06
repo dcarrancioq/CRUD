@@ -72,6 +72,7 @@ cd .. && npm start -- --port 8081
 | Consolidacion | `GET /api/invoices/consolidation-opportunities` |
 | Investigacion con Devin de una excepcion | `POST /api/invoices/:invoiceId/exceptions/:exceptionId/devin-session` |
 | Maestros | `GET /api/master-data/{categories,suppliers,contracts,purchase-orders,tolerance-profile}` |
+| Alta de proveedor | `POST /api/master-data/suppliers` (con cuenta de cobro y presupuesto opcionales) |
 | Presupuestos de proveedor | `GET /api/master-data/budgets`, `GET /api/master-data/budget-years`, `GET /api/master-data/suppliers/:id/budgets` |
 | Informe por proveedor y ejercicio | `GET /api/reports/suppliers/:supplierId?year=`, `GET /api/reports/years` |
 | Proxy Devin | `GET/POST /api/integrations/devin/...` |
@@ -208,6 +209,10 @@ condiciones.
   tabla de lineas), con identificacion del proveedor en el maestro por NIF, IBAN o razon social. La pantalla
   muestra cada campo detectado con su fiabilidad y el texto de origen, ademas de avisos de descuadre y de
   campos no encontrados; **la factura no se registra hasta que una persona valida la propuesta**.
+- **Emisor desconocido**: si el NIF del documento no esta en el maestro, no se propone proveedor (una coincidencia
+  parcial por nombre asignaria al proveedor equivocado) y la pantalla pregunta si se quiere dar de alta. Al
+  confirmar se abre el alta de proveedor (2.4) prerellenada con los datos leidos del fichero y, tras guardarla,
+  el proveedor queda seleccionado en la factura que se estaba dando de alta.
 - Al seleccionar proveedor se precargan condiciones de pago y su cuenta principal, y se muestran todas sus
   cuentas registradas con su estado (control visual de cambio de IBAN).
 - Panel lateral en vivo alimentado por `POST /api/invoices/preview` (evaluacion real, sin persistir): totales calculados, categoria de gasto asignada con confianza y terminos,
@@ -241,7 +246,18 @@ condiciones.
 Todos los desplegables de la aplicacion usan el mismo componente `app-searchable-select`: el usuario escribe
 y la lista se reduce (filtrado local en listas cerradas, busqueda en servidor para el registro de facturas).
 
-### 2.4 Datos sinteticos
+### 2.4 Alta de proveedor (`/invoices/suppliers/new`)
+
+- Identificacion (NIF/CIF, razon social, nombre comercial, pais, estado, categoria habitual, plazo de pago,
+  email de contacto y riesgo de maestro), cuenta de cobro y presupuesto anual del ejercicio.
+- La cuenta de cobro se registra **pendiente de verificacion**: los controles antifraude (`BANK_ACCOUNT_UNKNOWN`,
+  `BANK_ACCOUNT_RECENT_CHANGE`) siguen aplicando sobre las facturas de ese proveedor.
+- El presupuesto es opcional; si se informa, el informe de proveedor compara consumido vs budget desde la
+  primera factura.
+- Se usa como pantalla propia o embebida en un dialogo desde la importacion de facturas; en ese caso, al
+  guardar, el proveedor queda seleccionado en la factura en curso sin perder lo ya importado.
+
+### 2.5 Datos sinteticos
 
 `npm run seed` (en `backend/`) carga el maestro de demostracion y ademas genera un volumen realista
 determinista: 50 proveedores adicionales x 100 facturas (mas de 5.000 facturas), sus pedidos de compra,

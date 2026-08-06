@@ -1,5 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { MasterDataService } from './master-data.service';
 
 @ApiTags('master-data')
@@ -17,6 +18,16 @@ export class MasterDataController {
   @ApiOperation({ summary: 'Proveedores con sus cuentas bancarias y estado de verificacion' })
   suppliers() {
     return this.masterData.findSuppliers();
+  }
+
+  @Post('suppliers')
+  @ApiOperation({
+    summary: 'Da de alta un proveedor en el maestro',
+    description:
+      'Se usa cuando la importacion detecta un emisor desconocido. La cuenta de cobro queda pendiente de verificacion.',
+  })
+  createSupplier(@Body() dto: CreateSupplierDto) {
+    return this.masterData.createSupplier(dto);
   }
 
   @Get('suppliers/:id/bank-account-changes')

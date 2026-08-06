@@ -11,7 +11,11 @@ import {
   SupplierBankAccount,
   ToleranceProfile
 } from '../../../../core/models/invoice.model';
-import { ImportedInvoiceDraft, InvoiceImportResult } from '../../../../core/models/invoice-import.model';
+import {
+  ImportedInvoiceDraft,
+  ImportedSupplierCandidate,
+  InvoiceImportResult
+} from '../../../../core/models/invoice-import.model';
 import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { DevinApiService, DevinSessionRequest } from '../../../../core/services/devin-api.service';
 import { InvoiceService } from '../../../../core/services/invoice.service';
@@ -35,6 +39,8 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   dragActive = false;
   importResult?: InvoiceImportResult;
   importError = '';
+  supplierRegistrationOpen = false;
+  supplierCandidate?: ImportedSupplierCandidate;
 
   readonly acceptedImportTypes = '.pdf,.doc,.docx,.xls,.xlsx,.csv';
 
@@ -241,6 +247,44 @@ export class InvoiceEntryComponent implements OnInit, OnDestroy {
   dismissImport(): void {
     this.importResult = undefined;
     this.importError = '';
+  }
+
+  /** El emisor del fichero no esta en el maestro: se ofrece darlo de alta. */
+  get unknownSupplierCandidate(): ImportedSupplierCandidate | undefined {
+    return this.importResult && !this.importResult.supplierMatch
+      ? this.importResult.supplierCandidate
+      : undefined;
+  }
+
+  openSupplierRegistration(): void {
+    this.supplierCandidate = this.unknownSupplierCandidate ?? {};
+    this.supplierRegistrationOpen = true;
+  }
+
+  closeSupplierRegistration(): void {
+    this.supplierRegistrationOpen = false;
+  }
+
+  /** Tras el alta, el proveedor queda seleccionado en la factura que se estaba dando de alta. */
+  onSupplierRegistered(supplier: Supplier): void {
+    this.supplierRegistrationOpen = false;
+    this.suppliers = [...this.suppliers, supplier].sort((a, b) => a.legalName.localeCompare(b.legalName));
+    this.form.get('supplierId')?.setValue(supplier.id);
+    this.onSupplierChange();
+    if (this.importResult) {
+      this.importResult = {
+        ...this.importResult,
+        supplierMatch: {
+          supplierId: supplier.id,
+          legalName: supplier.legalName,
+          taxId: supplier.taxId,
+          matchedBy: 'taxId',
+          confidence: 1
+        },
+        supplierCandidate: undefined,
+        warnings: this.importResult.warnings.filter(warning => !warning.includes('proveedor'))
+      };
+    }
   }
 
   confidenceLabel(confidence: number): string {

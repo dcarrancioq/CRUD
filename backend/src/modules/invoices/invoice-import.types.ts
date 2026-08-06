@@ -46,12 +46,27 @@ export interface ImportedSupplierMatch {
   confidence: number;
 }
 
+/**
+ * Datos del emisor leidos del documento cuando no esta en el maestro: sirven
+ * para prerellenar el alta de proveedor que se ofrece al operador.
+ */
+export interface ImportedSupplierCandidate {
+  taxId?: string;
+  legalName?: string;
+  country?: string;
+  contactEmail?: string;
+  iban?: string;
+  holderName?: string;
+  paymentTermsDays?: number;
+}
+
 export interface InvoiceImportResult {
   fileName: string;
   format: ImportedFileFormat;
   draft: ImportedInvoiceDraft;
   fields: ExtractedFieldInfo[];
   supplierMatch?: ImportedSupplierMatch;
+  supplierCandidate?: ImportedSupplierCandidate;
   warnings: string[];
   missingFields: string[];
   textPreview: string;
