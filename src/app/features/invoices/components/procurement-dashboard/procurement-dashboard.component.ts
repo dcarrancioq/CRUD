@@ -4,9 +4,11 @@ import {
   AnalyticsDimensionRow,
   AnalyticsPeriod,
   AnalyticsPeriodBucket,
+  AnalyticsSupplierRow,
   AnalyticsSupplierTrend,
   ProcurementAnalyticsReport
 } from '../../../../core/models/procurement-analytics.model';
+import { SortValue, TableSortState } from '../../../../shared/utils/table-sort';
 import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { ProcurementMasterDataService } from '../../../../core/services/procurement-master-data.service';
 import { SupplierReportService } from '../../../../core/services/supplier-report.service';
@@ -19,6 +21,30 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 type DimensionView = 'company' | 'orgUnit' | 'category';
+
+type DimensionSortField =
+  | 'name'
+  | 'assignedAmount'
+  | 'consumedAmount'
+  | 'committedAmount'
+  | 'availableAmount'
+  | 'executionPercent'
+  | 'deviationAmount'
+  | 'yoyVariationPercent'
+  | 'invoiceCount'
+  | 'supplierCount';
+
+type SupplierSortField =
+  | 'legalName'
+  | 'awardedAmount'
+  | 'consumedAmount'
+  | 'orderCount'
+  | 'contractCount'
+  | 'onTimeDeliveryPercent'
+  | 'incidents'
+  | 'avgRiskScore'
+  | 'yoyVariationPercent'
+  | 'sharePercent';
 
 /** Serie de un proveedor lista para pintar como polilinea SVG. */
 interface TrendSeries {
@@ -61,6 +87,24 @@ export class ProcurementDashboardComponent implements OnInit {
     { value: 'quarter', label: 'Trimestral' },
     { value: 'year', label: 'Anual' }
   ];
+
+  readonly dimensionSort = new TableSortState<DimensionSortField>('consumedAmount', 'desc');
+  readonly supplierSort = new TableSortState<SupplierSortField>('consumedAmount', 'desc');
+
+  readonly dimensionSortOptions: SearchableOption[] = [
+    { value: 'name', label: 'Nombre' },
+    { value: 'assignedAmount', label: 'Presupuesto' },
+    { value: 'consumedAmount', label: 'Consumo' },
+    { value: 'committedAmount', label: 'Compromisos' },
+    { value: 'availableAmount', label: 'Disponible' },
+    { value: 'executionPercent', label: '% ejecucion' },
+    { value: 'deviationAmount', label: 'Desviacion' },
+    { value: 'yoyVariationPercent', label: 'Variacion interanual' },
+    { value: 'invoiceCount', label: 'Facturas' },
+    { value: 'supplierCount', label: 'Proveedores' }
+  ];
+
+  supplierSearch = '';
 
   private companies: Company[] = [];
   private orgUnits: OrgUnit[] = [];
@@ -134,10 +178,92 @@ export class ProcurementDashboardComponent implements OnInit {
     if (!this.report) {
       return [];
     }
-    if (this.dimensionView === 'company') {
-      return this.report.byCompany;
+    const rows =
+      this.dimensionView === 'company'
+        ? this.report.byCompany
+        : this.dimensionView === 'orgUnit'
+          ? this.report.byOrgUnit
+          : this.report.byCategory;
+    return this.dimensionSort.sort(rows, (row, field) => this.dimensionValue(row, field));
+  }
+
+  /** Filas de proveedor filtradas por texto y ordenadas por la columna activa. */
+  get supplierRows(): AnalyticsSupplierRow[] {
+    const term = this.supplierSearch.trim().toLowerCase();
+    const rows = (this.report?.suppliers ?? []).filter(
+      row =>
+        !term ||
+        row.legalName.toLowerCase().includes(term) ||
+        row.taxId.toLowerCase().includes(term)
+    );
+    return this.supplierSort.sort(rows, (row, field) => this.supplierValue(row, field));
+  }
+
+  sortDimensionBy(field: string): void {
+    this.dimensionSort.toggle(field as DimensionSortField);
+  }
+
+  /** El desplegable elige columna sin invertir el sentido ya seleccionado. */
+  onDimensionSortFieldChange(field: string): void {
+    this.dimensionSort.field = field as DimensionSortField;
+  }
+
+  toggleDimensionDirection(): void {
+    this.dimensionSort.direction = this.dimensionSort.direction === 'asc' ? 'desc' : 'asc';
+  }
+
+  sortSuppliersBy(field: string): void {
+    this.supplierSort.toggle(field as SupplierSortField);
+  }
+
+  private dimensionValue(row: AnalyticsDimensionRow, field: DimensionSortField): SortValue {
+    switch (field) {
+      case 'name':
+        return row.name;
+      case 'assignedAmount':
+        return row.assignedAmount;
+      case 'consumedAmount':
+        return row.consumedAmount;
+      case 'committedAmount':
+        return row.committedAmount;
+      case 'availableAmount':
+        return row.availableAmount;
+      case 'executionPercent':
+        return row.executionPercent;
+      case 'deviationAmount':
+        return row.deviationAmount;
+      case 'yoyVariationPercent':
+        return row.yoyVariationPercent;
+      case 'invoiceCount':
+        return row.invoiceCount;
+      case 'supplierCount':
+        return row.supplierCount;
     }
-    return this.dimensionView === 'orgUnit' ? this.report.byOrgUnit : this.report.byCategory;
+  }
+
+  private supplierValue(row: AnalyticsSupplierRow, field: SupplierSortField): SortValue {
+    switch (field) {
+      case 'legalName':
+        return row.legalName;
+      case 'awardedAmount':
+        return row.awardedAmount;
+      case 'consumedAmount':
+        return row.consumedAmount;
+      case 'orderCount':
+        return row.orderCount;
+      case 'contractCount':
+        return row.contractCount;
+      case 'onTimeDeliveryPercent':
+        return row.onTimeDeliveryPercent;
+      case 'incidents':
+        return row.incidents;
+      case 'avgRiskScore':
+        return row.avgRiskScore;
+      case 'yoyVariationPercent':
+        return row.yoyVariationPercent;
+      case 'sharePercent':
+        return row.sharePercent;
+    }
   }
 
   get dimensionTitle(): string {

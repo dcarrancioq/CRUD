@@ -185,16 +185,27 @@
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th>Mes</th>
-              <th class="text-right">Facturas</th>
-              <th class="text-right">Gasto</th>
-              <th class="text-right">Acumulado</th>
-              <th class="text-right">Presupuesto acumulado</th>
-              <th class="text-right">Desviacion</th>
+              <th><app-sort-header field="month" [activeField]="monthSort.field" [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Mes</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="invoiceCount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Facturas</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="amount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Gasto</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="cumulativeAmount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Acumulado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="budgetCumulativeAmount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Presupuesto acumulado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="deviationPercent" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Desviacion</app-sort-header></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let month of report.monthly">
+            <tr *ngFor="let month of monthlyRows">
               <td>{{ month.label }}</td>
               <td class="text-right">{{ month.invoiceCount }}</td>
               <td class="text-right">{{ month.amount | number:'1.2-2' }}</td>
@@ -215,14 +226,22 @@
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th>Indicador</th>
-              <th class="text-right">Valor</th>
-              <th class="text-right">Referencia</th>
-              <th class="text-right">Desviacion</th>
+              <th><app-sort-header field="label" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Indicador</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="value" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Valor</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="reference" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Referencia</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="deviationPercent" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Desviacion</app-sort-header></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let deviation of report.deviations">
+            <tr *ngFor="let deviation of deviationRows">
               <td>
                 {{ deviation.label }}
                 <span class="d-block text-muted small">{{ deviation.comment }}</span>
@@ -242,14 +261,22 @@
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th>Categoria</th>
-              <th class="text-right">Facturas</th>
-              <th class="text-right">Gasto</th>
-              <th class="text-right">Peso</th>
+              <th><app-sort-header field="categoryName" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Categoria</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="invoiceCount" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Facturas</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="amount" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Gasto</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="sharePercent" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Peso</app-sort-header></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let category of report.categories">
+            <tr *ngFor="let category of categoryRows">
               <td>{{ category.categoryName }}</td>
               <td class="text-right">{{ category.invoiceCount }}</td>
               <td class="text-right">{{ category.amount | number:'1.2-2' }}</td>
@@ -261,22 +288,40 @@
     </div>
 
     <div class="detail-card">
-      <h5>Ultimas facturas del ejercicio</h5>
+      <div class="card-header-row">
+        <h5 class="mb-0">Ultimas facturas del ejercicio</h5>
+        <input type="text" class="form-control form-control-sm invoice-filter"
+               placeholder="Filtrar numero, categoria o estado..." [(ngModel)]="invoiceSearch">
+      </div>
       <div class="table-responsive">
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th>Factura</th>
-              <th>Fecha</th>
-              <th>Categoria</th>
-              <th class="text-right">Total</th>
-              <th>Estado</th>
-              <th class="text-right">Riesgo</th>
-              <th class="text-right">Excepciones</th>
+              <th><app-sort-header field="invoiceNumber" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Factura</app-sort-header></th>
+              <th><app-sort-header field="issueDate" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Fecha</app-sort-header></th>
+              <th><app-sort-header field="categoryName" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Categoria</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="totalAmount" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Total</app-sort-header></th>
+              <th><app-sort-header field="status" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Estado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="riskScore" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Riesgo</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="openExceptions" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Excepciones</app-sort-header></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let invoice of report.invoices">
+            <tr *ngFor="let invoice of invoiceRows">
               <td>{{ invoice.invoiceNumber }}</td>
               <td>{{ invoice.issueDate }}</td>
               <td>{{ invoice.categoryName }}</td>

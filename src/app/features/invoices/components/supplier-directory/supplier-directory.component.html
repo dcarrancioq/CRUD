@@ -14,12 +14,51 @@
   </div>
 
   <div class="selector-card">
-    <label class="form-label">Buscar proveedor</label>
-    <input type="text" class="form-control" placeholder="Nombre, NIF o categoria..."
-           [(ngModel)]="search" (ngModelChange)="onSearchChange()">
-    <small class="text-muted">
-      {{ loading ? 'Buscando...' : (suppliers.length + ' proveedor(es) encontrados') }}
-    </small>
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Buscar proveedor</label>
+        <input type="text" class="form-control" placeholder="Nombre, NIF o categoria..."
+               [(ngModel)]="search" (ngModelChange)="onSearchChange()">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Sociedad</label>
+        <app-searchable-select [options]="companyOptions"
+                               emptyLabel="Todas las sociedades"
+                               placeholder="Todas las sociedades"
+                               searchPlaceholder="Busca sociedad..."
+                               [(ngModel)]="companyFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Area</label>
+        <app-searchable-select [options]="orgUnitOptions"
+                               emptyLabel="Todas las areas"
+                               placeholder="Todas las areas"
+                               searchPlaceholder="Busca area..."
+                               [(ngModel)]="orgUnitFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Categoria</label>
+        <app-searchable-select [options]="categoryOptions"
+                               emptyLabel="Todas las categorias"
+                               placeholder="Todas las categorias"
+                               searchPlaceholder="Busca categoria..."
+                               [(ngModel)]="categoryFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Cobro</label>
+        <app-searchable-select [options]="bankStatusOptions"
+                               emptyLabel="Cualquier estado"
+                               placeholder="Cualquier estado"
+                               searchPlaceholder="Busca estado..."
+                               [(ngModel)]="bankStatusFilter"></app-searchable-select>
+      </div>
+    </div>
+    <div class="d-flex align-items-center">
+      <small class="text-muted mr-3">
+        {{ loading ? 'Buscando...' : (visibleSuppliers.length + ' proveedor(es) encontrados') }}
+      </small>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
     <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
   </div>
 
@@ -27,18 +66,39 @@
     <table class="table table-hover directory-table">
       <thead>
         <tr>
-          <th>Proveedor</th>
-          <th>Sociedades</th>
-          <th>Areas</th>
-          <th class="text-right">Contratos</th>
-          <th class="text-right">Consumo</th>
-          <th class="text-right">Facturas</th>
-          <th>Cobro</th>
+          <th>
+            <app-sort-header field="legalName" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Proveedor</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="companies" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Sociedades</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="orgUnits" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Areas</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="contractCount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Contratos</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="consumedAmount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Consumo</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="invoiceCount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Facturas</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="bankAccountsPendingVerification" [activeField]="sort.field"
+                             [direction]="sort.direction" (sortChange)="sortBy($event)">Cobro</app-sort-header>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <ng-container *ngFor="let supplier of suppliers">
+        <ng-container *ngFor="let supplier of visibleSuppliers">
           <tr>
             <td>
               <strong>{{ supplier.legalName }}</strong>
@@ -103,7 +163,7 @@
             </td>
           </tr>
         </ng-container>
-        <tr *ngIf="!suppliers.length && !loading">
+        <tr *ngIf="!visibleSuppliers.length && !loading">
           <td colspan="8" class="text-center text-muted">No hay proveedores que coincidan con la busqueda.</td>
         </tr>
       </tbody>

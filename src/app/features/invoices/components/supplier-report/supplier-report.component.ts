@@ -1,9 +1,37 @@
 import { Component, OnInit } from '@angular/core';
 import { Company, OrgUnit, Supplier } from '../../../../core/models/invoice.model';
-import { SupplierReport, SupplierReportMonth } from '../../../../core/models/supplier-report.model';
+import {
+  SupplierReport,
+  SupplierReportCategory,
+  SupplierReportDeviation,
+  SupplierReportInvoice,
+  SupplierReportMonth
+} from '../../../../core/models/supplier-report.model';
+import { SortValue, TableSortState } from '../../../../shared/utils/table-sort';
 import { SearchableOption } from '../../../../shared/components/searchable-select/searchable-select.component';
 import { ProcurementMasterDataService } from '../../../../core/services/procurement-master-data.service';
 import { SupplierReportService } from '../../../../core/services/supplier-report.service';
+
+type MonthSortField =
+  | 'month'
+  | 'invoiceCount'
+  | 'amount'
+  | 'cumulativeAmount'
+  | 'budgetCumulativeAmount'
+  | 'deviationPercent';
+
+type DeviationSortField = 'label' | 'value' | 'reference' | 'deviationPercent';
+
+type CategorySortField = 'categoryName' | 'invoiceCount' | 'amount' | 'sharePercent';
+
+type ReportInvoiceSortField =
+  | 'invoiceNumber'
+  | 'issueDate'
+  | 'categoryName'
+  | 'totalAmount'
+  | 'status'
+  | 'riskScore'
+  | 'openExceptions';
 
 const STATUS_LABELS: Record<string, string> = {
   no_budget: 'Sin presupuesto asignado',
@@ -33,6 +61,12 @@ export class SupplierReportComponent implements OnInit {
   report?: SupplierReport;
   loading = false;
   errorMessage = '';
+
+  readonly monthSort = new TableSortState<MonthSortField>('month', 'asc');
+  readonly deviationSort = new TableSortState<DeviationSortField>('deviationPercent', 'desc');
+  readonly categorySort = new TableSortState<CategorySortField>('amount', 'desc');
+  readonly invoiceSort = new TableSortState<ReportInvoiceSortField>('issueDate', 'desc');
+  invoiceSearch = '';
 
   constructor(
     private masterData: ProcurementMasterDataService,
@@ -112,6 +146,50 @@ export class SupplierReportComponent implements OnInit {
     return Math.round((month.amount / this.maxMonthlyAmount) * 100);
   }
 
+  get monthlyRows(): SupplierReportMonth[] {
+    return this.monthSort.sort(this.report?.monthly ?? [], (row, field) => this.monthValue(row, field));
+  }
+
+  get deviationRows(): SupplierReportDeviation[] {
+    return this.deviationSort.sort(this.report?.deviations ?? [], (row, field) =>
+      this.deviationValue(row, field)
+    );
+  }
+
+  get categoryRows(): SupplierReportCategory[] {
+    return this.categorySort.sort(this.report?.categories ?? [], (row, field) =>
+      this.categoryValue(row, field)
+    );
+  }
+
+  get invoiceRows(): SupplierReportInvoice[] {
+    const term = this.invoiceSearch.trim().toLowerCase();
+    const rows = (this.report?.invoices ?? []).filter(
+      row =>
+        !term ||
+        row.invoiceNumber.toLowerCase().includes(term) ||
+        row.categoryName.toLowerCase().includes(term) ||
+        row.status.toLowerCase().includes(term)
+    );
+    return this.invoiceSort.sort(rows, (row, field) => this.invoiceValue(row, field));
+  }
+
+  sortMonthsBy(field: string): void {
+    this.monthSort.toggle(field as MonthSortField);
+  }
+
+  sortDeviationsBy(field: string): void {
+    this.deviationSort.toggle(field as DeviationSortField);
+  }
+
+  sortCategoriesBy(field: string): void {
+    this.categorySort.toggle(field as CategorySortField);
+  }
+
+  sortInvoicesBy(field: string): void {
+    this.invoiceSort.toggle(field as ReportInvoiceSortField);
+  }
+
   generate(): void {
     if (!this.canGenerate) {
       return;
@@ -136,6 +214,68 @@ export class SupplierReportComponent implements OnInit {
             'No se ha podido generar el informe. Revisa el proveedor y el ejercicio seleccionados.';
         }
       });
+  }
+
+  private monthValue(row: SupplierReportMonth, field: MonthSortField): SortValue {
+    switch (field) {
+      case 'month':
+        return row.month;
+      case 'invoiceCount':
+        return row.invoiceCount;
+      case 'amount':
+        return row.amount;
+      case 'cumulativeAmount':
+        return row.cumulativeAmount;
+      case 'budgetCumulativeAmount':
+        return row.budgetCumulativeAmount;
+      case 'deviationPercent':
+        return row.deviationPercent;
+    }
+  }
+
+  private deviationValue(row: SupplierReportDeviation, field: DeviationSortField): SortValue {
+    switch (field) {
+      case 'label':
+        return row.label;
+      case 'value':
+        return row.value;
+      case 'reference':
+        return row.reference;
+      case 'deviationPercent':
+        return row.deviationPercent;
+    }
+  }
+
+  private categoryValue(row: SupplierReportCategory, field: CategorySortField): SortValue {
+    switch (field) {
+      case 'categoryName':
+        return row.categoryName;
+      case 'invoiceCount':
+        return row.invoiceCount;
+      case 'amount':
+        return row.amount;
+      case 'sharePercent':
+        return row.sharePercent;
+    }
+  }
+
+  private invoiceValue(row: SupplierReportInvoice, field: ReportInvoiceSortField): SortValue {
+    switch (field) {
+      case 'invoiceNumber':
+        return row.invoiceNumber;
+      case 'issueDate':
+        return row.issueDate;
+      case 'categoryName':
+        return row.categoryName;
+      case 'totalAmount':
+        return row.totalAmount;
+      case 'status':
+        return row.status;
+      case 'riskScore':
+        return row.riskScore;
+      case 'openExceptions':
+        return row.openExceptions;
+    }
   }
 
   private toSupplierOption(supplier: Supplier): SearchableOption {

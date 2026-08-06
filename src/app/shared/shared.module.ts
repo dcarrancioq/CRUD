@@ -13,6 +13,7 @@ import { EmptyStateComponent } from './components/empty-state/empty-state.compon
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { SearchableSelectComponent } from './components/searchable-select/searchable-select.component';
+import { SortHeaderComponent } from './components/sort-header/sort-header.component';
 
 import { CurrencyFormatPipe } from './pipes/currency-format.pipe';
 import { TruncatePipe } from './pipes/truncate.pipe';
@@ -30,6 +31,7 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     ConfirmDialogComponent,
     BreadcrumbComponent,
     SearchableSelectComponent,
+    SortHeaderComponent,
     CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe
@@ -55,6 +57,7 @@ import { TimeAgoPipe } from './pipes/time-ago.pipe';
     ConfirmDialogComponent,
     BreadcrumbComponent,
     SearchableSelectComponent,
+    SortHeaderComponent,
     CurrencyFormatPipe,
     TruncatePipe,
     TimeAgoPipe

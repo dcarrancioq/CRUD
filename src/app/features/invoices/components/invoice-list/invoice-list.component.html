@@ -20,23 +20,50 @@
   </div>
 
   <div class="row align-items-end mb-3">
-    <div class="col-md-5 mb-2">
+    <div class="col-md-4 mb-2">
       <label class="form-label">Filtrar por proveedor</label>
       <app-searchable-select [options]="supplierOptions"
                              emptyLabel="Todos los proveedores"
                              placeholder="Todos los proveedores"
                              searchPlaceholder="Busca por nombre, NIF o categoria..."
                              [(ngModel)]="supplierFilter"
-                             (selectionChange)="onSupplierFilterChange()"></app-searchable-select>
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
     </div>
-    <div class="col-md-7 mb-2">
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions">
+    <div class="col-md-3 mb-2">
+      <label class="form-label">Estado</label>
+      <app-searchable-select [options]="statusOptions"
+                             emptyLabel="Todos los estados"
+                             placeholder="Todos los estados"
+                             searchPlaceholder="Busca estado..."
+                             [(ngModel)]="statusFilter"
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-2 mb-2">
+      <label class="form-label">Riesgo</label>
+      <app-searchable-select [options]="riskBandOptions"
+                             emptyLabel="Todos los riesgos"
+                             placeholder="Todos los riesgos"
+                             searchPlaceholder="Busca banda..."
+                             [(ngModel)]="riskBandFilter"
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-3 mb-2">
+      <label class="form-label">Buscar</label>
+      <input type="text" class="form-control" placeholder="Numero, proveedor, NIF o categoria"
+             [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+    </div>
+    <div class="col-12 mb-2 d-flex flex-wrap align-items-center">
+      <div class="form-check mr-3">
+        <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions"
+               (ngModelChange)="onFilterChange()">
         <label class="form-check-label" for="onlyExc">Mostrar solo facturas con excepciones</label>
       </div>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+    <div class="col-12">
       <p class="text-muted small mb-0">
-        La tabla muestra las {{ invoices.length }} facturas mas recientes del filtro aplicado; los indicadores
-        superiores estan calculados sobre el total registrado.
+        La tabla muestra {{ invoices.length }} facturas del filtro y orden aplicados (resueltos en servidor sobre
+        el total); los indicadores superiores estan calculados sobre todo lo registrado.
       </p>
     </div>
   </div>
@@ -45,13 +72,38 @@
     <table class="table table-sm mb-0">
       <thead>
         <tr>
-          <th>Factura</th>
-          <th>Proveedor</th>
-          <th>Categoria</th>
-          <th class="text-right">Total</th>
-          <th>Vencimiento</th>
-          <th>Estado</th>
-          <th>Riesgo</th>
+          <th>
+            <app-sort-header field="invoiceNumber" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Factura</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="supplierName" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Proveedor</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="categoryName" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Categoria</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="totalAmount" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Total</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="issueDate" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Emision</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="dueDate" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Vencimiento</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="status" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Estado</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="riskScore" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Riesgo</app-sort-header>
+          </th>
           <th>Excepciones</th>
         </tr>
       </thead>
@@ -64,6 +116,7 @@
             <div class="small text-muted">{{ invoice.classification.confidence }}% | {{ invoice.classification.glAccount }}</div>
           </td>
           <td class="text-right">{{ invoice.totalAmount | number:'1.2-2' }} {{ invoice.currency }}</td>
+          <td>{{ invoice.issueDate | date:'yyyy-MM-dd' }}</td>
           <td>{{ invoice.dueDate | date:'yyyy-MM-dd' }}</td>
           <td><span class="badge" [ngClass]="'status-' + invoice.status">{{ invoice.status }}</span></td>
           <td><span class="badge" [ngClass]="'risk-' + invoice.riskAssessment.band">{{ invoice.riskAssessment.score }}</span></td>
@@ -83,6 +136,9 @@
               </div>
             </div>
           </td>
+        </tr>
+        <tr *ngIf="!visibleInvoices.length">
+          <td colspan="9" class="text-center text-muted py-3">No hay facturas para el filtro aplicado.</td>
         </tr>
       </tbody>
     </table>

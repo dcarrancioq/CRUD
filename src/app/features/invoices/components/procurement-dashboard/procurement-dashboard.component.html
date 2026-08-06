@@ -198,6 +198,20 @@
         </div>
       </div>
 
+      <div class="sort-bar">
+        <label class="form-label mb-0">Ordenar por</label>
+        <app-searchable-select class="sort-select"
+                               [options]="dimensionSortOptions"
+                               size="sm"
+                               placeholder="Ordenar por"
+                               searchPlaceholder="Busca columna..."
+                               [ngModel]="dimensionSort.field"
+                               (selectionChange)="onDimensionSortFieldChange($event)"></app-searchable-select>
+        <button type="button" class="btn btn-sm btn-outline-primary" (click)="toggleDimensionDirection()">
+          {{ dimensionSort.direction === 'asc' ? 'ASCENDENTE' : 'DESCENDENTE' }}
+        </button>
+      </div>
+
       <div class="dimension-row" *ngFor="let row of dimensionRows">
         <div class="dimension-head">
           <div>
@@ -248,25 +262,49 @@
     </div>
 
     <div class="chart-card">
-      <h5>Indicadores de proveedor</h5>
+      <div class="card-header-row">
+        <h5>Indicadores de proveedor</h5>
+        <input type="text" class="form-control form-control-sm supplier-filter"
+               placeholder="Filtrar proveedor o NIF..." [(ngModel)]="supplierSearch">
+      </div>
       <div class="table-responsive">
         <table class="table table-sm table-hover mb-0">
           <thead>
             <tr>
-              <th>Proveedor</th>
-              <th class="text-right">Adjudicado</th>
-              <th class="text-right">Consumo</th>
-              <th class="text-right">Pedidos</th>
-              <th class="text-right">Contratos</th>
-              <th class="text-right">Plazos</th>
-              <th class="text-right">Incidencias</th>
-              <th class="text-right">Riesgo</th>
-              <th class="text-right">vs ano ant.</th>
-              <th class="text-right">% gasto</th>
+              <th><app-sort-header field="legalName" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Proveedor</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="awardedAmount" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Adjudicado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="consumedAmount" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Consumo</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="orderCount" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Pedidos</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="contractCount" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Contratos</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="onTimeDeliveryPercent" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Plazos</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="incidents" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Incidencias</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="avgRiskScore" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">Riesgo</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="yoyVariationPercent" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">vs ano ant.</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="sharePercent" [activeField]="supplierSort.field"
+                                   [direction]="supplierSort.direction"
+                                   (sortChange)="sortSuppliersBy($event)">% gasto</app-sort-header></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let supplier of report.suppliers">
+            <tr *ngFor="let supplier of supplierRows">
               <td>
                 <strong>{{ supplier.legalName }}</strong>
                 <small class="text-muted d-block">{{ supplier.taxId }}</small>
@@ -289,6 +327,9 @@
                     : 'sin base' }}
               </td>
               <td class="text-right">{{ supplier.sharePercent | number:'1.1-1' }}%</td>
+            </tr>
+            <tr *ngIf="!supplierRows.length">
+              <td colspan="10" class="text-center text-muted">Ningun proveedor coincide con el filtro.</td>
             </tr>
           </tbody>
         </table>

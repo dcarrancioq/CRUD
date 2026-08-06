@@ -19,7 +19,11 @@ import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { ResolveExceptionDto } from './dto/resolve-exception.dto';
 import { toInvoiceResponse } from './invoice.mapper';
 import { InvoiceExtractionService } from './services/invoice-extraction.service';
-import { InvoicesService } from './services/invoices.service';
+import {
+  INVOICE_SORT_FIELDS,
+  InvoiceSortField,
+  InvoicesService,
+} from './services/invoices.service';
 
 const MAX_IMPORT_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -36,12 +40,38 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Listado de facturas con clasificacion, riesgo y excepciones' })
   @ApiQuery({ name: 'supplierId', required: false })
   @ApiQuery({ name: 'limit', required: false, description: 'Tamano de ventana (200 por defecto)' })
-  async findAll(@Query('supplierId') supplierId?: string, @Query('limit') limit?: string) {
+  @ApiQuery({ name: 'search', required: false, description: 'Numero, proveedor, NIF o categoria' })
+  @ApiQuery({ name: 'status', required: false })
+  @ApiQuery({ name: 'riskBand', required: false })
+  @ApiQuery({ name: 'onlyExceptions', required: false })
+  @ApiQuery({ name: 'sort', required: false, enum: INVOICE_SORT_FIELDS })
+  @ApiQuery({ name: 'direction', required: false, enum: ['asc', 'desc'] })
+  async findAll(
+    @Query('supplierId') supplierId?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('riskBand') riskBand?: string,
+    @Query('onlyExceptions') onlyExceptions?: string,
+    @Query('sort') sort?: string,
+    @Query('direction') direction?: string,
+  ) {
     const invoices = await this.invoices.findAll({
       supplierId: supplierId || undefined,
       limit: limit ? Number(limit) : undefined,
+      search: search || undefined,
+      status: status || undefined,
+      riskBand: riskBand || undefined,
+      onlyExceptions: onlyExceptions === 'true',
+      sort: this.parseSort(sort),
+      direction: direction === 'asc' ? 'asc' : 'desc',
     });
     return invoices.map(toInvoiceResponse);
+  }
+
+  /** Solo se admiten columnas conocidas: el nombre llega a la clausula ORDER BY. */
+  private parseSort(sort?: string): InvoiceSortField | undefined {
+    return INVOICE_SORT_FIELDS.find((field) => field === sort);
   }
 
   @Get('summary')

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AllocationTarget, MasterDataService } from '../../master-data/master-data.service';
 import { CreateInvoiceAllocationDto } from '../dto/create-invoice-allocation.dto';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
@@ -22,9 +22,30 @@ const ALLOCATION_TOLERANCE = 0.02;
 const DEFAULT_PAGE_SIZE = 200;
 const MAX_PAGE_SIZE = 1000;
 
+/** Columnas de la bandeja por las que tiene sentido ordenar. */
+export const INVOICE_SORT_FIELDS = [
+  'invoiceNumber',
+  'supplierName',
+  'categoryName',
+  'totalAmount',
+  'issueDate',
+  'dueDate',
+  'status',
+  'riskScore',
+] as const;
+
+export type InvoiceSortField = (typeof INVOICE_SORT_FIELDS)[number];
+export type SortDirection = 'asc' | 'desc';
+
 export interface InvoiceListFilter {
   supplierId?: string;
   limit?: number;
+  search?: string;
+  status?: string;
+  riskBand?: string;
+  onlyExceptions?: boolean;
+  sort?: InvoiceSortField;
+  direction?: SortDirection;
 }
 
 export interface InvoiceSummary {
@@ -60,13 +81,65 @@ export class InvoicesService {
    * Listado paginado: con volumenes reales (miles de facturas) la bandeja trabaja
    * siempre sobre una ventana acotada y los totales se calculan en base de datos.
    */
-  findAll(filter: InvoiceListFilter = {}): Promise<Invoice[]> {
+  async findAll(filter: InvoiceListFilter = {}): Promise<Invoice[]> {
     const limit = Math.min(filter.limit ?? DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
-    return this.invoices.find({
-      where: filter.supplierId ? { supplierId: filter.supplierId } : {},
-      order: { issueDate: 'DESC', createdAt: 'DESC' },
-      take: limit,
-    });
+    const direction: 'ASC' | 'DESC' = filter.direction === 'asc' ? 'ASC' : 'DESC';
+    const query = this.invoices.createQueryBuilder('invoice').select('invoice.id', 'id').limit(limit);
+
+    if (filter.supplierId) {
+      query.andWhere('invoice.supplier_id = :supplierId', { supplierId: filter.supplierId });
+    }
+    if (filter.status) {
+      query.andWhere('invoice.status = :status', { status: filter.status });
+    }
+    if (filter.riskBand) {
+      query.andWhere('invoice.risk_band = :riskBand', { riskBand: filter.riskBand });
+    }
+    if (filter.search) {
+      query.andWhere(
+        '(invoice.invoice_number ILIKE :search OR invoice.supplier_name ILIKE :search' +
+          ' OR invoice.supplier_tax_id ILIKE :search OR invoice.category_name ILIKE :search)',
+        { search: `%${filter.search}%` },
+      );
+    }
+    if (filter.onlyExceptions) {
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM invoice_exceptions e
+                 WHERE e.invoice_id = invoice.id AND e.status IN ('open', 'in_review'))`,
+      );
+    }
+
+    query.orderBy(`invoice.${this.sortColumn(filter.sort)}`, direction);
+    if (filter.sort !== 'issueDate') {
+      query.addOrderBy('invoice.issue_date', 'DESC');
+    }
+    query.addOrderBy('invoice.created_at', 'DESC');
+
+    // Se resuelve primero la ventana de ids y despues se cargan las relaciones eager:
+    // paginar sobre el join multiplicaria filas por linea, excepcion e imputacion.
+    const rows = await query.getRawMany<{ id: string }>();
+    const ids = rows.map((row) => row.id);
+    if (!ids.length) {
+      return [];
+    }
+    const invoices = await this.invoices.find({ where: { id: In(ids) } });
+    const byId = new Map(invoices.map((invoice) => [invoice.id, invoice]));
+    return ids.map((id) => byId.get(id)).filter((invoice): invoice is Invoice => !!invoice);
+  }
+
+  /** Columna fisica de cada campo ordenable; sin campo valido se ordena por fecha de emision. */
+  private sortColumn(sort?: InvoiceSortField): string {
+    const columns: Record<InvoiceSortField, string> = {
+      invoiceNumber: 'invoice_number',
+      supplierName: 'supplier_name',
+      categoryName: 'category_name',
+      totalAmount: 'total_amount',
+      issueDate: 'issue_date',
+      dueDate: 'due_date',
+      status: 'status',
+      riskScore: 'risk_score',
+    };
+    return sort ? columns[sort] : 'issue_date';
   }
 
   /** Historico del proveedor: base de la deteccion de duplicados y de los outliers. */

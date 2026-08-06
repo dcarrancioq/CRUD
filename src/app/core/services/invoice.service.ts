@@ -10,6 +10,7 @@ import {
   InvoiceException
 } from '../models/invoice.model';
 import { InvoiceImportResult } from '../models/invoice-import.model';
+import { SortDirection } from '../../shared/utils/table-sort';
 
 export interface InvoiceSummary {
   invoiceCount: number;
@@ -27,6 +28,28 @@ export interface InvoiceOption {
   totalAmount: number;
   currency: string;
   issueDate: string;
+}
+
+export type InvoiceSortField =
+  | 'invoiceNumber'
+  | 'supplierName'
+  | 'categoryName'
+  | 'totalAmount'
+  | 'issueDate'
+  | 'dueDate'
+  | 'status'
+  | 'riskScore';
+
+/** Filtro y orden de la bandeja; se resuelven en servidor sobre el total de facturas. */
+export interface InvoiceListQuery {
+  supplierId?: string;
+  limit?: number;
+  search?: string;
+  status?: string;
+  riskBand?: string;
+  onlyExceptions?: boolean;
+  sort?: InvoiceSortField;
+  direction?: SortDirection;
 }
 
 /**
@@ -61,13 +84,28 @@ export class InvoiceService {
   }
 
   /** Carga (o recarga) una ventana del listado y la publica en `invoices$`. */
-  refresh(filter: { supplierId?: string; limit?: number } = {}): Observable<Invoice[]> {
+  refresh(filter: InvoiceListQuery = {}): Observable<Invoice[]> {
     let params = new HttpParams();
     if (filter.supplierId) {
       params = params.set('supplierId', filter.supplierId);
     }
     if (filter.limit) {
       params = params.set('limit', filter.limit);
+    }
+    if (filter.search) {
+      params = params.set('search', filter.search);
+    }
+    if (filter.status) {
+      params = params.set('status', filter.status);
+    }
+    if (filter.riskBand) {
+      params = params.set('riskBand', filter.riskBand);
+    }
+    if (filter.onlyExceptions) {
+      params = params.set('onlyExceptions', 'true');
+    }
+    if (filter.sort) {
+      params = params.set('sort', filter.sort).set('direction', filter.direction ?? 'asc');
     }
     return this.http
       .get<Invoice[]>(this.baseUrl, { params })

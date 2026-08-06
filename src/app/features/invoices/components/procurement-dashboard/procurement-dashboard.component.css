@@ -33,6 +33,22 @@
   margin-bottom: 0.75rem;
 }
 
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.sort-select {
+  min-width: 220px;
+}
+
+.supplier-filter {
+  max-width: 260px;
+}
+
 .report-head {
   display: flex;
   justify-content: space-between;
