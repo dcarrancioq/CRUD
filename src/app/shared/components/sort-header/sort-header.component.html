@@ -1,0 +1,4 @@
+<button type="button" class="sort-header" [class.active]="active" [attr.aria-sort]="ariaSort" (click)="emit()">
+  <span class="sort-label"><ng-content></ng-content></span>
+  <span class="sort-arrow" aria-hidden="true">{{ active ? (direction === 'asc' ? '▲' : '▼') : '⇅' }}</span>
+</button>

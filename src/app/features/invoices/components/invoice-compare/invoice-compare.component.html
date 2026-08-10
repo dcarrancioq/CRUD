@@ -1,0 +1,199 @@
+<div class="invoice-compare">
+  <div class="page-header">
+    <div>
+      <h1>Comparativa de facturas</h1>
+      <p class="text-muted mb-0">
+        Compara dos facturas del registro para resolver excepciones de duplicado, refacturacion y cambios de datos de cobro.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/invoices">Ver facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/new">Nueva factura</a>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="row">
+      <div class="col-md-5 mb-2">
+        <label class="form-label">Factura A</label>
+        <app-searchable-select [options]="invoiceOptions"
+                              placeholder="Selecciona factura"
+                              searchPlaceholder="Busca por numero, proveedor o NIF..."
+                              [(ngModel)]="leftId"
+                              (searchChange)="onInvoiceSearch($event)"
+                              (selectionChange)="compare()"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2 d-flex align-items-end justify-content-center">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="swap()">Intercambiar</button>
+      </div>
+      <div class="col-md-5 mb-2">
+        <label class="form-label">Factura B</label>
+        <app-searchable-select [options]="invoiceOptions"
+                              placeholder="Selecciona factura"
+                              searchPlaceholder="Busca por numero, proveedor o NIF..."
+                              [(ngModel)]="rightId"
+                              (searchChange)="onInvoiceSearch($event)"
+                              (selectionChange)="compare()"></app-searchable-select>
+      </div>
+    </div>
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="checkbox" id="onlyDiff" [(ngModel)]="onlyDifferences">
+      <label class="form-check-label" for="onlyDiff">Mostrar solo diferencias</label>
+    </div>
+  </div>
+
+  <app-empty-state *ngIf="!comparison" title="Selecciona dos facturas distintas"
+                   message="Elige la factura A y la factura B para ver la comparativa campo a campo.">
+  </app-empty-state>
+
+  <ng-container *ngIf="comparison">
+    <div class="verdict" [ngClass]="'verdict-' + comparison.duplicateVerdict">
+      <div class="verdict-score">{{ comparison.duplicateScore }}%</div>
+      <div>
+        <div class="verdict-label">{{ verdictLabel }}</div>
+        <div class="small">
+          Coincidencias: {{ comparison.matchedFields.length }} | Diferencias: {{ comparison.differingFields.length }}
+        </div>
+      </div>
+      <div class="verdict-actions">
+        <button type="button" class="btn btn-dark btn-sm" (click)="investigateWithAi()">
+          Investigar con IA
+        </button>
+      </div>
+    </div>
+
+    <div class="alert alert-warning" *ngIf="fraudSignals.length">
+      <strong>Señales de riesgo de pago:</strong>
+      <ul class="mb-0">
+        <li *ngFor="let signal of fraudSignals">
+          {{ signal.label }}: {{ signal.leftValue }} vs {{ signal.rightValue }}
+        </li>
+      </ul>
+    </div>
+
+    <div class="table-responsive comparison-table">
+      <table class="table table-sm">
+        <thead>
+          <tr>
+            <th>Campo</th>
+            <th>{{ comparison.left.invoiceNumber }}</th>
+            <th>{{ comparison.right.invoiceNumber }}</th>
+            <th class="text-right">Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let field of visibleFields" [class.row-diff]="!field.equal"
+              [class.row-fraud]="!field.equal && field.relevance === 'fraud_signal'">
+            <td>
+              {{ field.label }}
+              <span class="badge evidence-duplicate"
+                    *ngIf="field.relevance === 'duplicate_signal' && field.equal"
+                    title="Coincide en un campo usado para detectar duplicados">
+                coincide
+              </span>
+              <span class="badge evidence-fraud"
+                    *ngIf="field.relevance === 'fraud_signal' && !field.equal"
+                    title="Diferencia en un dato sensible a fraude de cobro">
+                antifraude
+              </span>
+            </td>
+            <td>{{ field.leftValue }}</td>
+            <td>{{ field.rightValue }}</td>
+            <td class="text-right">
+              <span *ngIf="field.equal">=</span>
+              <span *ngIf="!field.equal && field.deltaAbsolute !== undefined">
+                {{ field.deltaAbsolute | number:'1.2-2' }}
+                <span class="text-muted" *ngIf="field.deltaPercent !== undefined">({{ field.deltaPercent }}%)</span>
+              </span>
+              <span *ngIf="!field.equal && field.deltaAbsolute === undefined">distinto</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6" *ngFor="let invoice of [comparison.left, comparison.right]">
+        <div class="detail-card">
+          <h5>{{ invoice.invoiceNumber }}</h5>
+          <p class="small text-muted mb-2">
+            {{ invoice.supplierName }} | {{ invoice.classification.categoryName }} |
+            riesgo {{ invoice.riskAssessment.score }}/100 ({{ invoice.riskAssessment.band }})
+          </p>
+          <table class="table table-sm">
+            <thead>
+              <tr><th>Linea</th><th>Cant.</th><th>Precio</th><th class="text-right">Total</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of invoice.lines">
+                <td>{{ line.description }}</td>
+                <td>{{ line.quantity }}</td>
+                <td>{{ line.unitPrice | number:'1.2-2' }}</td>
+                <td class="text-right">{{ line.lineTotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="invoice.exceptions.length">
+            <h6 class="mt-3">Excepciones</h6>
+            <ul class="small mb-0">
+              <li *ngFor="let exception of invoice.exceptions">
+                <strong>{{ exception.ruleCode }}</strong>: {{ exception.message }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <div class="investigation-backdrop" *ngIf="investigationOpen" (click)="closeInvestigation()"></div>
+  <div class="investigation-dialog" *ngIf="investigationOpen" role="dialog" aria-modal="true">
+    <div class="investigation-head">
+      <h5 class="mb-0">Investigacion asistida por IA</h5>
+      <button type="button" class="close-dialog" aria-label="Cerrar" (click)="closeInvestigation()">&times;</button>
+    </div>
+
+    <div class="investigation-body">
+      <ng-container *ngIf="investigationState === 'launching' || investigationState === 'running'">
+        <p class="mb-2">
+          {{ investigationState === 'launching' ? 'Lanzando la investigacion...' : 'La IA esta revisando las dos facturas. Puedes cerrar esta ventana y volver mas tarde.' }}
+        </p>
+        <p class="small text-muted mb-1">Que esta comprobando:</p>
+        <ul class="investigation-plan">
+          <li *ngFor="let step of investigationPlan">{{ step }}</li>
+        </ul>
+      </ng-container>
+
+      <ng-container *ngIf="investigationState === 'done' && findings">
+        <div class="investigation-verdict">
+          <span class="investigation-verdict-text">{{ findings.verdict }}</span>
+          <span class="badge evidence-duplicate" *ngIf="findings.confidence !== undefined">
+            confianza {{ findings.confidence }}%
+          </span>
+        </div>
+
+        <h6 class="mt-3">Evidencias encontradas</h6>
+        <ul class="investigation-plan" *ngIf="findings.evidence.length">
+          <li *ngFor="let item of findings.evidence">{{ item }}</li>
+        </ul>
+        <p class="small text-muted" *ngIf="!findings.evidence.length">Sin evidencias documentadas.</p>
+
+        <h6>Accion recomendada</h6>
+        <p class="mb-2">{{ findings.recommendedAction }}</p>
+        <p class="small text-muted mb-0" *ngIf="findings.notes">{{ findings.notes }}</p>
+        <p class="small text-muted mt-3 mb-0">
+          La decision final (liberar o bloquear el pago) sigue siendo del aprobador humano.
+        </p>
+      </ng-container>
+
+      <p class="mb-0" *ngIf="investigationMessage && !findings">{{ investigationMessage }}</p>
+    </div>
+
+    <div class="investigation-foot">
+      <a class="btn btn-outline-primary btn-sm" *ngIf="investigationSessionUrl"
+         [href]="investigationSessionUrl" target="_blank" rel="noopener">Ver detalle de la sesion</a>
+      <button type="button" class="btn btn-primary btn-sm" (click)="closeInvestigation()">Cerrar</button>
+    </div>
+  </div>
+</div>

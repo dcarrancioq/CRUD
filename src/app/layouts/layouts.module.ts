@@ -4,6 +4,7 @@ import { SharedModule } from '../shared/shared.module';
 
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { AdminLayoutComponent } from './admin-layout/admin-layout.component';
+import { InvoiceLayoutComponent } from './invoice-layout/invoice-layout.component';
 import { HeaderComponent } from './components/header/header.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { AdminSidebarComponent } from './components/admin-sidebar/admin-sidebar.component';
@@ -12,6 +13,7 @@ import { AdminSidebarComponent } from './components/admin-sidebar/admin-sidebar.
   declarations: [
     MainLayoutComponent,
     AdminLayoutComponent,
+    InvoiceLayoutComponent,
     HeaderComponent,
     FooterComponent,
     AdminSidebarComponent
@@ -22,7 +24,8 @@ import { AdminSidebarComponent } from './components/admin-sidebar/admin-sidebar.
   ],
   exports: [
     MainLayoutComponent,
-    AdminLayoutComponent
+    AdminLayoutComponent,
+    InvoiceLayoutComponent
   ]
 })
 export class LayoutsModule { }

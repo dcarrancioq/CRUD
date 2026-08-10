@@ -1,0 +1,67 @@
+<div class="vwfs-app">
+  <div class="utility-bar">
+    <div class="wrap">
+      <span class="utility-item">Compras y proveedores</span>
+      <span class="utility-item">Area de gestion</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" routerLink="/invoices">
+        <span class="brand-line">FINANCIAL</span>
+        <span class="brand-line">SERVICES</span>
+        <span class="brand-claim">INVOICE MANAGEMENT</span>
+      </a>
+      <nav class="main-nav">
+        <a routerLink="/invoices" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+          Bandeja de facturas
+        </a>
+        <a routerLink="/invoices/new" routerLinkActive="active">Alta de factura</a>
+        <a routerLink="/invoices/compare" routerLinkActive="active">Comparativa</a>
+        <a routerLink="/invoices/analytics" routerLinkActive="active">Cuadro de mando</a>
+        <a routerLink="/invoices/report" routerLinkActive="active">Informe de proveedor</a>
+        <a routerLink="/invoices/suppliers" routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }">Proveedores</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="wrap">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-cols">
+        <div>
+          <h6>Gestion de facturas</h6>
+          <a routerLink="/invoices">Bandeja de excepciones</a>
+          <a routerLink="/invoices/new">Alta de factura</a>
+          <a routerLink="/invoices/compare">Comparativa de facturas</a>
+          <a routerLink="/invoices/analytics">Cuadro de mando de compras</a>
+          <a routerLink="/invoices/report">Informe de proveedor</a>
+          <a routerLink="/invoices/suppliers">Listado de proveedores</a>
+          <a routerLink="/invoices/suppliers/new">Alta de proveedor</a>
+        </div>
+        <div>
+          <h6>Controles</h6>
+          <span>Clasificacion automatica del gasto</span>
+          <span>Tolerancias y desviaciones</span>
+          <span>Duplicados y antifraude de cobro</span>
+        </div>
+        <div>
+          <h6>Soporte</h6>
+          <span>compras&#64;empresa.com</span>
+          <span>Perfil de tolerancias: compras IT</span>
+        </div>
+      </div>
+      <div class="footer-legal">
+        <span>&copy; {{ year }} Departamento de compras</span>
+        <span>Aplicacion interna de gestion de facturas de proveedores</span>
+      </div>
+    </div>
+  </footer>
+</div>

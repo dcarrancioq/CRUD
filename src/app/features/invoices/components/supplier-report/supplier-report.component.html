@@ -1,0 +1,342 @@
+<div class="supplier-report">
+  <div class="page-header">
+    <div>
+      <h1>Informe de proveedor</h1>
+      <p class="text-muted mb-0">
+        Consumo frente a presupuesto, seguimiento, desviaciones y alertas de facturas del ejercicio.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-primary" routerLink="/invoices">Ver facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/compare">Comparar facturas</a>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="row">
+      <div class="col-md-6 mb-2">
+        <label class="form-label">Proveedor</label>
+        <app-searchable-select [options]="supplierOptions"
+                               placeholder="Selecciona proveedor"
+                               searchPlaceholder="Busca por nombre, NIF o categoria..."
+                               [(ngModel)]="supplierId"></app-searchable-select>
+      </div>
+      <div class="col-md-3 mb-2">
+        <label class="form-label">Ejercicio</label>
+        <app-searchable-select [options]="yearOptions"
+                               placeholder="Selecciona año"
+                               searchPlaceholder="Busca año..."
+                               [(ngModel)]="fiscalYear"></app-searchable-select>
+      </div>
+      <div class="col-md-3 mb-2 d-flex align-items-end">
+        <button type="button" class="btn btn-primary w-100" [disabled]="!canGenerate" (click)="generate()">
+          {{ loading ? 'Generando...' : 'Mostrar informe' }}
+        </button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Sociedad</label>
+        <app-searchable-select [options]="companyOptions"
+                               emptyLabel="Todas las sociedades"
+                               placeholder="Todas las sociedades"
+                               searchPlaceholder="Busca sociedad..."
+                               [(ngModel)]="companyId"
+                               (selectionChange)="onCompanyChange()"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Area / Departamento</label>
+        <app-searchable-select [options]="orgUnitOptions"
+                               emptyLabel="Todas las areas"
+                               placeholder="Todas las areas"
+                               searchPlaceholder="Busca area..."
+                               [(ngModel)]="orgUnitId"></app-searchable-select>
+      </div>
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Categoria de compra</label>
+        <app-searchable-select [options]="categoryOptions"
+                               emptyLabel="Todas las categorias"
+                               placeholder="Todas las categorias"
+                               searchPlaceholder="Busca categoria..."
+                               [(ngModel)]="categoryCode"></app-searchable-select>
+      </div>
+    </div>
+    <p class="text-muted small mb-0">
+      El informe se calcula sobre la imputacion analitica de cada factura, asi que una factura
+      repartida entre varias sociedades solo aporta su parte a cada filtro.
+    </p>
+    <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+
+  <ng-container *ngIf="report">
+    <div class="report-head">
+      <div>
+        <h2 class="mb-1">{{ report.supplier.legalName }}</h2>
+        <p class="text-muted mb-0">
+          {{ report.supplier.taxId }} | alta {{ report.supplier.onboardedAt }} |
+          condiciones {{ report.supplier.paymentTermsDays }} dias |
+          riesgo de maestro {{ report.supplier.riskScore }}
+        </p>
+      </div>
+      <span class="status-chip" [ngClass]="'status-' + report.consumption.status">{{ statusLabel }}</span>
+    </div>
+
+    <div class="budget-card">
+      <div class="budget-figures">
+        <div>
+          <span class="figure-label">Presupuesto {{ report.fiscalYear }}</span>
+          <span class="figure-value">
+            {{ report.budget ? (report.budget.amount | number:'1.2-2') : 'Sin presupuesto' }}
+          </span>
+        </div>
+        <div>
+          <span class="figure-label">Consumido</span>
+          <span class="figure-value">{{ report.consumption.consumedAmount | number:'1.2-2' }}</span>
+        </div>
+        <div>
+          <span class="figure-label">Disponible</span>
+          <span class="figure-value" [class.negative]="report.consumption.remainingAmount < 0">
+            {{ report.consumption.remainingAmount | number:'1.2-2' }}
+          </span>
+        </div>
+        <div>
+          <span class="figure-label">Proyeccion a cierre</span>
+          <span class="figure-value">{{ report.consumption.forecastYearEndAmount | number:'1.2-2' }}</span>
+        </div>
+        <div>
+          <span class="figure-label">Facturas</span>
+          <span class="figure-value">{{ report.consumption.invoiceCount }}</span>
+        </div>
+      </div>
+
+      <div class="budget-bar" *ngIf="report.budget">
+        <div class="budget-bar-fill"
+             [ngClass]="'fill-' + report.consumption.status"
+             [style.width.%]="consumedBarWidth"></div>
+        <span class="budget-threshold"
+              [style.left.%]="report.budget.alertThresholdPercent"
+              [title]="'Umbral de aviso ' + report.budget.alertThresholdPercent + '%'"></span>
+      </div>
+      <p class="budget-caption" *ngIf="report.budget">
+        {{ report.consumption.consumedPercent | number:'1.0-1' }}% consumido
+        (umbral de aviso {{ report.budget.alertThresholdPercent }}%) |
+        desviacion {{ report.consumption.deviationAmount | number:'1.2-2' }}
+        ({{ report.consumption.deviationPercent | number:'1.0-1' }}%)
+        <ng-container *ngIf="report.budget.ownerEmail"> | responsable {{ report.budget.ownerEmail }}</ng-container>
+      </p>
+    </div>
+
+    <div class="report-grid">
+      <div class="detail-card">
+        <h5>Alertas</h5>
+        <p class="text-muted small mb-0" *ngIf="!report.alerts.length">
+          Sin alertas: el consumo y las facturas del ejercicio estan dentro de lo esperado.
+        </p>
+        <div class="alert-item" *ngFor="let alert of report.alerts" [ngClass]="'severity-' + alert.severity">
+          <span class="alert-title">{{ alert.title }}</span>
+          <span class="alert-message">{{ alert.message }}</span>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h5>Seguimiento del proveedor</h5>
+        <ul class="tracking-list">
+          <li><span>Importe medio por factura</span><strong>{{ report.tracking.avgInvoiceAmount | number:'1.2-2' }}</strong></li>
+          <li><span>Factura mas alta</span><strong>{{ report.tracking.maxInvoiceAmount | number:'1.2-2' }}</strong></li>
+          <li>
+            <span>Dias de pago medios</span>
+            <strong>
+              {{ report.tracking.avgPaymentTermsDays | number:'1.0-1' }}
+              <ng-container *ngIf="report.tracking.contractPaymentTermsDays">
+                (contrato {{ report.tracking.contractPaymentTermsDays }})
+              </ng-container>
+            </strong>
+          </li>
+          <li><span>Riesgo medio de factura</span><strong>{{ report.tracking.avgRiskScore | number:'1.0-1' }}</strong></li>
+          <li><span>Facturas con excepcion</span><strong>{{ report.tracking.exceptionRatePercent | number:'1.0-1' }}%</strong></li>
+          <li><span>Excepciones abiertas</span><strong>{{ report.tracking.openExceptions }}</strong></li>
+          <li><span>Pagos bloqueados</span><strong>{{ report.tracking.blockedInvoices }}</strong></li>
+          <li><span>Facturas sin pedido</span><strong>{{ report.tracking.invoicesWithoutPurchaseOrder }}</strong></li>
+          <li><span>Candidatos de duplicado</span><strong>{{ report.tracking.duplicateCandidates }}</strong></li>
+          <li><span>Cambios de cuenta bancaria</span><strong>{{ report.tracking.bankAccountChanges }}</strong></li>
+          <li>
+            <span>Gasto ejercicio anterior</span>
+            <strong>
+              {{ report.tracking.previousYearAmount | number:'1.2-2' }}
+              <ng-container *ngIf="report.tracking.yoyVariationPercent !== undefined">
+                ({{ report.tracking.yoyVariationPercent | number:'1.0-1' }}%)
+              </ng-container>
+            </strong>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h5>Evolucion mensual y consumo acumulado</h5>
+      <div class="month-chart">
+        <div class="month-column" *ngFor="let month of report.monthly">
+          <div class="month-bar" [style.height.%]="monthBarHeight(month)"
+               [title]="month.label + ': ' + (month.amount | number:'1.2-2')"></div>
+          <span class="month-label">{{ month.label.slice(0, 3) }}</span>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th><app-sort-header field="month" [activeField]="monthSort.field" [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Mes</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="invoiceCount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Facturas</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="amount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Gasto</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="cumulativeAmount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Acumulado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="budgetCumulativeAmount" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Presupuesto acumulado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="deviationPercent" [activeField]="monthSort.field"
+                                   [direction]="monthSort.direction"
+                                   (sortChange)="sortMonthsBy($event)">Desviacion</app-sort-header></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let month of monthlyRows">
+              <td>{{ month.label }}</td>
+              <td class="text-right">{{ month.invoiceCount }}</td>
+              <td class="text-right">{{ month.amount | number:'1.2-2' }}</td>
+              <td class="text-right">{{ month.cumulativeAmount | number:'1.2-2' }}</td>
+              <td class="text-right">{{ month.budgetCumulativeAmount | number:'1.2-2' }}</td>
+              <td class="text-right" [class.negative]="month.deviationPercent > 0">
+                {{ month.deviationPercent | number:'1.0-1' }}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="report-grid">
+      <div class="detail-card">
+        <h5>Desviaciones</h5>
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th><app-sort-header field="label" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Indicador</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="value" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Valor</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="reference" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Referencia</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="deviationPercent" [activeField]="deviationSort.field"
+                                   [direction]="deviationSort.direction"
+                                   (sortChange)="sortDeviationsBy($event)">Desviacion</app-sort-header></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let deviation of deviationRows">
+              <td>
+                {{ deviation.label }}
+                <span class="d-block text-muted small">{{ deviation.comment }}</span>
+              </td>
+              <td class="text-right">{{ deviation.value | number:'1.2-2' }}</td>
+              <td class="text-right">{{ deviation.reference | number:'1.2-2' }}</td>
+              <td class="text-right" [class.negative]="deviation.deviationPercent > 0">
+                {{ deviation.deviationPercent | number:'1.0-1' }}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="detail-card">
+        <h5>Gasto por categoria</h5>
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th><app-sort-header field="categoryName" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Categoria</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="invoiceCount" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Facturas</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="amount" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Gasto</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="sharePercent" [activeField]="categorySort.field"
+                                   [direction]="categorySort.direction"
+                                   (sortChange)="sortCategoriesBy($event)">Peso</app-sort-header></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let category of categoryRows">
+              <td>{{ category.categoryName }}</td>
+              <td class="text-right">{{ category.invoiceCount }}</td>
+              <td class="text-right">{{ category.amount | number:'1.2-2' }}</td>
+              <td class="text-right">{{ category.sharePercent | number:'1.0-1' }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="card-header-row">
+        <h5 class="mb-0">Ultimas facturas del ejercicio</h5>
+        <input type="text" class="form-control form-control-sm invoice-filter"
+               placeholder="Filtrar numero, categoria o estado..." [(ngModel)]="invoiceSearch">
+      </div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th><app-sort-header field="invoiceNumber" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Factura</app-sort-header></th>
+              <th><app-sort-header field="issueDate" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Fecha</app-sort-header></th>
+              <th><app-sort-header field="categoryName" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Categoria</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="totalAmount" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Total</app-sort-header></th>
+              <th><app-sort-header field="status" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Estado</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="riskScore" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Riesgo</app-sort-header></th>
+              <th class="text-right"><app-sort-header field="openExceptions" [activeField]="invoiceSort.field"
+                                   [direction]="invoiceSort.direction"
+                                   (sortChange)="sortInvoicesBy($event)">Excepciones</app-sort-header></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let invoice of invoiceRows">
+              <td>{{ invoice.invoiceNumber }}</td>
+              <td>{{ invoice.issueDate }}</td>
+              <td>{{ invoice.categoryName }}</td>
+              <td class="text-right">{{ invoice.totalAmount | number:'1.2-2' }}</td>
+              <td>{{ invoice.status }}</td>
+              <td class="text-right">{{ invoice.riskScore }}</td>
+              <td class="text-right">{{ invoice.openExceptions }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <p class="text-muted" *ngIf="!report && !loading">
+    Selecciona un proveedor y un ejercicio y pulsa "Mostrar informe".
+  </p>
+</div>

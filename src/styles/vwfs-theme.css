@@ -1,0 +1,248 @@
+/*
+ * Look & feel de Volkswagen Financial Services (vwfs.es) para la aplicacion de
+ * facturas de proveedores. Todo esta acotado a `.vwfs-app` para no afectar a la
+ * aplicacion de e-commerce, que es una aplicacion distinta.
+ */
+.vwfs-app {
+  --vwfs-primary: #004666;
+  --vwfs-primary-dark: #003049;
+  --vwfs-accent: #66e4ee;
+  --vwfs-accent-dark: #00b0c8;
+  --vwfs-text: #4c5356;
+  --vwfs-text-strong: #004666;
+  --vwfs-muted: #6a7276;
+  --vwfs-surface: #f2f2f2;
+  --vwfs-border: #dfdfdf;
+  --vwfs-danger: #b3132b;
+  --vwfs-warning: #d98c00;
+  --vwfs-success: #2b7a3d;
+  --vwfs-font: 'Helvetica Neue', Helvetica, Arial, 'Segoe UI', sans-serif;
+}
+
+.vwfs-app h1,
+.vwfs-app h2,
+.vwfs-app h3,
+.vwfs-app h4,
+.vwfs-app h5,
+.vwfs-app h6 {
+  color: var(--vwfs-text-strong);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.vwfs-app h1 {
+  font-size: 2.25rem;
+}
+
+.vwfs-app h5 {
+  font-size: 1.0625rem;
+}
+
+.vwfs-app a {
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .text-muted {
+  color: var(--vwfs-muted) !important;
+}
+
+/* Superficies: sin radios, borde fino, cabeceras en azul corporativo. */
+.vwfs-app .card,
+.vwfs-app .card-surface,
+.vwfs-app .form-card,
+.vwfs-app .kpi {
+  background: #fff;
+  border: 1px solid var(--vwfs-border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.vwfs-app .kpi-value {
+  color: var(--vwfs-text-strong);
+}
+
+.vwfs-app .kpi-label {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Botones: rectangulares, mayusculas, cian corporativo para la accion primaria. */
+.vwfs-app .btn {
+  border-radius: 0;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  padding: 0.65rem 1.6rem;
+  border-width: 1px;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.vwfs-app .btn-sm {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.7rem;
+}
+
+.vwfs-app .btn-primary,
+.vwfs-app .btn-dark {
+  background: var(--vwfs-accent);
+  border-color: var(--vwfs-accent);
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .btn-primary:hover,
+.vwfs-app .btn-primary:focus,
+.vwfs-app .btn-dark:hover,
+.vwfs-app .btn-dark:focus {
+  background: var(--vwfs-accent-dark);
+  border-color: var(--vwfs-accent-dark);
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .btn-outline-primary,
+.vwfs-app .btn-outline-secondary,
+.vwfs-app .btn-outline-dark {
+  background: transparent;
+  border-color: var(--vwfs-primary);
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .btn-outline-primary:hover,
+.vwfs-app .btn-outline-secondary:hover,
+.vwfs-app .btn-outline-dark:hover {
+  background: var(--vwfs-primary);
+  border-color: var(--vwfs-primary);
+  color: #fff;
+}
+
+.vwfs-app .btn-outline-success {
+  border-color: var(--vwfs-success);
+  color: var(--vwfs-success);
+}
+
+.vwfs-app .btn-outline-success:hover {
+  background: var(--vwfs-success);
+  color: #fff;
+}
+
+.vwfs-app .btn-outline-danger {
+  border-color: var(--vwfs-danger);
+  color: var(--vwfs-danger);
+}
+
+.vwfs-app .btn-outline-danger:hover {
+  background: var(--vwfs-danger);
+  color: #fff;
+}
+
+.vwfs-app .btn-link {
+  color: var(--vwfs-primary);
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+/* Formularios: campos rectangulares con foco cian. */
+.vwfs-app .form-control,
+.vwfs-app select.form-control,
+.vwfs-app textarea.form-control {
+  border-radius: 0;
+  border: 1px solid var(--vwfs-border);
+  color: var(--vwfs-text);
+  background: #fff;
+  box-shadow: none;
+}
+
+.vwfs-app .form-control:focus {
+  border-color: var(--vwfs-primary);
+  box-shadow: 0 0 0 2px rgba(102, 228, 238, 0.55);
+}
+
+.vwfs-app .form-label,
+.vwfs-app label {
+  color: var(--vwfs-text-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+/* Tablas: cabecera azul, filas separadas por linea fina. */
+.vwfs-app .table {
+  color: var(--vwfs-text);
+  margin-bottom: 0;
+}
+
+.vwfs-app .table thead th {
+  background: var(--vwfs-primary);
+  color: #fff;
+  border: none;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.vwfs-app .table td,
+.vwfs-app .table th {
+  border-top: 1px solid var(--vwfs-border);
+  vertical-align: top;
+}
+
+.vwfs-app .table tbody tr:hover {
+  background: #f7fbfc;
+}
+
+/* Indicadores de estado y riesgo con la paleta corporativa. */
+.vwfs-app .badge {
+  border-radius: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.35em 0.6em;
+}
+
+.vwfs-app .badge-light,
+.vwfs-app .badge-secondary {
+  background: #e6eef2;
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .badge-danger,
+.vwfs-app .badge.status-blocked,
+.vwfs-app .badge.risk-critical {
+  background: var(--vwfs-danger);
+  color: #fff;
+}
+
+.vwfs-app .badge.status-under_review,
+.vwfs-app .badge.risk-high {
+  background: #fff1d6;
+  color: #8a5a00;
+}
+
+.vwfs-app .badge.risk-medium {
+  background: #e6eef2;
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .badge.status-approved,
+.vwfs-app .badge.risk-low {
+  background: var(--vwfs-accent);
+  color: var(--vwfs-primary);
+}
+
+.vwfs-app .badge.status-registered {
+  background: #eaeaea;
+  color: var(--vwfs-text);
+}
+
+.vwfs-app .alert {
+  border-radius: 0;
+  border-width: 0 0 0 4px;
+}
+
+.vwfs-app .alert-warning {
+  background: #fff8e9;
+  border-left-color: var(--vwfs-warning);
+  color: #6f4a00;
+}

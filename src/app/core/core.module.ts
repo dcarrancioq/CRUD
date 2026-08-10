@@ -15,6 +15,9 @@ import { WishlistService } from './services/wishlist.service';
 import { AdminService } from './services/admin.service';
 import { LoadingService } from './services/loading.service';
 import { NotificationService } from './services/notification.service';
+import { InvoiceService } from './services/invoice.service';
+import { ProcurementMasterDataService } from './services/procurement-master-data.service';
+import { DevinApiService } from './services/devin-api.service';
 
 import { AuthGuard } from './guards/auth.guard';
 import { AdminGuard } from './guards/admin.guard';
@@ -36,6 +39,9 @@ import { CheckoutGuard } from './guards/checkout.guard';
     AdminService,
     LoadingService,
     NotificationService,
+    ProcurementMasterDataService,
+    InvoiceService,
+    DevinApiService,
     AuthGuard,
     AdminGuard,
     GuestGuard,

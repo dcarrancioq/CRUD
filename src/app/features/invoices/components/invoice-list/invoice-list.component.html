@@ -1,0 +1,174 @@
+<div class="invoice-list">
+  <div class="page-header">
+    <div>
+      <h1>Facturas de proveedores</h1>
+      <p class="text-muted mb-0">Solo se revisan las excepciones que superan la tolerancia configurada.</p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-primary" routerLink="/invoices/new">Nueva factura</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/compare">Comparar facturas</a>
+      <a class="btn btn-outline-primary" routerLink="/invoices/report">Informe de proveedor</a>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><span class="kpi-value">{{ invoiceCount }}</span><span class="kpi-label">Facturas registradas</span></div>
+    <div class="kpi"><span class="kpi-value">{{ totalSpend | number:'1.2-2' }}</span><span class="kpi-label">Gasto total (EUR)</span></div>
+    <div class="kpi"><span class="kpi-value">{{ exceptionCount }}</span><span class="kpi-label">Excepciones abiertas</span></div>
+    <div class="kpi"><span class="kpi-value">{{ blockedCount }}</span><span class="kpi-label">Pagos bloqueados</span></div>
+    <div class="kpi"><span class="kpi-value">{{ autoApprovedPercent }}%</span><span class="kpi-label">Aprobacion sin toque</span></div>
+  </div>
+
+  <div class="row align-items-end mb-3">
+    <div class="col-md-4 mb-2">
+      <label class="form-label">Filtrar por proveedor</label>
+      <app-searchable-select [options]="supplierOptions"
+                             emptyLabel="Todos los proveedores"
+                             placeholder="Todos los proveedores"
+                             searchPlaceholder="Busca por nombre, NIF o categoria..."
+                             [(ngModel)]="supplierFilter"
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-3 mb-2">
+      <label class="form-label">Estado</label>
+      <app-searchable-select [options]="statusOptions"
+                             emptyLabel="Todos los estados"
+                             placeholder="Todos los estados"
+                             searchPlaceholder="Busca estado..."
+                             [(ngModel)]="statusFilter"
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-2 mb-2">
+      <label class="form-label">Riesgo</label>
+      <app-searchable-select [options]="riskBandOptions"
+                             emptyLabel="Todos los riesgos"
+                             placeholder="Todos los riesgos"
+                             searchPlaceholder="Busca banda..."
+                             [(ngModel)]="riskBandFilter"
+                             (selectionChange)="onFilterChange()"></app-searchable-select>
+    </div>
+    <div class="col-md-3 mb-2">
+      <label class="form-label">Buscar</label>
+      <input type="text" class="form-control" placeholder="Numero, proveedor, NIF o categoria"
+             [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()">
+    </div>
+    <div class="col-12 mb-2 d-flex flex-wrap align-items-center">
+      <div class="form-check mr-3">
+        <input class="form-check-input" type="checkbox" id="onlyExc" [(ngModel)]="onlyExceptions"
+               (ngModelChange)="onFilterChange()">
+        <label class="form-check-label" for="onlyExc">Mostrar solo facturas con excepciones</label>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+    <div class="col-12">
+      <p class="text-muted small mb-0">
+        La tabla muestra {{ invoices.length }} facturas del filtro y orden aplicados (resueltos en servidor sobre
+        el total); los indicadores superiores estan calculados sobre todo lo registrado.
+      </p>
+    </div>
+  </div>
+
+  <div class="table-responsive card-surface">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>
+            <app-sort-header field="invoiceNumber" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Factura</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="supplierName" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Proveedor</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="categoryName" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Categoria</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="totalAmount" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Total</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="issueDate" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Emision</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="dueDate" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Vencimiento</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="status" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Estado</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="riskScore" [activeField]="sortField" [direction]="sortDirection"
+                             (sortChange)="sortBy($event)">Riesgo</app-sort-header>
+          </th>
+          <th>Excepciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let invoice of visibleInvoices">
+          <td>{{ invoice.invoiceNumber }}<div class="small text-muted">{{ invoice.source }}</div></td>
+          <td>{{ invoice.supplierName }}</td>
+          <td>
+            {{ invoice.classification.categoryName }}
+            <div class="small text-muted">{{ invoice.classification.confidence }}% | {{ invoice.classification.glAccount }}</div>
+          </td>
+          <td class="text-right">{{ invoice.totalAmount | number:'1.2-2' }} {{ invoice.currency }}</td>
+          <td>{{ invoice.issueDate | date:'yyyy-MM-dd' }}</td>
+          <td>{{ invoice.dueDate | date:'yyyy-MM-dd' }}</td>
+          <td><span class="badge" [ngClass]="'status-' + invoice.status">{{ invoice.status }}</span></td>
+          <td><span class="badge" [ngClass]="'risk-' + invoice.riskAssessment.band">{{ invoice.riskAssessment.score }}</span></td>
+          <td class="exceptions-cell">
+            <span class="text-muted small" *ngIf="!openExceptions(invoice).length">-</span>
+            <div class="exception-item" *ngFor="let exception of openExceptions(invoice)">
+              <div>
+                <strong>{{ exception.title }}</strong>
+                <span class="badge badge-danger ml-1" *ngIf="exception.blocksPayment">bloquea pago</span>
+                <div class="small text-muted">{{ exception.message }}</div>
+              </div>
+              <div class="exception-actions">
+                <button type="button" class="btn btn-sm btn-outline-success" (click)="resolve(invoice, exception)">Aceptar</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" (click)="markFalsePositive(invoice, exception)">
+                  Falso positivo
+                </button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="!visibleInvoices.length">
+          <td colspan="9" class="text-center text-muted py-3">No hay facturas para el filtro aplicado.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-surface mt-4 p-3" *ngIf="opportunities.length">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Oportunidades de consolidacion</h5>
+      <button type="button" class="btn btn-sm btn-dark" (click)="requestConsolidationAnalysis()">
+        Analizar con Devin
+      </button>
+    </div>
+    <table class="table table-sm mt-3 mb-0">
+      <thead>
+        <tr><th>Categoria</th><th>Proveedores</th><th class="text-right">Gasto</th><th class="text-right">Ahorro estimado</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let opportunity of opportunities">
+          <td>{{ opportunity.categoryName }}</td>
+          <td class="small">{{ opportunity.supplierNames.join(', ') }}</td>
+          <td class="text-right">{{ opportunity.annualSpend | number:'1.2-2' }}</td>
+          <td class="text-right">{{ opportunity.estimatedSavings | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-surface mt-4 p-3" *ngIf="devinRequest">
+    <h5>Llamada a la API de Devin</h5>
+    <p class="small text-muted mb-1">POST /v3/organizations/&#123;org_id&#125;/sessions</p>
+    <pre class="devin-payload">{{ devinRequestJson }}</pre>
+  </div>
+</div>

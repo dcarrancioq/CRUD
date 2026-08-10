@@ -1,0 +1,25 @@
+.sort-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.sort-header:hover .sort-label {
+  text-decoration: underline;
+}
+
+.sort-arrow {
+  font-size: 0.7em;
+  opacity: 0.75;
+}
+
+.sort-header.active .sort-arrow {
+  opacity: 1;
+}

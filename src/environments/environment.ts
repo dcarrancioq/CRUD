@@ -3,5 +3,9 @@ export const environment = {
   apiUrl: 'http://localhost:8080/api',
   stripePublicKey: '',
   googleAnalyticsId: '',
-  recaptchaSiteKey: ''
+  recaptchaSiteKey: '',
+  devin: {
+    // El backend (/api/integrations/devin) es quien añade el token de servicio.
+    proxyPath: '/integrations/devin'
+  }
 };

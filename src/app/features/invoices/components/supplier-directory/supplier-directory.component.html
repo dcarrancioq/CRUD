@@ -1,0 +1,172 @@
+<div class="supplier-directory">
+  <div class="page-header">
+    <div>
+      <h1>Listado de proveedores</h1>
+      <p class="text-muted mb-0">
+        Sociedades y areas de la compañia a las que esta asociado cada proveedor, con sus contratos
+        y el ambito de cada contrato.
+      </p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-outline-primary" routerLink="/invoices/analytics">Cuadro de mando</a>
+      <a class="btn btn-primary" routerLink="/invoices/suppliers/new">Alta de proveedor</a>
+    </div>
+  </div>
+
+  <div class="selector-card">
+    <div class="row">
+      <div class="col-md-4 mb-2">
+        <label class="form-label">Buscar proveedor</label>
+        <input type="text" class="form-control" placeholder="Nombre, NIF o categoria..."
+               [(ngModel)]="search" (ngModelChange)="onSearchChange()">
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Sociedad</label>
+        <app-searchable-select [options]="companyOptions"
+                               emptyLabel="Todas las sociedades"
+                               placeholder="Todas las sociedades"
+                               searchPlaceholder="Busca sociedad..."
+                               [(ngModel)]="companyFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Area</label>
+        <app-searchable-select [options]="orgUnitOptions"
+                               emptyLabel="Todas las areas"
+                               placeholder="Todas las areas"
+                               searchPlaceholder="Busca area..."
+                               [(ngModel)]="orgUnitFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Categoria</label>
+        <app-searchable-select [options]="categoryOptions"
+                               emptyLabel="Todas las categorias"
+                               placeholder="Todas las categorias"
+                               searchPlaceholder="Busca categoria..."
+                               [(ngModel)]="categoryFilter"></app-searchable-select>
+      </div>
+      <div class="col-md-2 mb-2">
+        <label class="form-label">Cobro</label>
+        <app-searchable-select [options]="bankStatusOptions"
+                               emptyLabel="Cualquier estado"
+                               placeholder="Cualquier estado"
+                               searchPlaceholder="Busca estado..."
+                               [(ngModel)]="bankStatusFilter"></app-searchable-select>
+      </div>
+    </div>
+    <div class="d-flex align-items-center">
+      <small class="text-muted mr-3">
+        {{ loading ? 'Buscando...' : (visibleSuppliers.length + ' proveedor(es) encontrados') }}
+      </small>
+      <button type="button" class="btn btn-sm btn-outline-primary" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+    <p class="text-danger small mb-0" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover directory-table">
+      <thead>
+        <tr>
+          <th>
+            <app-sort-header field="legalName" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Proveedor</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="companies" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Sociedades</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="orgUnits" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Areas</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="contractCount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Contratos</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="consumedAmount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Consumo</app-sort-header>
+          </th>
+          <th class="text-right">
+            <app-sort-header field="invoiceCount" [activeField]="sort.field" [direction]="sort.direction"
+                             (sortChange)="sortBy($event)">Facturas</app-sort-header>
+          </th>
+          <th>
+            <app-sort-header field="bankAccountsPendingVerification" [activeField]="sort.field"
+                             [direction]="sort.direction" (sortChange)="sortBy($event)">Cobro</app-sort-header>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let supplier of visibleSuppliers">
+          <tr>
+            <td>
+              <strong>{{ supplier.legalName }}</strong>
+              <small class="text-muted d-block">
+                {{ supplier.taxId }} | {{ supplier.defaultCategoryCode ?? 'sin categoria' }} |
+                riesgo {{ supplier.riskScore }}
+              </small>
+            </td>
+            <td class="wrap-cell">{{ companyNames(supplier) }}</td>
+            <td class="wrap-cell">{{ orgUnitNames(supplier) }}</td>
+            <td class="text-right">{{ supplier.contractCount }}</td>
+            <td class="text-right">{{ supplier.consumedAmount | number:'1.0-0' }}</td>
+            <td class="text-right">{{ supplier.invoiceCount | number }}</td>
+            <td>
+              <span class="chip" *ngIf="supplier.bankAccountsPendingVerification; else verified">
+                {{ supplier.bankAccountsPendingVerification }} cuenta(s) pendiente(s)
+              </span>
+              <ng-template #verified><span class="chip chip-ok">Cuentas verificadas</span></ng-template>
+            </td>
+            <td class="text-right">
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="toggle(supplier.supplierId)">
+                {{ expandedSupplierId === supplier.supplierId ? 'Ocultar' : 'Detalle' }}
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="expandedSupplierId === supplier.supplierId" class="detail-row">
+            <td colspan="8">
+              <div class="detail-grid">
+                <div>
+                  <h6>Imputacion por sociedad y area</h6>
+                  <div class="scope-row" *ngFor="let scope of supplier.companies">
+                    <strong>{{ scope.companyName }}</strong>
+                    <span class="text-muted">
+                      {{ scope.orgUnits.length ? scope.orgUnits.join(', ') : 'sin area' }}
+                    </span>
+                    <span>{{ scope.amount | number:'1.0-0' }} imputados</span>
+                  </div>
+                  <p class="text-muted small mb-0" *ngIf="!supplier.companies.length">
+                    Todavia no hay facturas imputadas de este proveedor.
+                  </p>
+                </div>
+                <div>
+                  <h6>Contratos y ambito</h6>
+                  <div class="contract-row" *ngFor="let contract of supplier.contracts">
+                    <div class="contract-head">
+                      <strong>{{ contract.reference }}</strong>
+                      <span class="chip" [ngClass]="contractStatusClass(contract.status)">{{ contract.status }}</span>
+                    </div>
+                    <span class="text-muted">
+                      {{ contract.categoryCode }} | {{ contract.validFrom }} a {{ contract.validUntil }} |
+                      {{ contract.paymentTermsDays }} dias
+                    </span>
+                    <span>Compromiso anual {{ contract.committedAnnualSpend | number:'1.0-0' }} {{ contract.currency }}</span>
+                    <span>Sociedades: {{ contract.companies.join(', ') || 'todas' }}</span>
+                    <span>Areas: {{ contract.orgUnits.length ? contract.orgUnits.join(', ') : 'toda la sociedad' }}</span>
+                  </div>
+                  <p class="text-muted small mb-0" *ngIf="!supplier.contracts.length">
+                    Proveedor sin contrato marco: compras puntuales por pedido.
+                  </p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+        <tr *ngIf="!visibleSuppliers.length && !loading">
+          <td colspan="8" class="text-center text-muted">No hay proveedores que coincidan con la busqueda.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

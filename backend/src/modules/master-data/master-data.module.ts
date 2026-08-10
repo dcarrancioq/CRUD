@@ -1,0 +1,47 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MasterDataService } from './master-data.service';
+import { MasterDataController } from './master-data.controller';
+import { SpendCategory } from './entities/spend-category.entity';
+import { Supplier } from './entities/supplier.entity';
+import { SupplierBankAccount } from './entities/supplier-bank-account.entity';
+import { BankAccountChange } from './entities/bank-account-change.entity';
+import { Company } from './entities/company.entity';
+import { Contract } from './entities/contract.entity';
+import { ContractPrice } from './entities/contract-price.entity';
+import { ContractScope } from './entities/contract-scope.entity';
+import { CostCenter } from './entities/cost-center.entity';
+import { DimensionBudget } from './entities/dimension-budget.entity';
+import { OrgUnit } from './entities/org-unit.entity';
+import { PurchaseOrder } from './entities/purchase-order.entity';
+import { PurchaseOrderLine } from './entities/purchase-order-line.entity';
+import { SupplierBudget } from './entities/supplier-budget.entity';
+import { ToleranceProfile } from './entities/tolerance-profile.entity';
+import { ToleranceRule } from './entities/tolerance-rule.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      SpendCategory,
+      Supplier,
+      SupplierBankAccount,
+      BankAccountChange,
+      Company,
+      OrgUnit,
+      CostCenter,
+      DimensionBudget,
+      Contract,
+      ContractPrice,
+      ContractScope,
+      PurchaseOrder,
+      PurchaseOrderLine,
+      SupplierBudget,
+      ToleranceProfile,
+      ToleranceRule,
+    ]),
+  ],
+  controllers: [MasterDataController],
+  providers: [MasterDataService],
+  exports: [MasterDataService, TypeOrmModule],
+})
+export class MasterDataModule {}

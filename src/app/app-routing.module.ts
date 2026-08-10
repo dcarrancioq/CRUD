@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.component';
+import { InvoiceLayoutComponent } from './layouts/invoice-layout/invoice-layout.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AdminGuard } from './core/guards/admin.guard';
 
@@ -31,6 +32,12 @@ const routes: Routes = [
         canActivate: [AuthGuard]
       }
     ]
+  },
+  {
+    // Aplicacion de gestion de facturas de proveedores: shell propio, independiente del e-commerce.
+    path: 'invoices',
+    component: InvoiceLayoutComponent,
+    loadChildren: () => import('./features/invoices/invoices.module').then(m => m.InvoicesModule)
   },
   {
     path: 'auth',
