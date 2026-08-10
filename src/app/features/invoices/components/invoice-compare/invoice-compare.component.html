@@ -63,7 +63,7 @@
     </div>
 
     <div class="alert alert-warning" *ngIf="fraudSignals.length">
-      <strong>Senales de riesgo de pago:</strong>
+      <strong>Señales de riesgo de pago:</strong>
       <ul class="mb-0">
         <li *ngFor="let signal of fraudSignals">
           {{ signal.label }}: {{ signal.leftValue }} vs {{ signal.rightValue }}

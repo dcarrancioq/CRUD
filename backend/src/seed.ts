@@ -92,7 +92,7 @@ const categories: DeepPartial<SpendCategory>[] = [
     level: 2,
     parentCode: 'GEN',
     glAccount: '627000',
-    keywords: ['campana', 'publicidad', 'marketing', 'eventos', 'branding', 'medios'],
+    keywords: ['campaña', 'publicidad', 'marketing', 'eventos', 'branding', 'medios'],
   },
   {
     code: 'GEN-OTHER',

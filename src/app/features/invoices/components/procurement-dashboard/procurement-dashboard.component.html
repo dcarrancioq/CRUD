@@ -61,7 +61,7 @@
         <label class="form-label">Ejercicio</label>
         <app-searchable-select [options]="yearOptions"
                                placeholder="Ejercicio"
-                               searchPlaceholder="Busca ano..."
+                               searchPlaceholder="Busca año..."
                                [(ngModel)]="fiscalYear"></app-searchable-select>
       </div>
       <div class="col-md-3 mb-2 d-flex align-items-end">
@@ -126,7 +126,7 @@
               : 'sin base' }}
         </span>
         <span class="kpi-hint">
-          {{ report.summary.previousYearAmount | number:'1.0-0' }} el ano anterior
+          {{ report.summary.previousYearAmount | number:'1.0-0' }} el año anterior
         </span>
       </div>
     </div>
@@ -154,7 +154,7 @@
     </div>
 
     <div class="chart-card">
-      <h5>Consumo vs presupuesto vs ano anterior ({{ report.labels.period | lowercase }})</h5>
+      <h5>Consumo vs presupuesto vs año anterior ({{ report.labels.period | lowercase }})</h5>
       <div class="period-chart">
         <div class="period-column" *ngFor="let bucket of report.periods">
           <div class="period-bars">
@@ -163,7 +163,7 @@
             <div class="period-bar bar-consumed" [style.height.%]="periodBarHeight(bucket.consumedAmount)"
                  [title]="'Consumo ' + (bucket.consumedAmount | number:'1.0-0')"></div>
             <div class="period-bar bar-previous" [style.height.%]="periodBarHeight(bucket.previousYearAmount)"
-                 [title]="'Ano anterior ' + (bucket.previousYearAmount | number:'1.0-0')"></div>
+                 [title]="'Año anterior ' + (bucket.previousYearAmount | number:'1.0-0')"></div>
           </div>
           <span class="period-label">{{ bucket.label }}</span>
           <span class="period-value">{{ bucket.consumedAmount | number:'1.0-0' }}</span>
@@ -175,7 +175,7 @@
       <div class="legend">
         <span><i class="dot dot-budget"></i> Presupuesto del periodo</span>
         <span><i class="dot dot-consumed"></i> Consumo real</span>
-        <span><i class="dot dot-previous"></i> Mismo periodo del ano anterior</span>
+        <span><i class="dot dot-previous"></i> Mismo periodo del año anterior</span>
       </div>
     </div>
 
@@ -235,7 +235,7 @@
           <span [ngClass]="deviationClass(row.deviationAmount)">
             Desviacion {{ row.deviationAmount | number:'1.0-0' }} ({{ row.deviationPercent | number:'1.1-1' }}%)
           </span>
-          <span [ngClass]="deviationClass(row.yoyVariationPercent ?? 0)">vs ano anterior {{ yoyLabel(row) }}</span>
+          <span [ngClass]="deviationClass(row.yoyVariationPercent ?? 0)">vs año anterior {{ yoyLabel(row) }}</span>
           <span class="text-muted">{{ row.invoiceCount | number }} facturas | {{ row.supplierCount }} proveedores</span>
         </div>
       </div>
@@ -297,7 +297,7 @@
                                    (sortChange)="sortSuppliersBy($event)">Riesgo</app-sort-header></th>
               <th class="text-right"><app-sort-header field="yoyVariationPercent" [activeField]="supplierSort.field"
                                    [direction]="supplierSort.direction"
-                                   (sortChange)="sortSuppliersBy($event)">vs ano ant.</app-sort-header></th>
+                                   (sortChange)="sortSuppliersBy($event)">vs año ant.</app-sort-header></th>
               <th class="text-right"><app-sort-header field="sharePercent" [activeField]="supplierSort.field"
                                    [direction]="supplierSort.direction"
                                    (sortChange)="sortSuppliersBy($event)">% gasto</app-sort-header></th>

@@ -39,7 +39,7 @@ export class InvoicesController {
   @Get()
   @ApiOperation({ summary: 'Listado de facturas con clasificacion, riesgo y excepciones' })
   @ApiQuery({ name: 'supplierId', required: false })
-  @ApiQuery({ name: 'limit', required: false, description: 'Tamano de ventana (200 por defecto)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Tamaño de ventana (200 por defecto)' })
   @ApiQuery({ name: 'search', required: false, description: 'Numero, proveedor, NIF o categoria' })
   @ApiQuery({ name: 'status', required: false })
   @ApiQuery({ name: 'riskBand', required: false })

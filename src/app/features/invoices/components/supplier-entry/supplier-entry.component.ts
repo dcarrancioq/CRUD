@@ -46,7 +46,7 @@ export class SupplierEntryComponent implements OnInit {
   ];
 
   readonly countryOptions: SearchableOption[] = [
-    { value: 'ES', label: 'Espana (ES)' },
+    { value: 'ES', label: 'España (ES)' },
     { value: 'PT', label: 'Portugal (PT)' },
     { value: 'FR', label: 'Francia (FR)' },
     { value: 'DE', label: 'Alemania (DE)' },

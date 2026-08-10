@@ -122,7 +122,7 @@ const CATEGORY_PROFILES: CategoryProfile[] = [
     nameSuffix: 'Marketing S.L.',
     costCenter: 'CC-MKT',
     items: [
-      { itemCode: 'MKT-CAMP', description: 'Campana digital multicanal', uom: 'servicio', unitPrice: 9800, quantity: 1 },
+      { itemCode: 'MKT-CAMP', description: 'Campaña digital multicanal', uom: 'servicio', unitPrice: 9800, quantity: 1 },
       { itemCode: 'MKT-EVENT', description: 'Organizacion de evento corporativo', uom: 'servicio', unitPrice: 14500, quantity: 1 },
       { itemCode: 'MKT-MEDIA', description: 'Compra de medios', uom: 'insercion', unitPrice: 1250, quantity: 6 },
     ],

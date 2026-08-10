@@ -40,7 +40,7 @@ export interface DevinSessionStatus {
  * Cliente de la API de Devin (v3, ambito organizacion).
  *
  * Todas las llamadas salen contra el proxy del backend propio
- * (`${environment.apiUrl}${environment.devin.proxyPath}`), que es quien anade la
+ * (`${environment.apiUrl}${environment.devin.proxyPath}`), que es quien añade la
  * cabecera `Authorization: Bearer <service user token>` contra api.devin.ai.
  * El token de servicio nunca viaja al navegador.
  */
@@ -146,7 +146,7 @@ export class DevinApiService {
       'Tarea:',
       '1. Localiza la peticion de cambio de cuenta (ticket, correo o formulario) y comprueba que el solicitante es un contacto autorizado del proveedor.',
       '2. Compara el titular declarado con el titular registrado en el maestro y con el certificado de titularidad si existe.',
-      '3. Revisa el historico de cambios de cuenta del proveedor y si hay senales de suplantacion (dominio de correo distinto, IBAN de pais diferente, cambio proximo al vencimiento).',
+      '3. Revisa el historico de cambios de cuenta del proveedor y si hay señales de suplantacion (dominio de correo distinto, IBAN de pais diferente, cambio proximo al vencimiento).',
       '4. Prepara el guion de verificacion telefonica con el contacto de referencia del maestro (no el del correo entrante).',
       '',
       'Entrega un informe con la evidencia y el nivel de riesgo. La liberacion del pago y la actualizacion del maestro las realiza siempre una persona.'
@@ -241,7 +241,7 @@ export class DevinApiService {
       '',
       'Tarea:',
       '1. Implementa la regla en backend/src/modules/invoices/services/invoice-anomaly.service.ts respetando el patron de ToleranceRule (umbral, unidad, severidad, blocksPayment).',
-      '2. Anade la regla al perfil de tolerancias del seed (backend/src/seed.ts) y al catalogo documentado.',
+      '2. Añade la regla al perfil de tolerancias del seed (backend/src/seed.ts) y al catalogo documentado.',
       '3. Escribe tests unitarios con casos positivos, negativos y de frontera del umbral.',
       '4. Ejecuta un backtesting sobre el historico de facturas de ejemplo y reporta falsos positivos.',
       '5. Abre un PR con el resumen del impacto en volumen de excepciones.'

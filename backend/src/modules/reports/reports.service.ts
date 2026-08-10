@@ -391,7 +391,7 @@ export class ReportsService {
         deviationPercent: round(
           ((input.consumedAmount - input.previousYearAmount) / input.previousYearAmount) * 100,
         ),
-        comment: 'Comparativa con el gasto facturado por el mismo proveedor el ano anterior.',
+        comment: 'Comparativa con el gasto facturado por el mismo proveedor el año anterior.',
       });
     }
 

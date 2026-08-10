@@ -16,7 +16,7 @@ export class AdminDashboardComponent implements OnInit {
   periodOptions: { value: 'week' | 'month' | 'year'; label: string }[] = [
     { value: 'week', label: 'Esta semana' },
     { value: 'month', label: 'Este mes' },
-    { value: 'year', label: 'Este ano' }
+    { value: 'year', label: 'Este año' }
   ];
 
   constructor(private adminService: AdminService) {}

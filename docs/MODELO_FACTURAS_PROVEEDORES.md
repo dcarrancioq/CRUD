@@ -195,7 +195,7 @@ ambos es lo que detecta descuadres y manipulacion de totales.
   `devinSessionId` cuando la investigacion se delega a Devin.
 - `DuplicateCandidate`: pareja de facturas con score de similitud y campos coincidentes (evidencia).
 - `RiskAssessment` + `RiskSignal`: score 0-100, banda y recomendacion (`auto_release`, `manual_review`,
-  `block`), con el detalle de senales que suman al score.
+  `block`), con el detalle de señales que suman al score.
 - `AuditEvent`: trazabilidad de alta, bloqueo, resolucion de excepciones y sesiones de Devin creadas.
 
 ### 1.3 Catalogo de reglas implementado
@@ -270,8 +270,8 @@ condiciones.
 - Dos desplegables buscables sobre el registro de facturas (busqueda en servidor por numero, proveedor o
   NIF), con intercambio y filtro "solo diferencias".
 - Veredicto de duplicado con score ponderado y campos coincidentes.
-- Tabla campo a campo con delta absoluto y porcentual, marcando cada campo como senal de duplicado,
-  senal antifraude o informativo; resaltado especifico de cambios de IBAN, titular y divisa.
+- Tabla campo a campo con delta absoluto y porcentual, marcando cada campo como señal de duplicado,
+  señal antifraude o informativo; resaltado especifico de cambios de IBAN, titular y divisa.
 - Detalle de lineas y excepciones de cada factura, y boton "Investigar con IA" que abre un pop-up con la
   conclusion en lenguaje natural (veredicto, evidencias y accion propuesta), sin exponer el payload tecnico.
 
@@ -303,7 +303,7 @@ y la lista se reduce (filtrado local en listas cerradas, busqueda en servidor pa
   del ejercicio anterior.
 - Agrupacion conmutable por sociedad, area o categoria, con barra de ejecucion y desviacion por fila.
 - Graficos: ejecucion presupuestaria acumulada con proyeccion a cierre, consumo por periodo contra
-  presupuesto y contra el ano anterior, y evolucion del gasto de los principales proveedores.
+  presupuesto y contra el año anterior, y evolucion del gasto de los principales proveedores.
 - Indicadores de proveedor: importe adjudicado, numero de pedidos, cumplimiento de plazos, incidencias
   registradas y riesgo medio; y panel de alertas y excepciones.
 
@@ -379,7 +379,7 @@ Endpoints v3 de ambito organizacion que invoca el backend:
 | Consultar sesion | `GET /v3/organizations/{org_id}/sessions/{devin_id}` |
 | Enviar mensaje | `POST /v3/organizations/{org_id}/sessions/{devin_id}/messages` |
 
-El navegador solo llama a `/api/integrations/devin/*`; el backend anade
+El navegador solo llama a `/api/integrations/devin/*`; el backend añade
 `Authorization: Bearer <service user token>`. **El token de servicio no viaja al navegador.** Sin credenciales
 configuradas, `GET /api/integrations/devin/status` devuelve `{ "configured": false }` y la creacion de sesion
 responde 503, sin filtrar nada.

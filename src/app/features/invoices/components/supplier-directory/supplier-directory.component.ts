@@ -17,7 +17,7 @@ type DirectorySortField =
   | 'bankAccountsPendingVerification';
 
 /**
- * Listado de proveedores con las sociedades y areas de la compania a las que
+ * Listado de proveedores con las sociedades y areas de la compañia a las que
  * estan asociados (por imputacion de facturas y por ambito de sus contratos) y
  * los contratos vigentes de cada uno.
  */

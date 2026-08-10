@@ -251,7 +251,7 @@
                         (click)="setAllocationMode('amount')">POR IMPORTE</button>
               </div>
               <button type="button" class="btn btn-sm btn-outline-primary ml-2" (click)="addAllocation()">
-                Anadir CECO
+                Añadir CECO
               </button>
             </div>
           </div>
@@ -312,7 +312,7 @@
         <div class="form-card">
           <div class="card-header-row">
             <h5>Lineas de factura</h5>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLine()">Anadir linea</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLine()">Añadir linea</button>
           </div>
 
           <div class="line-row" *ngFor="let line of lineGroups; let i = index" [formGroup]="line">
