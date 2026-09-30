@@ -141,7 +141,7 @@ button.secondary:disabled { border-color: var(--grey-300); color: var(--grey-700
 /* El zoom se aplica escalando el SVG mediante --zoom */
 .diagram svg {
   width: calc(100% * var(--zoom, 1));
-  max-width: none;
+  max-width: none !important;
   height: auto;
 }
 .placeholder { color: var(--grey-700); font-style: italic; }
