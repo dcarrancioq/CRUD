@@ -846,13 +846,13 @@ $("zoomFitBtn").addEventListener("click", () => {
 });
 
 function setPseudoFullscreen(on) {
-  $("diagramWrap").classList.toggle("pseudo-fs", on);
+  $("diagramsPanel").classList.toggle("pseudo-fs", on);
   document.body.classList.toggle("no-scroll", on);
   $("fullscreenBtn").textContent = on ? "Salir de pantalla completa" : "Pantalla completa";
 }
 
 $("fullscreenBtn").addEventListener("click", async () => {
-  const wrap = $("diagramWrap");
+  const wrap = $("diagramsPanel");
   if (document.fullscreenElement) return document.exitFullscreen();
   if (wrap.classList.contains("pseudo-fs")) return setPseudoFullscreen(false);
   try {
@@ -868,7 +868,7 @@ document.addEventListener("fullscreenchange", () => {
     : "Pantalla completa";
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && $("diagramWrap").classList.contains("pseudo-fs")) setPseudoFullscreen(false);
+  if (e.key === "Escape" && $("diagramsPanel").classList.contains("pseudo-fs")) setPseudoFullscreen(false);
 });
 
 // ---------------------------------------------------------------------------
