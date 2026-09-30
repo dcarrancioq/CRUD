@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
   },
   "description": "Genera diagramas de flujo e historias de usuario a partir de un prompt y una transcripcion, via la Devin API. Look & feel Deloitte.",
   "license": "ISC",

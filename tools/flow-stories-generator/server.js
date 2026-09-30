@@ -3,6 +3,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { readEntry } = require("./lib/unzip");
+const {
+  buildPrompt,
+  buildIterationMessage,
+  buildVersions,
+} = require("./lib/outputs");
 const config = require("./config");
 
 const app = express();
@@ -128,48 +133,6 @@ function listSamples() {
   }
 }
 
-function buildPrompt(userPrompt, transcript, options) {
-  const wantFlow = options.flow !== false;
-  const wantStories = options.stories !== false;
-  const parts = [];
-  parts.push(
-    "Eres un analista funcional. A partir de la siguiente TRANSCRIPCION de una reunion/proceso de negocio y de la INSTRUCCION del usuario, produce una respuesta ESTRICTAMENTE en el formato indicado."
-  );
-  if (userPrompt && userPrompt.trim()) {
-    parts.push(`\n### INSTRUCCION DEL USUARIO\n${userPrompt.trim()}`);
-  }
-  parts.push("\n### FORMATO DE SALIDA OBLIGATORIO");
-  if (wantFlow) {
-    parts.push(
-      [
-        "1) Un unico bloque de codigo Mermaid con el diagrama de flujo del proceso, delimitado exactamente asi:",
-        "```mermaid",
-        "flowchart TD",
-        "  ... (nodos y decisiones del proceso) ...",
-        "```",
-        "Usa etiquetas claras en espanol. Evita acentos y comillas dentro de las etiquetas de los nodos para que Mermaid renderice sin errores.",
-      ].join("\n")
-    );
-  }
-  if (wantStories) {
-    parts.push(
-      [
-        "2) A continuacion, una seccion de historias de usuario en Markdown, delimitada exactamente asi:",
-        "### HISTORIAS DE USUARIO",
-        "- **[HU-01]** Como <rol>, quiero <objetivo>, para <beneficio>.",
-        "  - Criterios de aceptacion: ...",
-        "(genera todas las historias relevantes)",
-      ].join("\n")
-    );
-  }
-  parts.push(
-    `\n### TRANSCRIPCION\n${transcript.slice(0, 45000)}${
-      transcript.length > 45000 ? "\n...(truncada)" : ""
-    }`
-  );
-  return parts.join("\n");
-}
-
 function send(res, result) {
   res.status(result.status).json(result.body);
 }
@@ -215,12 +178,15 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
     if (!transcript.trim() && !(req.body.prompt || "").trim()) {
       return res
         .status(400)
-        .json({ error: "Aporta una transcripcion (fichero/texto) o un prompt." });
+        .json({ error: "Aporta una transcripcion (fichero, audio o texto) o un prompt." });
     }
 
     const options = {
       flow: req.body.flow !== "false",
       stories: req.body.stories !== "false",
+      reengineering: req.body.reengineering === "true",
+      custom: req.body.custom || "",
+      diagramsHint: req.body.diagramsHint || "",
     };
     const prompt = buildPrompt(req.body.prompt || "", transcript, options);
 
@@ -236,7 +202,45 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
   }
 });
 
-// Consulta el estado de la sesion y devuelve el mermaid + historias parseados
+// Envia una correccion a la sesion existente (iteracion sobre los outputs)
+app.post("/api/generate/:id/message", async (req, res) => {
+  try {
+    const feedback = String((req.body && req.body.feedback) || "").trim();
+    if (!feedback) {
+      return res.status(400).json({ error: "Escribe la correccion que quieres aplicar." });
+    }
+    const target = String((req.body && req.body.target) || "all");
+    const message = buildIterationMessage(feedback, target, req.body && req.body.current);
+    const { base, apiKey } = await orgContext(req);
+    const id = encodeURIComponent(req.params.id);
+    const result = await apiFetch(`${base}/sessions/${id}/messages`, apiKey, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message }),
+    });
+    send(res, result);
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message });
+  }
+});
+
+async function fetchAllMessages(base, id, apiKey) {
+  const items = [];
+  let after = null;
+  for (let page = 0; page < 10; page++) {
+    const qs = "first=100" + (after ? "&after=" + encodeURIComponent(after) : "");
+    const r = await apiFetch(`${base}/sessions/${id}/messages?${qs}`, apiKey, {
+      method: "GET",
+    });
+    if (!r.ok || !r.body) break;
+    items.push(...(r.body.items || []));
+    if (!r.body.has_next_page || !r.body.end_cursor) break;
+    after = r.body.end_cursor;
+  }
+  return items;
+}
+
+// Estado de la sesion + versiones parseadas (diagramas y documentos)
 app.get("/api/generate/:id", async (req, res) => {
   try {
     const { base, apiKey } = await orgContext(req);
@@ -247,34 +251,19 @@ app.get("/api/generate/:id", async (req, res) => {
     });
     if (!detail.ok) return send(res, detail);
 
-    const msgs = await apiFetch(
-      `${base}/sessions/${id}/messages?first=100`,
-      apiKey,
-      { method: "GET" }
-    );
-    const items = (msgs.ok && msgs.body && msgs.body.items) || [];
-    const combined = items
-      .filter((m) => m.source === "devin")
-      .map((m) => m.message || "")
-      .filter(Boolean)
-      .join("\n\n");
-
-    const mermaidMatch = combined.match(/```mermaid\s*([\s\S]*?)```/i);
-    const mermaid = mermaidMatch ? mermaidMatch[1].trim() : null;
-
-    let stories = null;
-    const storiesMatch = combined.match(
-      /###\s*HISTORIAS DE USUARIO\s*([\s\S]*?)(?:\n```|$)/i
-    );
-    if (storiesMatch) stories = storiesMatch[1].trim();
+    const items = await fetchAllMessages(base, id, apiKey);
+    const parsed = buildVersions(items);
 
     const j = detail.body || {};
     res.json({
       status: j.status || "unknown",
+      status_detail: j.status_detail || null,
       session_id: j.session_id || req.params.id,
-      mermaid,
-      stories,
-      raw_url: j.url || null,
+      url: j.url || null,
+      versions: parsed.versions,
+      turns: parsed.turns,
+      last_turn_has_content: parsed.lastTurnHasContent,
+      last_devin_message: parsed.lastDevinMessage,
     });
   } catch (e) {
     res.status(e.status || 500).json({ error: e.message });

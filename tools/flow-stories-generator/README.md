@@ -1,44 +1,54 @@
 # Flow & Stories Generator (look & feel Deloitte)
 
-Aplicación web que, a partir de un **prompt** y una **transcripción** (fichero `.docx`/`.txt`/`.md` o texto pegado), genera automáticamente:
+Aplicación web que, a partir de un **prompt** y una **transcripción** (fichero `.docx`/`.txt`/`.md`, texto pegado o **audio transcrito en el navegador**), genera los entregables que se pidan:
 
-- un **diagrama de flujo** del proceso (Mermaid, renderizado en el navegador con la paleta Deloitte), y
-- las **historias de usuario** correspondientes.
+- uno o **varios diagramas de flujo** (Mermaid, con la paleta Deloitte), cada uno con su título;
+- **historias de usuario**;
+- **reingeniería y valor para el negocio** (tabla situación actual → propuesta → valor, impacto, esfuerzo y KPI + quick wins);
+- **otros entregables** libres (p. ej. riesgos, RACI, glosario…).
 
-El diagrama se puede **descargar** en **PNG, JPEG, SVG o GIF**; las historias en **Markdown/TXT**.
-
-La generación se hace "a través de una conversación": el backend crea una sesión de la **Devin API** con el prompt + la transcripción y va recogiendo el resultado.
+Los resultados se pueden **iterar**: se envía una corrección a la misma sesión de Devin y la app guarda cada respuesta como una **versión** nueva.
 
 ## Arquitectura
 
-- **Backend** (`server.js`, Node/Express): extrae el texto del `.docx`, construye el prompt con el formato de salida requerido (bloque ```mermaid``` + sección `### HISTORIAS DE USUARIO`), crea la sesión en la Devin API y expone el estado ya parseado.
-  - `GET /api/health` — estado de configuración.
-  - `POST /api/generate` — crea la sesión (multipart: `file`, `prompt`, `flow`, `stories`, `transcript`).
-  - `GET /api/generate/:id` — devuelve `{ status, mermaid, stories }` parseados de la sesión.
-- **Frontend** (`public/`): interfaz con branding Deloitte, render de Mermaid, editor del diagrama y descargas.
+- **Backend** (`server.js`, Node/Express + `lib/outputs.js`):
+  - `GET /api/health`: estado de la configuración.
+  - `GET /api/samples`, `GET /api/samples/:name`: transcripciones de ejemplo (`SAMPLES_DIR`).
+  - `POST /api/generate`: crea la sesión (multipart: `file`, `transcript`, `prompt`, `flow`, `stories`, `reengineering`, `custom`, `diagramsHint`).
+  - `POST /api/generate/:id/message`: envía una corrección (`{ feedback, target, current }`) a la sesión (`POST /v3/organizations/{org}/sessions/{id}/messages`).
+  - `GET /api/generate/:id`: devuelve `{ status, versions[], turns }`. Cada versión tiene `diagrams[{title, code}]` y `docs[{key, title, md}]`.
+- **Frontend** (`public/`): HTML/CSS/JS sin build. Mermaid, Transformers.js (Whisper) y `modern-gif` se cargan desde CDN.
 
-## API key en el código
+### Formato de respuesta pedido a Devin
 
-La API key va en **`config.js`** (tal y como se pidió). Por seguridad, el repositorio incluye solo un **placeholder**; pega tu key en local:
-
-```js
-// config.js
-DEVIN_API_KEY: process.env.DEVIN_API_KEY || "PON_AQUI_TU_API_KEY",
+````text
+## DIAGRAMA: <título>
+```mermaid
+flowchart TD
+  ...
 ```
+## HISTORIAS DE USUARIO
+## REINGENIERIA Y VALOR DE NEGOCIO
+## OTRO: <nombre>
+````
 
-Genera tu key en `https://deloitte-es.devinenterprise.com/settings` → API Keys.
-También puedes usar variables de entorno (`DEVIN_API_KEY`, `DEVIN_API_BASE_URL`, `PORT`).
+El parser es tolerante: acepta mayúsculas y minúsculas, acentos y bloques `mermaid` sin encabezado. Cuando la corrección afecta a un solo entregable, Devin devuelve solo esa sección y la app la combina con el resto de la versión anterior.
 
-> No subas una API key real al repositorio.
+## API key
+
+La API key se lee de `DEVIN_API_KEY` (o de `config.js` en local). El repositorio solo incluye un placeholder. **No subas una key real al repositorio.**
+Otras variables: `DEVIN_API_BASE_URL`, `DEVIN_ORG_ID` (si no se indica, se obtiene con `/v3/enterprise/self`), `PORT` y `SAMPLES_DIR`.
 
 ## Uso
 
 ```bash
 cd tools/flow-stories-generator
 npm install
-npm start           # http://localhost:3100
+DEVIN_API_KEY=... npm start     # http://localhost:3100
+npm test                        # tests del parser y del versionado
 ```
 
-1. Escribe la instrucción y sube la transcripción (o pega el texto).
-2. Pulsa **Generar**. La app crea la sesión y va mostrando el diagrama y las historias.
-3. Descarga el diagrama (PNG/JPEG/SVG/GIF) y las historias (MD/TXT).
+1. **Transcripción**: sube un documento, elige un ejemplo o **adjunta un audio** (mp3, wav, m4a, ogg, webm, flac) y pulsa **Transcribir**. Whisper se ejecuta en el navegador, con WebGPU si está disponible y WASM si no. El audio no sale del equipo y solo se envía el texto. La primera vez se descarga el modelo (tiny unos 40 MB, base unos 80 MB, small unos 250 MB), que después queda en la caché del navegador. El texto se puede editar antes de generar.
+2. **Entregables**: marca diagramas, historias, reingeniería u otros, y describe qué diagramas quieres (p. ej. «AS-IS y TO-BE por fase»).
+3. **Generar** (entre 1 y 3 minutos). Los resultados se muestran en pestañas. En *Diagramas* hay un selector por diagrama y una **vista general**, además de zoom, pantalla completa, edición del Mermaid y re-render, descarga en PNG/JPEG/SVG/GIF/.mmd y copia de la imagen. Los documentos se pueden descargar en MD/TXT/HTML, copiar y editar.
+4. **Iterar**: elige el entregable afectado (o todos, o añade uno nuevo), escribe la corrección y pulsa **Enviar corrección**. Puedes volver a cualquier versión anterior desde el selector de versiones.

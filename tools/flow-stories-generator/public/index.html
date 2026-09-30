@@ -12,15 +12,15 @@
         <span class="wordmark">Deloitte<span class="dot">.</span></span>
         <span class="app-title">Flow &amp; Stories Generator</span>
       </div>
-      <div class="brand-right">Diagramas de flujo e historias de usuario</div>
+      <div class="brand-right">Diagramas, historias de usuario y reingeniería</div>
     </header>
 
     <main class="container">
       <p class="intro">
-        Sube una transcripción (o pega el texto), escribe una instrucción y genera
-        automáticamente un <strong>diagrama de flujo</strong> y las
-        <strong>historias de usuario</strong>. Descarga el diagrama en PNG, JPEG,
-        SVG o GIF.
+        Aporta una transcripción (fichero, <strong>audio</strong> o texto), elige los
+        entregables y genera <strong>diagramas de flujo</strong>,
+        <strong>historias de usuario</strong>, <strong>reingeniería orientada a valor</strong>
+        u otros outputs. Después, itera con correcciones hasta el resultado final.
       </p>
 
       <section class="card">
@@ -28,7 +28,7 @@
 
         <label class="field">
           <span>Instrucción / prompt</span>
-          <textarea id="prompt" rows="3" placeholder="Ej.: Dibuja el flujo del proceso de negocio descrito y escribe las historias de usuario. Target en Appian."></textarea>
+          <textarea id="prompt" rows="3" placeholder="Ej.: Dibuja un diagrama AS-IS y otro TO-BE del proceso de facturación y escribe las historias de usuario. Target en Appian."></textarea>
         </label>
 
         <div class="row" id="sampleRow" hidden>
@@ -39,79 +39,167 @@
           <button id="loadSampleBtn" type="button" class="secondary">Cargar</button>
         </div>
 
-        <div class="row">
-          <label class="field grow" id="fileDrop">
-            <span>Transcripción (fichero .docx / .txt / .md) — o arrástralo aquí</span>
-            <input id="fileInput" type="file" accept=".docx,.txt,.md,.csv" />
-          </label>
-          <label class="chk">
-            <input id="optFlow" type="checkbox" checked /> Diagrama
-          </label>
-          <label class="chk">
-            <input id="optStories" type="checkbox" checked /> Historias
-          </label>
+        <div class="inputs-grid">
+          <div class="dropzone" id="fileDrop">
+            <span class="dz-title">Documento de transcripción</span>
+            <span class="hint">.docx / .txt / .md / .csv — selecciónalo o arrástralo aquí</span>
+            <div class="dz-row">
+              <input id="fileInput" type="file" accept=".docx,.txt,.md,.csv" />
+              <button id="clearFileBtn" type="button" class="ghost small" hidden>Quitar</button>
+            </div>
+          </div>
+
+          <div class="dropzone" id="audioDrop">
+            <span class="dz-title">Audio de la reunión</span>
+            <span class="hint">.mp3 / .wav / .m4a / .ogg / .webm — se transcribe en tu navegador (Whisper), sin salir del equipo</span>
+            <input id="audioInput" type="file" accept="audio/*,video/webm,video/mp4,.m4a,.mp3,.wav,.ogg,.webm,.flac" />
+            <div class="dz-row">
+              <label class="inline">Idioma
+                <select id="asrLang">
+                  <option value="spanish" selected>Español</option>
+                  <option value="english">Inglés</option>
+                  <option value="catalan">Catalán</option>
+                  <option value="portuguese">Portugués</option>
+                  <option value="french">Francés</option>
+                </select>
+              </label>
+              <label class="inline">Modelo
+                <select id="asrModel">
+                  <option value="onnx-community/whisper-tiny">Rápido (tiny)</option>
+                  <option value="onnx-community/whisper-base" selected>Equilibrado (base)</option>
+                  <option value="onnx-community/whisper-small">Preciso (small)</option>
+                </select>
+              </label>
+              <button id="transcribeBtn" type="button" class="secondary" disabled>Transcribir</button>
+              <button id="cancelAsrBtn" type="button" class="ghost small" hidden>Cancelar</button>
+            </div>
+            <div class="progress" id="asrProgress" hidden><div class="bar" id="asrBar"></div></div>
+            <span id="asrStatus" class="status"></span>
+          </div>
         </div>
 
-        <details class="advanced" id="transcriptAdv">
-          <summary>…o pega el texto de la transcripción</summary>
-          <textarea id="transcript" rows="5" placeholder="Pega aquí el texto de la transcripción (opcional si subes un fichero)."></textarea>
-          <p class="hint" id="loadedHint"></p>
-        </details>
+        <label class="field">
+          <span>Texto de la transcripción <em class="hint">(se rellena al cargar un ejemplo o transcribir un audio; puedes editarlo)</em></span>
+          <textarea id="transcript" rows="6" placeholder="Pega aquí el texto de la transcripción (opcional si subes un fichero)."></textarea>
+        </label>
+        <p class="hint" id="loadedHint"></p>
+
+        <fieldset class="outputs">
+          <legend>Entregables a generar</legend>
+          <div class="out-opt">
+            <label class="chk"><input id="optFlow" type="checkbox" checked /> Diagramas de flujo</label>
+            <input id="diagramsHint" type="text" placeholder="Opcional: qué diagramas (ej.: AS-IS y TO-BE; uno por subproceso)" />
+          </div>
+          <div class="out-opt">
+            <label class="chk"><input id="optStories" type="checkbox" checked /> Historias de usuario</label>
+          </div>
+          <div class="out-opt">
+            <label class="chk"><input id="optReeng" type="checkbox" /> Reingeniería y valor de negocio</label>
+          </div>
+          <div class="out-opt">
+            <label class="chk"><input id="optCustom" type="checkbox" /> Otros</label>
+            <input id="customOutputs" type="text" placeholder="Ej.: Matriz RACI; Riesgos y mitigaciones (separa con ;)" />
+          </div>
+        </fieldset>
 
         <div class="actions">
           <button id="generateBtn" class="primary">Generar</button>
           <span id="genStatus" class="status"></span>
+          <a id="sessionLink" class="session-link" target="_blank" rel="noopener" hidden>Ver sesión en Devin</a>
         </div>
         <p class="hint" id="cfgHint"></p>
       </section>
 
-      <section class="card">
-        <h2><span class="step">2</span> Diagrama de flujo</h2>
-        <div class="toolbar">
-          <div class="dl-group">
-            <span>Descargar:</span>
-            <button class="ghost" data-dl="png">PNG</button>
-            <button class="ghost" data-dl="jpeg">JPEG</button>
-            <button class="ghost" data-dl="svg">SVG</button>
-            <button class="ghost" data-dl="gif">GIF</button>
-          </div>
-          <div class="dl-group">
-            <button id="copyImgBtn" class="secondary">Copiar imagen</button>
-            <button id="fullscreenBtn" class="ghost">Pantalla completa</button>
-          </div>
-          <div class="dl-group zoom-group">
-            <span>Zoom:</span>
-            <button id="zoomOutBtn" class="ghost">−</button>
-            <button id="zoomFitBtn" class="ghost">Ajustar</button>
-            <button id="zoomInBtn" class="ghost">+</button>
-          </div>
-          <button id="reRenderBtn" class="ghost">Re-render</button>
-          <span id="copyStatus" class="status"></span>
-        </div>
-        <div id="diagramWrap" class="diagram-wrap">
-          <div id="diagram" class="diagram">
-            <p class="placeholder">El diagrama aparecerá aquí.</p>
+      <section class="card" id="resultsCard">
+        <div class="card-head">
+          <h2><span class="step">2</span> Resultados</h2>
+          <div class="versions" id="versionsBar" hidden>
+            <label class="inline">Versión
+              <select id="versionSelect"></select>
+            </label>
           </div>
         </div>
-        <details class="advanced">
-          <summary>Ver / editar Mermaid</summary>
-          <textarea id="mermaidSrc" rows="10" spellcheck="false"></textarea>
-        </details>
+        <div class="tabs" id="tabs" role="tablist"></div>
+        <p class="placeholder" id="resultsPlaceholder">Los resultados aparecerán aquí.</p>
+
+        <div id="diagramsPanel" class="panel" hidden>
+          <div class="diagram-list" id="diagramList"></div>
+          <div class="toolbar">
+            <div class="dl-group">
+              <span>Descargar:</span>
+              <button class="ghost" data-dl="png">PNG</button>
+              <button class="ghost" data-dl="jpeg">JPEG</button>
+              <button class="ghost" data-dl="svg">SVG</button>
+              <button class="ghost" data-dl="gif">GIF</button>
+              <button class="ghost" data-dl="mmd">Mermaid</button>
+            </div>
+            <div class="dl-group">
+              <button id="copyImgBtn" class="secondary">Copiar imagen</button>
+              <button id="fullscreenBtn" class="ghost">Pantalla completa</button>
+            </div>
+            <div class="dl-group zoom-group">
+              <span>Zoom:</span>
+              <button id="zoomOutBtn" class="ghost" title="Alejar">−</button>
+              <button id="zoomFitBtn" class="ghost">Ajustar</button>
+              <button id="zoomInBtn" class="ghost" title="Acercar">+</button>
+            </div>
+          </div>
+          <div id="diagramWrap" class="diagram-wrap">
+            <div id="diagram" class="diagram"></div>
+          </div>
+          <details class="advanced" id="mermaidEditor">
+            <summary>Ver / editar Mermaid de este diagrama</summary>
+            <textarea id="mermaidSrc" rows="10" spellcheck="false"></textarea>
+            <div class="actions">
+              <button id="reRenderBtn" class="secondary">Aplicar y re-renderizar</button>
+            </div>
+          </details>
+          <div id="overview" class="overview" hidden></div>
+        </div>
+
+        <div id="docPanel" class="panel" hidden>
+          <div class="toolbar">
+            <div class="dl-group">
+              <span>Descargar:</span>
+              <button class="ghost" data-dls="md">Markdown</button>
+              <button class="ghost" data-dls="txt">TXT</button>
+              <button class="ghost" data-dls="html">HTML</button>
+            </div>
+            <div class="dl-group">
+              <button id="copyDocBtn" class="secondary">Copiar texto</button>
+              <button id="editDocBtn" class="ghost">Editar</button>
+            </div>
+          </div>
+          <div id="docView" class="stories"></div>
+          <div id="docEditor" hidden>
+            <textarea id="docSrc" rows="14" spellcheck="false"></textarea>
+            <div class="actions">
+              <button id="saveDocBtn" class="secondary">Guardar cambios</button>
+              <button id="cancelDocBtn" class="ghost">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <span id="copyStatus" class="status"></span>
       </section>
 
-      <section class="card">
-        <h2><span class="step">3</span> Historias de usuario</h2>
-        <div class="toolbar">
-          <div class="dl-group">
-            <span>Descargar:</span>
-            <button class="ghost" data-dls="md">Markdown</button>
-            <button class="ghost" data-dls="txt">TXT</button>
-          </div>
+      <section class="card" id="iterateCard">
+        <h2><span class="step">3</span> Iterar y corregir</h2>
+        <p class="hint">Envía correcciones a la misma sesión de Devin. Cada respuesta crea una nueva versión (las anteriores se conservan en el selector de versión).</p>
+        <div class="row">
+          <label class="field grow">
+            <span>¿Qué quieres corregir?</span>
+            <select id="iterTarget"></select>
+          </label>
         </div>
-        <div id="stories" class="stories">
-          <p class="placeholder">Las historias de usuario aparecerán aquí.</p>
+        <label class="field">
+          <span>Corrección / instrucciones</span>
+          <textarea id="feedback" rows="3" placeholder="Ej.: En el diagrama TO-BE añade la validación automática de la factura antes de enviarla al cliente."></textarea>
+        </label>
+        <div class="actions">
+          <button id="sendFeedbackBtn" class="primary" disabled>Enviar corrección</button>
+          <span id="iterStatus" class="status"></span>
         </div>
-        <textarea id="storiesSrc" rows="8" spellcheck="false" style="display:none"></textarea>
+        <ol class="history" id="history"></ol>
       </section>
     </main>
 
