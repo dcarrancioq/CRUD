@@ -197,6 +197,7 @@ app.post("/api/generate", upload.single("file"), async (req, res) => {
       flow: req.body.flow !== "false",
       stories: req.body.stories !== "false",
       reengineering: req.body.reengineering === "true",
+      gaps: req.body.gaps === "true",
       custom: req.body.custom || "",
       diagramsHint: req.body.diagramsHint || "",
     };

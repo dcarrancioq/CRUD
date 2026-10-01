@@ -6,6 +6,7 @@ const MAX_TRANSCRIPT = 45000;
 const DOC_TITLES = {
   stories: "Historias de usuario",
   reengineering: "Reingenieria y valor de negocio",
+  gaps: "Gaps",
 };
 
 function normalize(s) {
@@ -39,7 +40,7 @@ function diagramRules() {
     '    {"id": "sel", "lane": "ges", "phase": "f1", "type": "task", "text": "El gestor selecciona las propuestas y lanza **Enviar propuestas**"},',
     '    {"id": "d1", "lane": "ges", "phase": "f2", "type": "decision", "text": "Todas en SIMULACION o ENVIADO?"},',
     '    {"id": "ko", "lane": "ges", "phase": "f2", "type": "error", "text": "Accion rechazada y aviso al usuario"},',
-    '    {"id": "env", "lane": "cms", "phase": "f2", "type": "state", "text": "Propuestas enviadas al cliente", "status": "ENVIADO CLIENTE", "badge": "GAP 1"}',
+    '    {"id": "env", "lane": "cms", "phase": "f2", "type": "state", "text": "Propuestas enviadas al cliente", "status": "ENVIADO CLIENTE"}',
     "  ],",
     '  "edges": [',
     '    {"from": "ini", "to": "sel"}, {"from": "sel", "to": "d1", "label": "FC-141 Enviar"},',
@@ -55,10 +56,19 @@ function diagramRules() {
     "- Textos breves y legibles: maximo unas 15 palabras por caja y 8 por pregunta de decision. Puedes resaltar terminos clave con **negrita**. Usa acentos y signos normales del espanol; escapa las comillas dobles dentro del JSON.",
     "- Toda decision tiene al menos dos flechas de salida con \"label\" (Si/No o la condicion concreta). Etiqueta tambien las flechas que representan una accion, funcionalidad o codigo (p. ej. \"FC-144 Sin respuesta\"). Etiquetas de flecha de maximo 5 palabras.",
     "- Cuando varias actividades ocurran a la vez o en cualquier orden, usa un nodo \"parallel\" para abrir las ramas y otro para unirlas, siempre que haga el flujo mas claro.",
-    "- Usa \"badge\": \"GAP n\" (numeracion correlativa) en los nodos donde detectes huecos funcionales, ambiguedades, reglas no definidas o puntos de dolor, y explicalos brevemente en el titulo o en los supuestos.",
+    "- No marques gaps en los diagramas: no uses \"badge\" ni etiquetas GAP en ningun nodo.",
     "- Usa \"style\": \"dashed\" solo para retrocesos, excepciones o flujos alternativos.",
     "- Las flechas se dibujan automaticamente solo en horizontal o vertical (sin diagonales ni curvas). Para que no se crucen ni se pisen: coloca los nodos conectados en la misma fase o en fases contiguas y en el mismo carril o en carriles contiguos, evita flechas que salten muchos carriles o fases, y no repitas conexiones redundantes.",
     "- Responde con JSON estricto: sin comentarios, sin comas finales y con ids cortos sin espacios.",
+  ].join("\n");
+}
+
+function gapsSection(n) {
+  return [
+    `\n${n}) GAPS, en Markdown, con esta estructura:`,
+    "## GAPS",
+    "Una tabla Markdown con las columnas: | # | Flujo (AS-IS, TO-BE...) | Fase | Actividad o paso | Gap identificado | Impacto (Alto/Medio/Bajo) | Recomendacion |",
+    "Identifica huecos funcionales, ambiguedades, reglas no definidas y puntos de dolor de cada fase de los flujos pedidos, numerados GAP 1, GAP 2...",
   ].join("\n");
 }
 
@@ -73,6 +83,7 @@ function buildPrompt(userPrompt, transcript, options = {}) {
   const wantFlow = options.flow !== false;
   const wantStories = options.stories !== false;
   const wantReeng = !!options.reengineering;
+  const wantGaps = !!options.gaps;
   const customs = customList(options.custom);
   const diagramsHint = String(options.diagramsHint || "").trim();
 
@@ -119,6 +130,7 @@ function buildPrompt(userPrompt, transcript, options = {}) {
       ].join("\n")
     );
   }
+  if (wantGaps) parts.push(gapsSection(n++));
   for (const c of customs) {
     parts.push(
       [
@@ -132,6 +144,12 @@ function buildPrompt(userPrompt, transcript, options = {}) {
     "\nSi la INSTRUCCION DEL USUARIO pide otros entregables no listados arriba, incluyelos tambien, cada uno como una seccion `## OTRO: <nombre del entregable>`." +
       (wantFlow ? "" : " Si pide diagramas, usa el formato `## DIAGRAMA: <titulo>` con un bloque swimlane.")
   );
+  if (!wantGaps) {
+    parts.push(
+      "Identifica gaps SOLO si la INSTRUCCION DEL USUARIO lo pide expresamente; en ese caso entregalos en una seccion propia, nunca dentro de los diagramas:\n" +
+        gapsSection(n)
+    );
+  }
   if (!wantFlow) parts.push(diagramRules());
 
   const t = String(transcript || "");
@@ -159,6 +177,7 @@ function headingForTarget(target) {
   if (target === "new-doc") return "## OTRO: <nombre del entregable>";
   if (target === "stories") return "## HISTORIAS DE USUARIO";
   if (target === "reengineering") return "## REINGENIERIA Y VALOR DE NEGOCIO";
+  if (target === "gaps") return "## GAPS";
   if (target.startsWith("custom:")) return `## OTRO: ${target.slice(7)}`;
   return null;
 }
@@ -173,7 +192,7 @@ function buildIterationMessage(feedback, target, current) {
   lines.push(formatRules());
   if (t === "all") {
     lines.push(
-      "- Aplica la correccion y devuelve TODAS las secciones completas y actualizadas, con los mismos encabezados (## DIAGRAMA: <titulo>, ## HISTORIAS DE USUARIO, ## REINGENIERIA Y VALOR DE NEGOCIO, ## OTRO: <nombre>)."
+      "- Aplica la correccion y devuelve TODAS las secciones que ya existen, completas y actualizadas, con los mismos encabezados (## DIAGRAMA: <titulo>, ## HISTORIAS DE USUARIO, ## REINGENIERIA Y VALOR DE NEGOCIO, ## GAPS, ## OTRO: <nombre>)."
     );
   } else {
     lines.push(
@@ -201,6 +220,7 @@ function classifyHeading(text) {
   if (m) return { type: "diagram", title: raw.slice(raw.length - m[1].length).trim() };
   if (/^historias?\s+de\s+usuario\b/.test(n)) return { type: "doc", key: "stories" };
   if (/^reingenieria\b/.test(n)) return { type: "doc", key: "reengineering" };
+  if (/^gaps?\b/.test(n)) return { type: "doc", key: "gaps" };
   m = n.match(/^otros?(?:\s+outputs?|\s+entregables?)?\s*[:\-–]\s*(.+)$/);
   if (m) {
     const title = raw.slice(raw.length - m[1].length).trim();

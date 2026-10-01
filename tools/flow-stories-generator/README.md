@@ -2,9 +2,10 @@
 
 Aplicación web que, a partir de un **prompt** y una **transcripción** (fichero `.docx`/`.txt`/`.md`, texto pegado o **audio transcrito en el navegador**), genera los entregables que se pidan:
 
-- uno o **varios diagramas de flujo** de carriles (*swimlane*): un carril por actor o sistema, una columna por fase, cajas con color según su tipo (actividad, estado, error, decisión, paralelo, inicio/fin), etiquetas `GAP n` y flechas solo horizontales o verticales, enrutadas para no atravesar cajas y cruzarse lo menos posible;
+- uno o **varios diagramas de flujo** de carriles (*swimlane*): un carril por actor o sistema, una columna por fase, cajas con color según su tipo (actividad, estado, error, decisión, paralelo, inicio/fin) y flechas solo horizontales o verticales, enrutadas para no atravesar cajas y cruzarse lo menos posible;
 - **historias de usuario**;
 - **reingeniería y valor para el negocio** (tabla situación actual → propuesta → valor, impacto, esfuerzo y KPI + quick wins);
+- **gaps** por flujo y fase, solo si se piden (casilla o instrucción expresa), en su propia pestaña y nunca dentro de los diagramas;
 - **otros entregables** libres (p. ej. riesgos, RACI, glosario…).
 
 Los resultados se pueden **iterar**: se envía una corrección a la misma sesión de Devin y la app guarda cada respuesta como una **versión** nueva.
@@ -13,7 +14,7 @@ Los resultados se pueden **iterar**: se envía una corrección a la misma sesió
 
 - **Backend** (`server.js`, Node/Express + `lib/outputs.js`):
   - `GET /api/health`: estado de la configuración.
-  - `POST /api/generate`: crea la sesión (multipart: `file`, `transcript`, `prompt`, `flow`, `stories`, `reengineering`, `custom`, `diagramsHint`).
+  - `POST /api/generate`: crea la sesión (multipart: `file`, `transcript`, `prompt`, `flow`, `stories`, `reengineering`, `gaps`, `custom`, `diagramsHint`).
   - `POST /api/generate/:id/message`: envía una corrección (`{ feedback, target, current }`) a la sesión (`POST /v3/organizations/{org}/sessions/{id}/messages`).
   - `GET /api/generate/:id`: devuelve `{ status, versions[], turns }`. Cada versión tiene `diagrams[{title, code}]` y `docs[{key, title, md}]`.
 - **Frontend** (`public/`): HTML/CSS/JS sin build. `public/swimlane.js` dibuja los diagramas de carriles en SVG (layout por carril y fase, orden de nodos por baricentro y enrutado ortogonal A* con penalización de giros, cruces y solapes). Mermaid sigue disponible para diagramas en ese formato. Mermaid, Transformers.js (Whisper) y `modern-gif` se cargan desde CDN.
@@ -26,7 +27,7 @@ Los resultados se pueden **iterar**: se envía una corrección a la misma sesió
 { "phases": [{"id": "f1", "label": "1. ..."}],
   "lanes":  [{"id": "cli", "label": "Cliente", "sub": "..."}],
   "nodes":  [{"id": "a", "lane": "cli", "phase": "f1", "type": "task|state|error|decision|parallel|start|end",
-              "text": "...", "status": "ESTADO", "badge": "GAP 1"}],
+              "text": "...", "status": "ESTADO"}],
   "edges":  [{"from": "a", "to": "b", "label": "Sí", "style": "dashed"}] }
 ```
 ## HISTORIAS DE USUARIO

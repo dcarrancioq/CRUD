@@ -1077,7 +1077,7 @@ function startPolling(expectedTurns) {
 
 $("generateBtn").addEventListener("click", async () => {
   const wantCustom = $("optCustom").checked && $("customOutputs").value.trim();
-  if (!$("optFlow").checked && !$("optStories").checked && !$("optReeng").checked && !wantCustom && !$("prompt").value.trim()) {
+  if (!$("optFlow").checked && !$("optStories").checked && !$("optReeng").checked && !$("optGaps").checked && !wantCustom && !$("prompt").value.trim()) {
     setStatus($("genStatus"), "Elige al menos un entregable o escribe una instrucción.", "err");
     return;
   }
@@ -1090,6 +1090,7 @@ $("generateBtn").addEventListener("click", async () => {
     form.append("diagramsHint", $("optFlow").checked ? $("diagramsHint").value : "");
     form.append("stories", $("optStories").checked ? "true" : "false");
     form.append("reengineering", $("optReeng").checked ? "true" : "false");
+    form.append("gaps", $("optGaps").checked ? "true" : "false");
     form.append("custom", wantCustom ? $("customOutputs").value : "");
     const file = $("fileInput").files[0];
     if (file) form.append("file", file);
