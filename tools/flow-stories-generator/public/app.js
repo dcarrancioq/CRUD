@@ -71,7 +71,115 @@ function triggerDownload(blob, filename) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+  if (EMBEDDED) showExportModal(blob, filename, "download");
 }
+
+// ---------------------------------------------------------------------------
+// Vista previa integrada (iframe): el navegador puede bloquear descargas y
+// portapapeles, asi que se ofrece una ventana con el contenido y un enlace
+// de descarga servido por el backend.
+// ---------------------------------------------------------------------------
+const EMBEDDED = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+if (EMBEDDED) {
+  $("embedBanner").hidden = false;
+  $("appUrl").value = location.href;
+  $("openTabLink").href = location.href;
+}
+
+$("appUrl").addEventListener("focus", (e) => e.target.select());
+$("copyUrlBtn").addEventListener("click", async () => {
+  $("appUrl").focus();
+  $("appUrl").select();
+  try {
+    await copyText(location.href);
+    $("copyUrlBtn").textContent = "Enlace copiado ✓";
+  } catch {
+    $("copyUrlBtn").textContent = "Selecciona y pulsa Ctrl+C";
+  }
+});
+
+let exportObjectUrl = null;
+
+function closeExportModal() {
+  $("exportModal").hidden = true;
+  $("exportBody").innerHTML = "";
+  if (exportObjectUrl) URL.revokeObjectURL(exportObjectUrl);
+  exportObjectUrl = null;
+}
+
+async function uploadExport(blob, filename) {
+  const r = await fetch("api/export?name=" + encodeURIComponent(filename), {
+    method: "POST",
+    headers: { "Content-Type": blob.type || "application/octet-stream" },
+    body: blob,
+  });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return (await r.json()).url;
+}
+
+async function showExportModal(blob, filename, mode) {
+  const isImage = /^image\//.test(blob.type);
+  const body = $("exportBody");
+  closeExportModal();
+  $("exportTitle").textContent =
+    (mode === "copy" ? "Copiar: " : "Descargar: ") + filename;
+  if (isImage) {
+    exportObjectUrl = URL.createObjectURL(blob);
+    const img = document.createElement("img");
+    img.src = exportObjectUrl;
+    img.alt = filename;
+    body.appendChild(img);
+    $("exportHint").textContent =
+      mode === "copy"
+        ? "Haz clic derecho sobre la imagen → «Copiar imagen» y pégala donde quieras."
+        : "Si no se ha descargado, pulsa «Descargar fichero», ábrela en una pestaña nueva y guárdala con Ctrl+S, o haz clic derecho sobre la imagen → «Guardar imagen como…».";
+  } else {
+    const ta = document.createElement("textarea");
+    ta.readOnly = true;
+    ta.spellcheck = false;
+    ta.value = (await blob.text()).replace(/^\ufeff/, "");
+    body.appendChild(ta);
+    $("exportHint").textContent =
+      mode === "copy"
+        ? "El texto está seleccionado: si no se ha copiado automáticamente, pulsa Ctrl+C (Cmd+C en Mac)."
+        : "Si no se ha descargado, pulsa «Descargar fichero», ábrelo en una pestaña nueva y guárdalo con Ctrl+S, o copia el contenido (Ctrl+A, Ctrl+C).";
+  }
+  $("exportModal").hidden = false;
+  const ta = body.querySelector("textarea");
+  if (ta) {
+    ta.focus();
+    ta.select();
+  }
+  const link = $("exportLink");
+  const openLink = $("exportOpenLink");
+  link.hidden = true;
+  openLink.hidden = true;
+  setStatus($("exportStatus"), "Preparando enlace de descarga…", "busy");
+  try {
+    link.href = await uploadExport(blob, filename);
+    openLink.href = link.href + "?inline=1";
+    link.hidden = false;
+    openLink.hidden = false;
+    setStatus($("exportStatus"), "", "");
+  } catch (e) {
+    setStatus($("exportStatus"), "No se pudo preparar el enlace: " + e.message, "err");
+  }
+}
+
+$("exportClose").addEventListener("click", closeExportModal);
+$("exportModal").addEventListener("click", (e) => {
+  if (e.target === $("exportModal")) closeExportModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("exportModal").hidden) closeExportModal();
+});
 
 // ---------------------------------------------------------------------------
 // Configuracion / health
@@ -627,8 +735,10 @@ $("copyDocBtn").addEventListener("click", async () => {
   try {
     await copyText(doc.md);
     setStatus($("copyStatus"), "Texto copiado ✓", "ok");
+    if (EMBEDDED) showExportModal(new Blob([doc.md], { type: "text/markdown" }), slug(doc.title) + ".md", "copy");
   } catch (e) {
-    setStatus($("copyStatus"), "No se pudo copiar: " + e.message, "err");
+    setStatus($("copyStatus"), "No se pudo copiar automáticamente; cópialo desde la ventana.", "err");
+    showExportModal(new Blob([doc.md], { type: "text/markdown" }), slug(doc.title) + ".md", "copy");
   }
 });
 
@@ -813,17 +923,29 @@ document.querySelectorAll("[data-dl]").forEach((btn) => {
 
 $("copyImgBtn").addEventListener("click", async () => {
   const status = $("copyStatus");
+  let imgPromise = null;
+  if (!getSvgEl()) {
+    setStatus(status, "Selecciona un diagrama renderizado.", "err");
+    return;
+  }
   try {
-    if (!getSvgEl()) throw new Error("no hay diagrama renderizado.");
     if (!navigator.clipboard || !window.ClipboardItem) {
-      throw new Error("el navegador no permite copiar imágenes; usa Descargar PNG.");
+      throw new Error("el navegador no permite copiar imágenes");
     }
     setStatus(status, "Copiando…", "busy");
     const blobPromise = diagramCanvas(3).then((c) => canvasBlob(c, "image/png"));
+    imgPromise = blobPromise;
     await navigator.clipboard.write([new ClipboardItem({ "image/png": blobPromise })]);
     setStatus(status, "Imagen copiada ✓ pégala donde quieras", "ok");
   } catch (e) {
-    setStatus(status, "No se pudo copiar la imagen: " + e.message + " Usa Descargar PNG.", "err");
+    setStatus(status, "No se pudo copiar automáticamente (" + e.message + "). Cópiala desde la ventana.", "err");
+    try {
+      const d = currentDiagram();
+      const blob = await (imgPromise || diagramCanvas(3).then((c) => canvasBlob(c, "image/png")));
+      showExportModal(blob, `${slug(d ? d.title : "diagrama")}_v${state.vIdx + 1}.png`, "copy");
+    } catch (e2) {
+      setStatus(status, "No se pudo generar la imagen: " + e2.message, "err");
+    }
   }
 });
 

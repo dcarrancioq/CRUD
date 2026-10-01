@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const { readEntry } = require("./lib/unzip");
 const {
   buildPrompt,
@@ -140,6 +141,50 @@ function send(res, result) {
 // ---------------------------------------------------------------------------
 // Rutas
 // ---------------------------------------------------------------------------
+
+// Ficheros exportados desde el navegador, servidos como descarga normal
+// (alternativa cuando el navegador bloquea las descargas generadas en la pagina).
+const exportsStore = new Map();
+const EXPORT_TTL_MS = 30 * 60 * 1000;
+
+app.post(
+  "/api/export",
+  express.raw({ type: () => true, limit: "60mb" }),
+  (req, res) => {
+    const now = Date.now();
+    for (const [k, v] of exportsStore) {
+      if (now - v.at > EXPORT_TTL_MS) exportsStore.delete(k);
+    }
+    if (!req.body || !req.body.length) {
+      return res.status(400).json({ error: "Fichero vacio." });
+    }
+    const name =
+      String(req.query.name || "salida")
+        .replace(/[^\w.\-]+/g, "_")
+        .slice(0, 120) || "salida";
+    const id = crypto.randomUUID();
+    exportsStore.set(id, {
+      name,
+      type: req.headers["content-type"] || "application/octet-stream",
+      data: req.body,
+      at: now,
+    });
+    res.json({ url: `api/export/${id}/${encodeURIComponent(name)}` });
+  }
+);
+
+app.get("/api/export/:id/:name?", (req, res) => {
+  const item = exportsStore.get(req.params.id);
+  if (!item) return res.status(404).send("El fichero ha caducado; vuelve a descargarlo.");
+  if (req.query.inline) {
+    res.setHeader("Content-Disposition", `inline; filename="${item.name}"`);
+    res.setHeader("Content-Security-Policy", "sandbox");
+  } else {
+    res.attachment(item.name);
+  }
+  res.type(item.type);
+  res.send(item.data);
+});
 
 app.get("/api/health", (req, res) => {
   const { baseUrl, apiKey } = getConfig(req);

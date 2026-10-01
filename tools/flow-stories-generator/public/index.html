@@ -15,6 +15,14 @@
       <div class="brand-right">Diagramas, historias de usuario y reingeniería</div>
     </header>
 
+    <div id="embedBanner" class="embed-banner" hidden>
+      <strong>Estás usando la app dentro de la vista previa integrada.</strong>
+      Ahí el navegador bloquea las descargas y el portapapeles. Para usarlos, abre la app en una pestaña normal del navegador:
+      <input id="appUrl" type="text" readonly />
+      <button id="copyUrlBtn" type="button" class="secondary small">Copiar enlace</button>
+      <a id="openTabLink" class="btn-link" target="_blank" rel="noopener">Abrir en pestaña nueva</a>
+    </div>
+
     <main class="container">
       <p class="intro">
         Aporta una transcripción (fichero, <strong>audio</strong> o texto), elige los
@@ -202,6 +210,22 @@
         <ol class="history" id="history"></ol>
       </section>
     </main>
+
+    <div id="exportModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3 id="exportTitle">Exportar</h3>
+          <button id="exportClose" type="button" class="ghost small" aria-label="Cerrar">✕</button>
+        </div>
+        <p id="exportHint" class="modal-hint"></p>
+        <div id="exportBody" class="modal-body"></div>
+        <div class="actions">
+          <a id="exportLink" class="btn-link primary" target="_blank" rel="noopener" hidden>Descargar fichero</a>
+          <a id="exportOpenLink" class="btn-link" target="_blank" rel="noopener" hidden>Abrir en pestaña nueva</a>
+          <span id="exportStatus" class="status"></span>
+        </div>
+      </div>
+    </div>
 
     <footer class="footer">
       <span class="wordmark small">Deloitte<span class="dot">.</span></span>

@@ -52,3 +52,7 @@ npm test                        # tests del parser y del versionado
 2. **Entregables**: marca diagramas, historias, reingeniería u otros, y describe qué diagramas quieres (p. ej. «AS-IS y TO-BE por fase»).
 3. **Generar** (entre 1 y 3 minutos). Los resultados se muestran en pestañas. En *Diagramas* hay un selector por diagrama y una **vista general**, además de zoom, pantalla completa, edición del Mermaid y re-render, descarga en PNG/JPEG/SVG/GIF/.mmd y copia de la imagen. Los documentos se pueden descargar en MD/TXT/HTML, copiar y editar.
 4. **Iterar**: elige el entregable afectado (o todos, o añade uno nuevo), escribe la corrección y pulsa **Enviar corrección**. Puedes volver a cualquier versión anterior desde el selector de versiones.
+
+### Descargas y portapapeles en la vista previa integrada
+
+Si la app se abre dentro de un `iframe` (p. ej. la vista previa integrada de Devin), el navegador puede bloquear las descargas y el portapapeles. La app lo detecta, muestra un aviso con el enlace para abrirla en una pestaña normal y, al pulsar Descargar o Copiar, abre una ventana con el contenido (imagen o texto seleccionado), un enlace **Descargar fichero** y otro **Abrir en pestaña nueva** (servidos por `POST /api/export` y `GET /api/export/:id`, que guardan los ficheros en memoria durante 30 minutos).

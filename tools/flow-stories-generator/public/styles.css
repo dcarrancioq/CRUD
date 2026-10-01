@@ -247,3 +247,56 @@ body.no-scroll { overflow: hidden; }
 .history li.pending { color: var(--grey-700); font-style: italic; }
 button.link { background: none; border: none; padding: 0; color: var(--deloitte-green-dark); text-align: left; }
 button.link:hover { text-decoration: underline; }
+
+/* Vista previa integrada / exportacion alternativa */
+.embed-banner {
+  background: #fff8e1;
+  border-bottom: 2px solid #f0b400;
+  padding: 10px 24px;
+  font-size: 0.92rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.embed-banner input { flex: 1 1 320px; min-width: 220px; padding: 5px 8px; font-size: 0.85rem; }
+.btn-link {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--deloitte-green);
+  color: var(--deloitte-green-dark);
+  font-weight: 600;
+  text-decoration: none;
+  background: #fff;
+}
+.btn-link:hover { background: var(--deloitte-green); color: #000; }
+.btn-link.primary { background: var(--deloitte-green); color: #000; }
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal[hidden] { display: none; }
+.modal-box {
+  background: #fff;
+  border-top: 4px solid var(--deloitte-green);
+  border-radius: 6px;
+  width: min(1100px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  gap: 10px;
+}
+.modal-head { display: flex; justify-content: space-between; align-items: center; }
+.modal-head h3 { margin: 0; }
+.modal-hint { margin: 0; color: var(--grey-700); }
+.modal-body { overflow: auto; flex: 1; min-height: 120px; border: 1px solid var(--grey-300); border-radius: 4px; }
+.modal-body img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.modal-body textarea { width: 100%; height: 55vh; border: 0; font-family: Consolas, monospace; font-size: 0.85rem; resize: none; }
