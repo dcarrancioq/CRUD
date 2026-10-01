@@ -771,17 +771,17 @@
 
     // Etiquetas de flechas
     const placed = [];
-    const overlaps = (r) =>
-      r.x < S.laneHeadW + 4 ||
-      r.x + r.w > L.width - 2 ||
-      spec.nodes.some((n) => r.x < n.x + n.w && r.x + r.w > n.x && r.y < n.y + n.h && r.y + r.h > n.y) ||
-      placed.some((q) => r.x < q.x + q.w && r.x + r.w > q.x && r.y < q.y + q.h && r.y + r.h > q.y);
+    const inter = (r, q) =>
+      Math.max(0, Math.min(r.x + r.w, q.x + q.w) - Math.max(r.x, q.x)) *
+      Math.max(0, Math.min(r.y + r.h, q.y + q.h) - Math.max(r.y, q.y));
+    const overlapArea = (r) =>
+      Math.max(0, S.laneHeadW + 4 - r.x) * r.h * 4 +
+      Math.max(0, r.x + r.w - L.width + 2) * r.h * 4 +
+      spec.nodes.reduce((a, n) => a + inter(r, n) * 3, 0) +
+      placed.reduce((a, q) => a + inter(r, q), 0);
     spec.edges.forEach((e, i) => {
       const pts = L.routes[i];
       if (!e.label || !pts || pts.length < 2) return;
-      const lines = wrap(e.label, S.labelMaxW, S.labelFont, false);
-      const lw = Math.max(...lines.map((l) => lineWidth(l, S.labelFont))) + 14;
-      const lh = lines.length * S.labelLineH + 8;
       const segs = [];
       for (let k = 0; k + 1 < pts.length; k++) {
         const [x1, y1] = pts[k];
@@ -789,21 +789,38 @@
         segs.push({ x1, y1, x2, y2, len: Math.abs(x2 - x1) + Math.abs(y2 - y1) });
       }
       segs.sort((a, b) => b.len - a.len);
+      const ts = [0.5, 0.35, 0.65, 0.2, 0.8, 0.1, 0.9];
       let rect = null;
-      outer: for (const s of segs) {
-        for (const t of [0.5, 0.3, 0.7, 0.2, 0.8]) {
-          const cx = s.x1 + (s.x2 - s.x1) * t;
-          const cy = s.y1 + (s.y2 - s.y1) * t;
-          const r = { x: cx - lw / 2, y: cy - lh / 2, w: lw, h: lh };
-          if (!overlaps(r)) {
-            rect = r;
-            break outer;
+      let lines = null;
+      let best = null;
+      outer: for (const maxW of [S.labelMaxW, 96, 72]) {
+        const ls = wrap(e.label, maxW, S.labelFont, false);
+        const lw = Math.max(...ls.map((l) => lineWidth(l, S.labelFont))) + 14;
+        const lh = ls.length * S.labelLineH + 8;
+        for (const s of segs) {
+          const vertical = s.x1 === s.x2;
+          for (const t of ts) {
+            const cx = s.x1 + (s.x2 - s.x1) * t;
+            const cy = s.y1 + (s.y2 - s.y1) * t;
+            const cands = vertical
+              ? [[cx - lw / 2, cy - lh / 2], [cx + 6, cy - lh / 2], [cx - lw - 6, cy - lh / 2]]
+              : [[cx - lw / 2, cy - lh / 2], [cx - lw / 2, cy - lh - 6], [cx - lw / 2, cy + 6]];
+            for (const [x, y] of cands) {
+              const r = { x, y, w: lw, h: lh };
+              const score = overlapArea(r);
+              if (!score) {
+                rect = r;
+                lines = ls;
+                break outer;
+              }
+              if (!best || score < best.score) best = { score, r, ls };
+            }
           }
         }
       }
       if (!rect) {
-        const s = segs[0];
-        rect = { x: (s.x1 + s.x2) / 2 - lw / 2, y: (s.y1 + s.y2) / 2 - lh / 2, w: lw, h: lh };
+        rect = best.r;
+        lines = best.ls;
       }
       placed.push(rect);
       o.push(
