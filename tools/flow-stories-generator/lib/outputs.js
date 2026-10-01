@@ -28,13 +28,37 @@ function formatRules() {
 
 function diagramRules() {
   return [
-    "Para cada diagrama usa EXACTAMENTE esta estructura:",
+    "Para cada diagrama usa EXACTAMENTE esta estructura (un bloque ```swimlane``` con JSON valido por diagrama):",
     "## DIAGRAMA: <titulo descriptivo y unico>",
-    "```mermaid",
-    "flowchart TD",
-    "  ... (nodos y decisiones) ...",
+    "```swimlane",
+    "{",
+    '  "phases": [{"id": "f1", "label": "1. Simulacion y listado"}, {"id": "f2", "label": "2. Envio de propuestas (FC-141)"}],',
+    '  "lanes": [{"id": "cli", "label": "Cliente", "sub": "responde fuera del sistema"}, {"id": "ges", "label": "Gestor comercial", "sub": "Retail y Flotas"}, {"id": "cms", "label": "CMS / HOST", "sub": "estados automaticos"}],',
+    '  "nodes": [',
+    '    {"id": "ini", "lane": "cms", "phase": "f1", "type": "start", "text": "Simulaciones generadas en el CMS"},',
+    '    {"id": "sel", "lane": "ges", "phase": "f1", "type": "task", "text": "El gestor selecciona las propuestas y lanza **Enviar propuestas**"},',
+    '    {"id": "d1", "lane": "ges", "phase": "f2", "type": "decision", "text": "Todas en SIMULACION o ENVIADO?"},',
+    '    {"id": "ko", "lane": "ges", "phase": "f2", "type": "error", "text": "Accion rechazada y aviso al usuario"},',
+    '    {"id": "env", "lane": "cms", "phase": "f2", "type": "state", "text": "Propuestas enviadas al cliente", "status": "ENVIADO CLIENTE", "badge": "GAP 1"}',
+    "  ],",
+    '  "edges": [',
+    '    {"from": "ini", "to": "sel"}, {"from": "sel", "to": "d1", "label": "FC-141 Enviar"},',
+    '    {"from": "d1", "to": "ko", "label": "No"}, {"from": "d1", "to": "env", "label": "Si"}',
+    "  ]",
+    "}",
     "```",
-    "Un bloque ```mermaid``` por diagrama. Usa etiquetas claras en espanol, sin acentos ni comillas dentro de las etiquetas de los nodos, para que Mermaid renderice sin errores.",
+    "REGLAS DE ESTRUCTURA Y FORMATO DEL DIAGRAMA (diagrama de carriles tipo swimlane, como referencia corporativa):",
+    "- \"lanes\" = filas horizontales, una por actor, rol, area o sistema que participa (cliente, gestor, aplicaciones, sistemas core, terceros...). Ordenalas de arriba a abajo agrupando los que interactuan mas entre si, para que las flechas recorran la menor distancia posible. \"sub\" es una descripcion breve del carril.",
+    "- \"phases\" = columnas de izquierda a derecha con las etapas del proceso, numeradas (\"1. ...\", \"2. ...\") e incluyendo entre parentesis los codigos de funcionalidad/pantalla si existen. Usa entre 3 y 7 fases.",
+    "- Cada nodo va en exactamente un carril (lane) y una fase (phase). El flujo avanza de izquierda a derecha por fases y entre carriles de arriba a abajo; evita flechas hacia atras salvo retrocesos reales.",
+    "- Tipos de nodo (type): \"task\" (actividad o accion, caja azul), \"state\" (resultado o estado alcanzado, caja verde; pon el estado en MAYUSCULAS en \"status\"), \"error\" (rechazo, error, caducidad o anulacion, caja roja; estado en \"status\"), \"decision\" (rombo amarillo con una pregunta corta terminada en ?), \"parallel\" (rombo con + para bifurcar en ramas paralelas y para volver a unirlas), \"start\" y \"end\" (inicio y fin, caja azul oscuro).",
+    "- Textos breves y legibles: maximo unas 15 palabras por caja y 8 por pregunta de decision. Puedes resaltar terminos clave con **negrita**. Usa acentos y signos normales del espanol; escapa las comillas dobles dentro del JSON.",
+    "- Toda decision tiene al menos dos flechas de salida con \"label\" (Si/No o la condicion concreta). Etiqueta tambien las flechas que representan una accion, funcionalidad o codigo (p. ej. \"FC-144 Sin respuesta\"). Etiquetas de flecha de maximo 5 palabras.",
+    "- Cuando varias actividades ocurran a la vez o en cualquier orden, usa un nodo \"parallel\" para abrir las ramas y otro para unirlas, siempre que haga el flujo mas claro.",
+    "- Usa \"badge\": \"GAP n\" (numeracion correlativa) en los nodos donde detectes huecos funcionales, ambiguedades, reglas no definidas o puntos de dolor, y explicalos brevemente en el titulo o en los supuestos.",
+    "- Usa \"style\": \"dashed\" solo para retrocesos, excepciones o flujos alternativos.",
+    "- Las flechas se dibujan automaticamente solo en horizontal o vertical (sin diagonales ni curvas). Para que no se crucen ni se pisen: coloca los nodos conectados en la misma fase o en fases contiguas y en el mismo carril o en carriles contiguos, evita flechas que salten muchos carriles o fases, y no repitas conexiones redundantes.",
+    "- Responde con JSON estricto: sin comentarios, sin comas finales y con ids cortos sin espacios.",
   ].join("\n");
 }
 
@@ -106,7 +130,7 @@ function buildPrompt(userPrompt, transcript, options = {}) {
   }
   parts.push(
     "\nSi la INSTRUCCION DEL USUARIO pide otros entregables no listados arriba, incluyelos tambien, cada uno como una seccion `## OTRO: <nombre del entregable>`." +
-      (wantFlow ? "" : " Si pide diagramas, usa el formato `## DIAGRAMA: <titulo>` con un bloque mermaid.")
+      (wantFlow ? "" : " Si pide diagramas, usa el formato `## DIAGRAMA: <titulo>` con un bloque swimlane.")
   );
   if (!wantFlow) parts.push(diagramRules());
 
@@ -185,10 +209,29 @@ function classifyHeading(text) {
   return null;
 }
 
-function mermaidBlocks(text) {
-  return [...String(text).matchAll(/```\s*mermaid\s*\n([\s\S]*?)```/gi)].map((m) =>
-    m[1].trim()
-  );
+const DIAGRAM_FENCE = /```[ \t]*(mermaid|swimlane|json)[ \t]*\n([\s\S]*?)```/gi;
+
+// lenient=true acepta tambien bloques ```json``` (solo dentro de secciones DIAGRAMA).
+function diagramBlocks(text, lenient) {
+  const out = [];
+  for (const m of String(text).matchAll(DIAGRAM_FENCE)) {
+    const lang = m[1].toLowerCase();
+    if (lang === "json" && !(lenient && /"(lanes|nodes)"/.test(m[2]))) continue;
+    out.push(m[2].trim());
+  }
+  return out;
+}
+
+function stripDiagramBlocks(text) {
+  return String(text).replace(/```[ \t]*(mermaid|swimlane)[ \t]*\n[\s\S]*?```/gi, "");
+}
+
+function isSwimlane(code) {
+  return /^\s*\{/.test(String(code || ""));
+}
+
+function fencedDiagram(code) {
+  return "```" + (isSwimlane(code) ? "swimlane" : "mermaid") + "\n" + code + "\n```";
 }
 
 // Divide la respuesta en diagramas y documentos Markdown.
@@ -221,21 +264,20 @@ function parseOutputs(text) {
     out.diagrams.push({ title: t, code });
   };
 
-  for (const orphanCode of mermaidBlocks(orphan.join("\n"))) addDiagram(null, orphanCode);
+  for (const orphanCode of diagramBlocks(orphan.join("\n"), false)) addDiagram(null, orphanCode);
 
   for (const s of sections) {
     const body = s.body.join("\n").trim();
     if (s.type === "diagram") {
-      const blocks = mermaidBlocks(body);
+      const blocks = diagramBlocks(body, true);
       blocks.forEach((code, i) =>
         addDiagram(blocks.length > 1 ? `${s.title} (${i + 1})` : s.title, code)
       );
       continue;
     }
-    const embedded = mermaidBlocks(body);
+    const embedded = diagramBlocks(body, false);
     embedded.forEach((code) => addDiagram(null, code));
-    const md = body
-      .replace(/```\s*mermaid\s*\n[\s\S]*?```/gi, "")
+    const md = stripDiagramBlocks(body)
       .replace(/\n?```\s*$/, "")
       .trim();
     if (!md) continue;
@@ -329,4 +371,6 @@ module.exports = {
   buildVersions,
   parseIterationHeader,
   customList,
+  isSwimlane,
+  fencedDiagram,
 };

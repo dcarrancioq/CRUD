@@ -13,7 +13,9 @@ mermaid.initialize({
     secondaryColor: "#26890d",
     tertiaryColor: "#f4f4f2",
     fontFamily: "Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+    fontSize: "18px",
   },
+  flowchart: { curve: "step", nodeSpacing: 60, rankSpacing: 70, padding: 14 },
 });
 
 const POLL_MS = 5000;
@@ -563,6 +565,11 @@ async function mermaidSvg(code) {
   return svg;
 }
 
+async function diagramSvg(code) {
+  if (Swimlane.isSwimlane(code)) return Swimlane.render(code);
+  return mermaidSvg(code);
+}
+
 function renderDiagramsPanel(v) {
   if (state.dIdx >= v.diagrams.length) state.dIdx = 0;
   const list = $("diagramList");
@@ -590,6 +597,7 @@ function renderDiagramsPanel(v) {
   else {
     const d = v.diagrams[state.dIdx];
     $("mermaidSrc").value = d.code;
+    $("codeDlBtn").textContent = Swimlane.isSwimlane(d.code) ? "JSON" : "Mermaid";
     renderDiagram(d.code);
   }
   renderIterTargets();
@@ -598,12 +606,12 @@ function renderDiagramsPanel(v) {
 async function renderDiagram(code) {
   const container = $("diagram");
   try {
-    container.innerHTML = await mermaidSvg(code);
+    container.innerHTML = await diagramSvg(code);
   } catch (e) {
     container.innerHTML =
-      '<p class="status err">Error al renderizar el Mermaid: ' +
+      '<p class="status err">Error al renderizar el diagrama: ' +
       escapeHtml(e.message || String(e)) +
-      "</p><p class=\"hint\">Corrige el código en «Ver / editar Mermaid» o pide la corrección en el paso 3.</p>";
+      "</p><p class=\"hint\">Corrige el código en «Ver / editar código» o pide la corrección en el paso 3.</p>";
   }
   applyZoom();
 }
@@ -623,9 +631,9 @@ async function renderOverview(v) {
     });
     grid.appendChild(card);
     try {
-      card.querySelector(".ov-svg").innerHTML = await mermaidSvg(d.code);
+      card.querySelector(".ov-svg").innerHTML = await diagramSvg(d.code);
     } catch {
-      card.querySelector(".ov-svg").innerHTML = '<p class="status err">Error de sintaxis Mermaid</p>';
+      card.querySelector(".ov-svg").innerHTML = '<p class="status err">Error de sintaxis del diagrama</p>';
     }
   }
 }
@@ -803,6 +811,7 @@ async function diagramCanvas(scale = 3, maxW) {
   } catch (e) {
     if (e.name !== "SecurityError") throw e;
     const d = currentDiagram();
+    if (Swimlane.isSwimlane(d.code)) throw e;
     const svgText = await mermaidSvg('%%{init: {"flowchart": {"htmlLabels": false}} }%%\n' + d.code);
     const holder = document.createElement("div");
     holder.style.cssText = "position:absolute;left:-99999px;top:0;";
@@ -855,6 +864,7 @@ async function downloadDiagram(fmt, btn) {
     let ext = fmt;
     if (fmt === "mmd") {
       blob = new Blob([d.code], { type: "text/plain;charset=utf-8" });
+      if (Swimlane.isSwimlane(d.code)) ext = "json";
     } else if (fmt === "svg") {
       blob = new Blob([serializeSvg(getSvgEl()).str], { type: "image/svg+xml;charset=utf-8" });
     } else if (fmt === "png") {
@@ -1143,7 +1153,7 @@ function currentContentFor(target) {
   if (!v) return "";
   if (target.startsWith("diagram:")) {
     const d = v.diagrams.find((x) => x.title === target.slice(8));
-    return d ? "```mermaid\n" + d.code + "\n```" : "";
+    return d ? "```" + (Swimlane.isSwimlane(d.code) ? "swimlane" : "mermaid") + "\n" + d.code + "\n```" : "";
   }
   const doc = v.docs.find((x) => x.key === target);
   return doc ? doc.md : "";

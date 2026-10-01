@@ -131,7 +131,7 @@
               <button class="ghost" data-dl="jpeg">JPEG</button>
               <button class="ghost" data-dl="svg">SVG</button>
               <button class="ghost" data-dl="gif">GIF</button>
-              <button class="ghost" data-dl="mmd">Mermaid</button>
+              <button class="ghost" data-dl="mmd" id="codeDlBtn">Mermaid</button>
             </div>
             <div class="dl-group">
               <button id="copyImgBtn" class="secondary">Copiar imagen</button>
@@ -148,7 +148,7 @@
             <div id="diagram" class="diagram"></div>
           </div>
           <details class="advanced" id="mermaidEditor">
-            <summary>Ver / editar Mermaid de este diagrama</summary>
+            <summary>Ver / editar código de este diagrama</summary>
             <textarea id="mermaidSrc" rows="10" spellcheck="false"></textarea>
             <div class="actions">
               <button id="reRenderBtn" class="secondary">Aplicar y re-renderizar</button>
@@ -225,6 +225,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="swimlane.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
