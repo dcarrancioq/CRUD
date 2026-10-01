@@ -39,14 +39,6 @@
           <textarea id="prompt" rows="3" placeholder="Ej.: Dibuja un diagrama AS-IS y otro TO-BE del proceso de facturación y escribe las historias de usuario. Target en Appian."></textarea>
         </label>
 
-        <div class="row" id="sampleRow" hidden>
-          <label class="field grow">
-            <span>Transcripción de ejemplo (en el servidor)</span>
-            <select id="sampleSelect"></select>
-          </label>
-          <button id="loadSampleBtn" type="button" class="secondary">Cargar</button>
-        </div>
-
         <div class="inputs-grid">
           <div class="dropzone" id="fileDrop">
             <span class="dz-title">Documento de transcripción</span>
@@ -87,7 +79,7 @@
         </div>
 
         <label class="field">
-          <span>Texto de la transcripción <em class="hint">(se rellena al cargar un ejemplo o transcribir un audio; puedes editarlo)</em></span>
+          <span>Texto de la transcripción <em class="hint">(se rellena al transcribir un audio; puedes editarlo)</em></span>
           <textarea id="transcript" rows="6" placeholder="Pega aquí el texto de la transcripción (opcional si subes un fichero)."></textarea>
         </label>
         <p class="hint" id="loadedHint"></p>

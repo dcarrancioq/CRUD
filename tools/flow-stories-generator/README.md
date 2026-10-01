@@ -13,7 +13,6 @@ Los resultados se pueden **iterar**: se envía una corrección a la misma sesió
 
 - **Backend** (`server.js`, Node/Express + `lib/outputs.js`):
   - `GET /api/health`: estado de la configuración.
-  - `GET /api/samples`, `GET /api/samples/:name`: transcripciones de ejemplo (`SAMPLES_DIR`).
   - `POST /api/generate`: crea la sesión (multipart: `file`, `transcript`, `prompt`, `flow`, `stories`, `reengineering`, `custom`, `diagramsHint`).
   - `POST /api/generate/:id/message`: envía una corrección (`{ feedback, target, current }`) a la sesión (`POST /v3/organizations/{org}/sessions/{id}/messages`).
   - `GET /api/generate/:id`: devuelve `{ status, versions[], turns }`. Cada versión tiene `diagrams[{title, code}]` y `docs[{key, title, md}]`.
@@ -37,7 +36,7 @@ El parser es tolerante: acepta mayúsculas y minúsculas, acentos y bloques `mer
 ## API key
 
 La API key se lee de `DEVIN_API_KEY` (o de `config.js` en local). El repositorio solo incluye un placeholder. **No subas una key real al repositorio.**
-Otras variables: `DEVIN_API_BASE_URL`, `DEVIN_ORG_ID` (si no se indica, se obtiene con `/v3/enterprise/self`), `PORT` y `SAMPLES_DIR`.
+Otras variables: `DEVIN_API_BASE_URL`, `DEVIN_ORG_ID` (si no se indica, se obtiene con `/v3/enterprise/self`) y `PORT`.
 
 ## Uso
 
@@ -48,7 +47,7 @@ DEVIN_API_KEY=... npm start     # http://localhost:3100
 npm test                        # tests del parser y del versionado
 ```
 
-1. **Transcripción**: sube un documento, elige un ejemplo o **adjunta un audio** (mp3, wav, m4a, ogg, webm, flac) y pulsa **Transcribir**. Whisper se ejecuta en el navegador, con WebGPU si está disponible y WASM si no. El audio no sale del equipo y solo se envía el texto. La primera vez se descarga el modelo (tiny unos 40 MB, base unos 80 MB, small unos 250 MB), que después queda en la caché del navegador. El texto se puede editar antes de generar.
+1. **Transcripción**: adjunta un documento (docx, txt, md, csv), pega el texto o **adjunta un audio** (mp3, wav, m4a, ogg, webm, flac) y pulsa **Transcribir**. Whisper se ejecuta en el navegador, con WebGPU si está disponible y WASM si no. El audio no sale del equipo y solo se envía el texto. La primera vez se descarga el modelo (tiny unos 40 MB, base unos 80 MB, small unos 250 MB), que después queda en la caché del navegador. El texto se puede editar antes de generar.
 2. **Entregables**: marca diagramas, historias, reingeniería u otros, y describe qué diagramas quieres (p. ej. «AS-IS y TO-BE por fase»).
 3. **Generar** (entre 1 y 3 minutos). Los resultados se muestran en pestañas. En *Diagramas* hay un selector por diagrama y una **vista general**, además de zoom, pantalla completa, edición del Mermaid y re-render, descarga en PNG/JPEG/SVG/GIF/.mmd y copia de la imagen. Los documentos se pueden descargar en MD/TXT/HTML, copiar y editar.
 4. **Iterar**: elige el entregable afectado (o todos, o añade uno nuevo), escribe la corrección y pulsa **Enviar corrección**. Puedes volver a cualquier versión anterior desde el selector de versiones.

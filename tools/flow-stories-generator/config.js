@@ -24,9 +24,4 @@ module.exports = {
   DEVIN_ORG_ID: process.env.DEVIN_ORG_ID || "",
 
   PORT: process.env.PORT || 3100,
-
-  // Carpeta con transcripciones de ejemplo que la app ofrece en un desplegable
-  // (para poder cargar un documento sin usar el dialogo del sistema).
-  // No subas transcripciones confidenciales al repositorio.
-  SAMPLES_DIR: process.env.SAMPLES_DIR || require("path").join(__dirname, "samples"),
 };

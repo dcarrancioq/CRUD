@@ -198,55 +198,12 @@ async function checkHealth() {
 checkHealth();
 
 // ---------------------------------------------------------------------------
-// Entradas: ejemplos, documento, audio
+// Entradas: documento, audio
 // ---------------------------------------------------------------------------
-async function loadSamplesList() {
-  try {
-    const r = await fetch("/api/samples");
-    const j = await r.json();
-    const samples = j.samples || [];
-    if (!samples.length) return;
-    const sel = $("sampleSelect");
-    sel.innerHTML = "";
-    for (const name of samples) {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
-    }
-    $("sampleRow").hidden = false;
-  } catch {
-    /* sin ejemplos disponibles */
-  }
-}
-loadSamplesList();
-
 function clearDocFile() {
   $("fileInput").value = "";
   $("clearFileBtn").hidden = true;
 }
-
-$("loadSampleBtn").addEventListener("click", async () => {
-  const name = $("sampleSelect").value;
-  if (!name) return;
-  const btn = $("loadSampleBtn");
-  btn.disabled = true;
-  btn.textContent = "Cargando…";
-  try {
-    const r = await fetch("/api/samples/" + encodeURIComponent(name));
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || "No se pudo cargar el ejemplo.");
-    $("transcript").value = j.text || "";
-    clearDocFile();
-    $("loadedHint").textContent =
-      "Transcripción cargada: " + name + " (" + (j.text || "").length + " caracteres).";
-  } catch (e) {
-    $("loadedHint").textContent = "Error: " + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Cargar";
-  }
-});
 
 function onDocFileSelected() {
   const f = $("fileInput").files[0];

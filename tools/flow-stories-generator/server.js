@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
 const crypto = require("crypto");
 const { readEntry } = require("./lib/unzip");
 const {
@@ -122,18 +121,6 @@ function extractText(file) {
   return extractTextFromBuffer(file.buffer, file.originalname);
 }
 
-// Lista los ficheros de la carpeta de ejemplos (docx/txt/md).
-function listSamples() {
-  try {
-    return fs
-      .readdirSync(config.SAMPLES_DIR)
-      .filter((f) => /\.(docx|txt|md|csv)$/i.test(f))
-      .sort();
-  } catch {
-    return [];
-  }
-}
-
 function send(res, result) {
   res.status(result.status).json(result.body);
 }
@@ -189,26 +176,6 @@ app.get("/api/export/:id/:name?", (req, res) => {
 app.get("/api/health", (req, res) => {
   const { baseUrl, apiKey } = getConfig(req);
   res.json({ ok: true, baseUrl, hasKey: hasValidKey(apiKey) });
-});
-
-// Lista las transcripciones de ejemplo disponibles en el servidor
-app.get("/api/samples", (req, res) => {
-  res.json({ samples: listSamples() });
-});
-
-// Devuelve el texto extraido de una transcripcion de ejemplo
-app.get("/api/samples/:name", (req, res) => {
-  const name = path.basename(req.params.name);
-  if (!listSamples().includes(name)) {
-    return res.status(404).json({ error: "Ejemplo no encontrado." });
-  }
-  try {
-    const buffer = fs.readFileSync(path.join(config.SAMPLES_DIR, name));
-    const text = extractTextFromBuffer(buffer, name);
-    res.json({ name, text });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
 });
 
 // Crea la sesion de Devin con el prompt + transcripcion
