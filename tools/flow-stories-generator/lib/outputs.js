@@ -67,7 +67,7 @@ function gapsSection(n) {
   return [
     `\n${n}) GAPS, en Markdown, con esta estructura:`,
     "## GAPS",
-    "Una tabla Markdown con las columnas: | # | Flujo (AS-IS, TO-BE...) | Fase | Actividad o paso | Gap identificado | Impacto (Alto/Medio/Bajo) | Recomendacion |",
+    "Una tabla Markdown con las columnas: | # | Flujo | Fase | Actividad o paso | Gap identificado | Impacto | Recomendación |. En Flujo indica AS-IS, TO-BE u otro flujo pedido; en Impacto, Alto, Medio o Bajo.",
     "Identifica huecos funcionales, ambiguedades, reglas no definidas y puntos de dolor de cada fase de los flujos pedidos, numerados GAP 1, GAP 2...",
   ].join("\n");
 }
